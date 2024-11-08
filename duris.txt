@@ -1,0 +1,22 @@
+Ročníkový projekt
+Názov projektu: BlockSense
+Meno: Ďuriš Maroš
+Trieda: 3.A
+
+Cieľom projektu je vytvorenie digitálnej peňaženky, ktorá používateľom umožní bezpečne a efektívne spravovať kryptomeny
+Medzi hlavné ciele aplikácie patria:
+	• Poskytovanie cien v reálnom čase z blockchainových sietí
+	• Umožnenie nákupu kryptomien s aktuálnymi cenami
+	• Systém na odosielanie a prijímanie kryptomien bez zbytočných poplatkov
+	• Monitorovanie histórie transakcií a sledovanie zostatkov na účte používateľa
+
+	----- 07.11.2024 -----
+• Vytvorenie úvodného návrhu aplikácie
+• Implementácia základného grafického rozhrania pre registráciu a prihlásenie
+• Návrh a prepojenie jednotlivých komponentov úvodného rozhrania s obrazovkami registrácie a prihlásenia
+
+
+
+
+
+

@@ -1,0 +1,16 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="BlockSense.App"
+             RequestedThemeVariant="Default">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Styles>
+        <FluentTheme />
+		<StyleInclude Source="/Assets/Styles.axaml"/>
+    </Application.Styles>
+	<Application.Resources>
+		<FontFamily x:Key="Montserrat">
+			avares://BlockSense/Assets/Fonts#Montserrat
+		</FontFamily>
+	</Application.Resources>
+</Application>
