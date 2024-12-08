@@ -4,6 +4,8 @@ using Avalonia.Markup.Xaml;
 
 using BlockSense.ViewModels;
 using BlockSense.Views;
+using System.Runtime.InteropServices;
+using System;
 
 namespace BlockSense;
 
@@ -16,21 +18,15 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        base.OnFrameworkInitializationCompleted();
+
+        // Open the console at application startup
+        ConsoleHelper.OpenConsole();
+
+        // Create the main window (or perform any other initialization)
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = new MainViewModel()
-            };
+            desktop.MainWindow = new MainWindow();
         }
-        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
-        {
-            singleViewPlatform.MainView = new MainView
-            {
-                DataContext = new MainViewModel()
-            };
-        }
-
-        base.OnFrameworkInitializationCompleted();
     }
 }

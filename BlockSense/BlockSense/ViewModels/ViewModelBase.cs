@@ -1,6 +1,4 @@
-﻿
-
-namespace BlockSense.ViewModels;
+﻿namespace BlockSense.ViewModels;
 
 public class ViewModelBase
 {

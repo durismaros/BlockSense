@@ -1,5 +1,8 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
+using BlockSense.ViewModels;
+using System;
+using System.Xml;
 
 namespace BlockSense.Views;
 
@@ -10,13 +13,12 @@ public partial class MainView : UserControl
         InitializeComponent();
     }
 
-
     /// <summary>
     /// Redirects user to the Login page
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
-    private void LoginClick(object sender, RoutedEventArgs e)
+    private void LoginClick(object? sender, RoutedEventArgs e)
     {
         Content = new LoginView();
     }
@@ -27,7 +29,7 @@ public partial class MainView : UserControl
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
-    private void RegisterClick(object sender, RoutedEventArgs e)
+    private void RegisterClick(object? sender, RoutedEventArgs e)
     {
         Content = new RegisterView();
     }

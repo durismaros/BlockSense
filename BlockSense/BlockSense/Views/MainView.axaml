@@ -35,10 +35,10 @@
 		
 		<StackPanel
 			Margin="30"
-					Width="400"
-					HorizontalAlignment="Right"
-					VerticalAlignment="Center"
-					Spacing="15">
+			Width="400"
+			HorizontalAlignment="Right"
+			VerticalAlignment="Center"
+			Spacing="15">
 
 			<!--Application header-->
 			<TextBlock

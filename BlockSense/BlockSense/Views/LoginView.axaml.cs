@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using BlockSense.Views;
+using System;
 
 namespace BlockSense;
 
