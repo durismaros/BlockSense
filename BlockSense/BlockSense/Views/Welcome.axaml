@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="BlockSense.Welcome">
+	<Panel>
+		<ExperimentalAcrylicBorder IsHitTestVisible="False">
+			<ExperimentalAcrylicBorder.Material>
+				<ExperimentalAcrylicMaterial
+					BackgroundSource="Digger"
+					TintColor="Yellow"
+					TintOpacity="0.2"
+					MaterialOpacity="0.8" />
+			</ExperimentalAcrylicBorder.Material>
+		</ExperimentalAcrylicBorder>
+
+		<TextBlock
+			Name="WelcomeText"
+			HorizontalAlignment="Center"
+			VerticalAlignment="Center"
+			FontFamily="{StaticResource Pacifico}"
+			FontSize="72"
+			Foreground="White"
+			Opacity="0"
+			RenderTransformOrigin="0.5,0.5"
+			Text="Welcome">
+			<TextBlock.Effect>
+				<DropShadowEffect
+					Color="DarkGray"
+					BlurRadius="10"/>
+			</TextBlock.Effect>
+		</TextBlock>
+
+		<Button
+			Name="InviteGeneratorButton"
+			Width="150"
+			Height="30"
+			HorizontalAlignment="Center"
+			VerticalAlignment="Bottom"
+			Margin="0,0,0,20"
+			CornerRadius="20"
+			Background="White"
+			Foreground="Gray"
+			Content="Invite Generator"
+			VerticalContentAlignment="Center"
+			HorizontalContentAlignment="Center"
+			FontWeight="Bold"
+			FontSize="13">
+
+			<Button.Styles>
+				<Style Selector="Button:pointerover /template/ ContentPresenter">
+					<Setter Property="Background" Value="LightGray"/>
+					<Setter Property="Foreground" Value="#6E6E6E"/>
+				</Style>
+			</Button.Styles>
+			
+		</Button>
+	</Panel>
+</UserControl>

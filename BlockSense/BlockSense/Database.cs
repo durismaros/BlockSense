@@ -2,31 +2,32 @@
 using System;
 using System.Configuration;
 using System.Reflection.Metadata.Ecma335;
+using System.Threading.Tasks;
 using ZstdSharp.Unsafe;
 
 namespace BlockSense
 {
     class Database
     {
-        private static string connectionString = "Server=localhost;Database=BlockSense;User=root;Password=Pa$$w0rd;";
-        public static string ConnectionString { get { return connectionString; } }
+        private static string _connectionString = "Server=localhost;Database=BlockSense;User=root;Password=Pa$$w0rd;";
+        public static string ConnectionString { get { return _connectionString; } }
 
         /// <summary>
         /// 
         /// </summary>
         /// <returns></returns>
-        public static MySqlConnection GetConnection()
+        public static async Task<MySqlConnection> GetConnectionAsync()
         {
             var connection = new MySqlConnection(ConnectionString);
             try
             {
-                connection.Open();
-                Console.WriteLine("Database connection established");
+                await connection.OpenAsync();
+                ConsoleHelper.WriteLine("Database connection established");
             }
             catch (Exception ex)
             {
                 // Log or handle the exception appropriately
-                Console.WriteLine("Error: " + ex.Message);
+                ConsoleHelper.WriteLine("Error: " + ex.Message);
             }
 
             return connection;

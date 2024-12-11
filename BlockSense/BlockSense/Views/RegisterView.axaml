@@ -49,11 +49,20 @@
 					Height="30"
 					Margin="5 0 0 0"
 					CornerRadius="20,20,20,20"
+					Background="#D2B48C"
 					Click="HomeClick">
+
+					<Button.Styles>
+						<Style Selector="Button:pointerover /template/ ContentPresenter">
+							<Setter Property="Background" Value="#B99978" />
+						</Style>
+					</Button.Styles>
+					
 					<Image
 						Height="30"
-						Source="avares://BlockSense/Assets/back3.png"/>
+						Source="avares://BlockSense/Assets/backArrow.png"/>
 				</Button>
+				
 				
 				<TextBlock
 					HorizontalAlignment="Center"
@@ -78,43 +87,39 @@
 				Width="320"
 				Height="20"
 				Watermark="username*"
-				VerticalContentAlignment="Center"
 				Margin="0,10,0,0"
-				CornerRadius="5"/>
-			
+				VerticalAlignment="Center">
+			</TextBox>
+
+
 			<TextBox
 				Name="emailRegister"
 				Width="320"
 				Height="20"
-				Watermark="email address*"
-				VerticalContentAlignment="Center"
-				CornerRadius="5"/>
+				Watermark="email address*"/>
 			
 			<TextBox
 				Name="passwordRegister"
 				Width="320"
 				Height="20"
 				Watermark="password*"
-				PasswordChar="•"
-				VerticalContentAlignment="Center"
-				CornerRadius="5"/>
+				FontFamily="default"
+				PasswordChar="•"/>
 			
 			<TextBox
 				Name="passwordConfirmRegister"
 				Width="320"
 				Height="20"
 				Watermark="confirm password*"
-				PasswordChar="•"
-				VerticalContentAlignment="Center"
-				CornerRadius="5"/>
+				FontFamily="default"
+				PasswordChar="•"/>
 			
 			<TextBox
 				Name="invitationCodeRegister"
 				Width="320"
 				Height="20"
 				Watermark="invitation code*"
-				VerticalContentAlignment="Center"
-				CornerRadius="5"/>
+				FontWeight="Bold"/>
 			
 			<!--Main register Button-->
 			<Button

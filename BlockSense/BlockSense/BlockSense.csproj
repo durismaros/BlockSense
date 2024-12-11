@@ -14,9 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Assets\back1.png" />
-    <None Remove="Assets\back2.png" />
-    <None Remove="Assets\back3.png" />
+    <None Remove="Assets\backArrow.png" />
     <None Remove="Assets\cryptoicon.png" />
     <None Remove="Assets\Fonts\Montserrat-Black.ttf" />
     <None Remove="Assets\Fonts\Montserrat-BlackItalic.ttf" />
@@ -36,8 +34,9 @@
     <None Remove="Assets\Fonts\Montserrat-SemiBoldItalic.ttf" />
     <None Remove="Assets\Fonts\Montserrat-Thin.ttf" />
     <None Remove="Assets\Fonts\Montserrat-ThinItalic.ttf" />
-    <None Remove="Assets\icon.png" />
+    <None Remove="Assets\Fonts\Pacifico-Regular.ttf" />
     <None Remove="Assets\mainWindowIcon.png" />
+    <None Remove="Assets\taskbarIcon.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -52,7 +51,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AvaloniaResource Update="Assets\Styles.axaml">
+    <AvaloniaResource Update="Assets\Styles\AppDefaultStyles.axaml">
       <SubType>Designer</SubType>
     </AvaloniaResource>
   </ItemGroup>

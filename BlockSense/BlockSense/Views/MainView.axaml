@@ -6,11 +6,6 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="BlockSense.Views.MainView"
              x:DataType="vm:MainViewModel">
-  <Design.DataContext>
-    <!-- This only sets the DataContext for the previewer in an IDE,
-         to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-    <vm:MainViewModel />
-  </Design.DataContext>
 
 	<Panel>
 		<ExperimentalAcrylicBorder IsHitTestVisible="False">
@@ -94,6 +89,7 @@
 				CornerRadius="10"
 				Background="#6F4E37"
 				Click="LoginClick">
+				
 				<TextBlock
 					Name="loginText"
 					Text="Login"
@@ -101,11 +97,13 @@
 					VerticalAlignment="Center"
 					FontWeight="SemiBold"
 					Foreground="#F5DEB3"/>
+				
 				<Button.Styles>
 					<Style Selector="Button:pointerover /template/ ContentPresenter">
 						<Setter Property="Background" Value="#5C4033" />
 					</Style>
 				</Button.Styles>
+				
 			</Button>
 
 			<!--Register Button-->
@@ -128,6 +126,7 @@
 					<Style Selector="Button:pointerover /template/ ContentPresenter">
 						<Setter Property="Background" Value="#D2B48C" />
 					</Style>
+
 				</Button.Styles>
 			</Button>
 			

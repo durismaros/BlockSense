@@ -6,11 +6,14 @@
 
     <Application.Styles>
         <FluentTheme />
-		<StyleInclude Source="/Assets/Styles.axaml"/>
+		<StyleInclude Source="/Assets/Styles/AppDefaultStyles.axaml"/>
     </Application.Styles>
 	<Application.Resources>
 		<FontFamily x:Key="Montserrat">
 			avares://BlockSense/Assets/Fonts#Montserrat
+		</FontFamily>
+		<FontFamily x:Key="Pacifico">
+			avares://BlockSense/Assets/Fonts#Pacifico
 		</FontFamily>
 	</Application.Resources>
 </Application>
