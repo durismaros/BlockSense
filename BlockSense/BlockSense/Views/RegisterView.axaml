@@ -28,7 +28,7 @@
 		
 		
 		<StackPanel
-			Margin="30"
+			Margin="30, 40, 30, 30"
 			Width="400"
 			HorizontalAlignment="Right"
 			VerticalAlignment="Top"
@@ -48,7 +48,7 @@
 					Width="40"
 					Height="30"
 					Margin="5 0 0 0"
-					CornerRadius="20,20,20,20"
+					CornerRadius="20"
 					Background="#D2B48C"
 					Click="HomeClick">
 
@@ -126,9 +126,8 @@
 				Name="registerButton"
 				Width="275"
 				Height="35"
-				Margin="0,0,0,0"
 				HorizontalAlignment="Center"
-				CornerRadius="10"
+				CornerRadius="15"
 				Background="#F5DEB3"
 				Click="RegisterClick">
 				<TextBlock

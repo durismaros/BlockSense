@@ -2,6 +2,10 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
+using Avalonia.Platform;
+using BlockSense.Client_Side.Token_authentication;
+using BlockSense.DB;
 using BlockSense.Views;
 using MySql.Data.MySqlClient;
 using System;
@@ -20,11 +24,18 @@ public partial class LoginView : UserControl
         InitializeComponent();
     }
 
+
     /// <summary>
-    /// Returns back to the MainView
+    /// 
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
+    public static void ResetPasswordClick(object sender, RoutedEventArgs e)
+    {
+        User.ResetPassword();
+    }
+
+
     private void HomeClick(object sender, RoutedEventArgs e)
     {
         Content = new MainView();
@@ -32,90 +43,40 @@ public partial class LoginView : UserControl
 
     private async void LoginClick(object sender, RoutedEventArgs e)
     {
-        string? login = loginLogin.Text, password = passwordLogin.Text;
+        string login = loginLogin.Text?.Trim() ?? string.Empty;
+        string password = passwordLogin.Text?.Trim() ?? string.Empty;
+
+        void ShowMessage(string message)
+        {
+            loginTextBorder.IsVisible = true;
+            loginText.Text = message;
+        }
 
         try
         {
 
-            if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password))
+            if (!InputHelper.Check(login, password))
             {
-                loginTextBorder.IsVisible = true;
-                loginText.Text = "mandatory field is empty";
+                ShowMessage("Looks like you missed a required field.");
             }
-            else if (loginLogin.Text != null && passwordLogin.Text != null)
+            else
             {
-                var(loginCorrect, loginInfo) = await LoginUser(login, password);
-                if (loginCorrect)
+                var(correctLogin, loginMessage) = await User.LoginUser(login, password);
+                if (correctLogin && !string.IsNullOrEmpty(loginMessage))
                 {
-                    loginTextBorder.IsVisible = true;
-                    loginText.Text = "login successful";
-                    ConsoleHelper.WriteLine("User logged in successfully");
+                    ShowMessage(loginMessage);
 
                     await Task.Delay(2000);
                     Content = new Welcome();
                 }
-                else if (!loginCorrect)
+                else if (!correctLogin && !string.IsNullOrEmpty(loginMessage))
                 {
-                    loginTextBorder.IsVisible = true;
-                    loginText.Text = loginInfo;
+                    ShowMessage(loginMessage);
                 }
             }
 
+        }
 
-        }
-        catch (Exception ex)
-        {
-            loginTextBorder.IsVisible = true;
-            loginText.Text = "An error occurred while processing your request";
-            ConsoleHelper.WriteLine("Error: " + ex.Message);
-        }
-    }
-
-    private async Task<(bool loginCorrect, string? loginInfo)> LoginUser(string login, string password)
-    {
-        using (var connection = await Database.GetConnectionAsync())
-        {
-            try
-            {
-                string command = "SELECT password_hash, salt FROM Users WHERE username = @login OR email = @login";
-                var execute = new MySqlCommand(command, connection);
-                execute.Parameters.AddWithValue("login", login);
-                var reader = await execute.ExecuteReaderAsync();
-                if (reader.Read())
-                {
-                    string correctHash = reader.GetString("password_hash");
-                    string salt = reader.GetString("salt");
-                    string inputHash = Hash.HashPassword(password, salt);
-                    if (correctHash == inputHash)
-                    {
-                        return (true, null);
-                    }
-                    else
-                    {
-                        return (false, "Invalid password");
-                    }
-                }
-                return (false, "username or email not found");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error: " + ex.Message);
-                return (false, "An error occurred while processing your request");
-            }
-        }
-    }
-
-    private void ResetPasswordClick(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "https://www.google.com",
-                UseShellExecute = true
-            }
-            );
-        }
         catch (Exception ex)
         {
             ConsoleHelper.WriteLine("Error: " + ex.Message);

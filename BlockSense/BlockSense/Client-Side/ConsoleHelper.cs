@@ -15,7 +15,6 @@ namespace BlockSense
     {
         [DllImport("kernel32.dll")]
         private static extern bool AllocConsole();
-
         public static void OpenConsole()
         {
             AllocConsole();

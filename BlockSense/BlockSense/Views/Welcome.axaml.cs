@@ -7,6 +7,8 @@ using Avalonia.Styling;
 using System.Threading.Tasks;
 using System;
 using System.Diagnostics.Contracts;
+using Avalonia.Interactivity;
+using Org.BouncyCastle.Asn1.BC;
 
 namespace BlockSense;
 
@@ -17,6 +19,20 @@ public partial class Welcome : UserControl
         InitializeComponent();
         FadeInText();
     }
+
+    public void UserProfileClick(object sender, RoutedEventArgs e)
+    {
+        Content = new UserProfile();
+    }
+
+
+    /*
+    private void InviteGenerator(object sender, RoutedEventArgs e)
+    {
+        Content = new InvitationGenerator();
+    }
+    */
+
     private async Task FadeInText()
     {
         var welcomeText = this.FindControl<TextBlock>("WelcomeText");

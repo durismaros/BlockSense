@@ -86,9 +86,9 @@
 				Height="35"
 				Margin="0,20,0,0"
 				HorizontalAlignment="Center"
-				CornerRadius="10"
+				CornerRadius="15"
 				Background="#6F4E37"
-				Click="LoginClick">
+				Click="LoginButton">
 				
 				<TextBlock
 					Name="loginText"
@@ -112,9 +112,9 @@
 					Width="275"
 					Height="35"
 					HorizontalAlignment="Center"
-					CornerRadius="10"
+					CornerRadius="15"
 					Background="#F5DEB3"
-					Click="RegisterClick">
+					Click="RegisterButton">
 				<TextBlock
 					Name="registerText"
 					Text="Register"

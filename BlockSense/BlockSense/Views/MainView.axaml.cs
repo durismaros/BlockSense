@@ -18,7 +18,7 @@ public partial class MainView : UserControl
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
-    private void LoginClick(object? sender, RoutedEventArgs e)
+    private void LoginButton(object? sender, RoutedEventArgs e)
     {
         Content = new LoginView();
     }
@@ -29,7 +29,7 @@ public partial class MainView : UserControl
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
-    private void RegisterClick(object? sender, RoutedEventArgs e)
+    private void RegisterButton(object? sender, RoutedEventArgs e)
     {
         Content = new RegisterView();
     }
