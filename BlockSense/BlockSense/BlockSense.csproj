@@ -10,63 +10,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AvaloniaXaml Remove="Assets\Styles.axaml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="Assets\backArrow.png" />
-    <None Remove="Assets\cryptoicon.png" />
-    <None Remove="Assets\Fonts\Montserrat-Black.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-BlackItalic.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-Bold.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-BoldItalic.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-ExtraBold.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-ExtraBoldItalic.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-ExtraLight.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-ExtraLightItalic.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-Italic.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-Light.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-LightItalic.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-Medium.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-MediumItalic.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-Regular.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-SemiBold.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-SemiBoldItalic.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-Thin.ttf" />
-    <None Remove="Assets\Fonts\Montserrat-ThinItalic.ttf" />
-    <None Remove="Assets\Fonts\Pacifico-Regular.ttf" />
-    <None Remove="Assets\mainWindowIcon.png" />
-    <None Remove="Assets\taskbarIcon.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.2.3">
-      <TreatAsUsed>true</TreatAsUsed>
-    </PackageReference>
-    <PackageReference Include="Avalonia.Desktop" Version="11.2.3">
-      <TreatAsUsed>true</TreatAsUsed>
-    </PackageReference>
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3">
-      <TreatAsUsed>true</TreatAsUsed>
-    </PackageReference>
+    <PackageReference Include="Avalonia" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.2.3" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.2.3" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.1" />
     <PackageReference Include="CredentialManagement" Version="1.0.2" />
     <PackageReference Include="MySql.Data" Version="9.2.0" />
-    <PackageReference Include="System.Security.Permissions" Version="9.0.1">
-      <TreatAsUsed>true</TreatAsUsed>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <AvaloniaResource Update="Assets\Styles\AppDefaultStyles.axaml">
-      <SubType>Designer</SubType>
-    </AvaloniaResource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Server-Based\UserProfilePictures\" />
   </ItemGroup>
 </Project>

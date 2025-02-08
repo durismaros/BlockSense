@@ -14,7 +14,7 @@
 					MaterialOpacity="0.8" />
 			</ExperimentalAcrylicBorder.Material>
 		</ExperimentalAcrylicBorder>
-		
+
 		<Panel
 			Width="400"
 			HorizontalAlignment="Left"
@@ -84,7 +84,7 @@
 					Foreground="#F5DEB3"
 					Text="User Profile"/>
 			</Grid>
-			
+
 
 			<Border
 				Width="320"
@@ -110,66 +110,66 @@
 						Foreground="#6F4E37"
 						FontWeight="Medium">
 						uid: <Span
-							Name="uid_span"
-						    Foreground="#28282B"
-						    FontWeight="SemiBold"
-						    FontSize="13"></Span>
+					   Name="uid_span"
+					   Foreground="#28282B"
+					   FontWeight="SemiBold"
+					   FontSize="13"></Span>
 					</TextBlock>
-					
+
 					<TextBlock
 						Name="username"
 						Foreground="#6F4E37"
 						FontWeight="Medium">
 						username: <Span
-							Name="username_span"
-							Foreground="#28282B"
-							FontWeight="SemiBold"
-							FontSize="13"></Span>
+				  Name="username_span"
+				  Foreground="#28282B"
+				  FontWeight="SemiBold"
+				  FontSize="13"></Span>
 					</TextBlock>
-					
+
 					<TextBlock
 						Name="email"
 						Foreground="#6F4E37"
 						FontWeight="Medium">
 						email: <Span
-							Name="email_span"
-							Foreground="#28282B"
-							FontWeight="SemiBold"
-							FontSize="13"></Span>
+					 Name="email_span"
+					 Foreground="#28282B"
+					 FontWeight="SemiBold"
+					 FontSize="13"></Span>
 					</TextBlock>
-					
+
 					<TextBlock
 						Name="type"
 						Foreground="#6F4E37"
 						FontWeight="Medium">
 						type: <Span
-							Name="type_span"
-							Foreground="#28282B"
-							FontWeight="SemiBold"
-							FontSize="13"></Span>
+					  Name="type_span"
+					  Foreground="#28282B"
+					  FontWeight="SemiBold"
+					  FontSize="13"></Span>
 					</TextBlock>
-					
+
 					<TextBlock
 						Name="creationDate"
 						Foreground="#6F4E37"
 						FontWeight="Medium">
 						creation date: <Span
-							Name="creationDate_span"
-							Foreground="#28282B"
-							FontWeight="SemiBold"
-							FontSize="13"></Span>
+			 Name="creationDate_span"
+			 Foreground="#28282B"
+			 FontWeight="SemiBold"
+			 FontSize="13"></Span>
 					</TextBlock>
-					
+
 					<TextBlock
 						Name="invitingUser"
 						Foreground="#6F4E37"
 						FontWeight="Medium">
 						invited by: <Span
-							Name="invitingUser_span"
-							Foreground="#28282B"
-							FontWeight="Bold"
-							FontSize="13"
-							FontStyle="Italic"></Span>
+				Name="invitingUser_span"
+				Foreground="#28282B"
+				FontWeight="Bold"
+				FontSize="13"
+				FontStyle="Italic"></Span>
 					</TextBlock>
 				</StackPanel>
 			</Border>
@@ -195,7 +195,7 @@
 					</Style>
 				</Button.Styles>
 			</Button>
-	</StackPanel>
-		
+		</StackPanel>
+
 	</Panel>
 </UserControl>

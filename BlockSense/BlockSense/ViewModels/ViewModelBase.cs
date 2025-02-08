@@ -1,5 +1,7 @@
-﻿namespace BlockSense.ViewModels;
+﻿using ReactiveUI;
 
-public class ViewModelBase
+namespace BlockSense.ViewModels;
+
+public class ViewModelBase : ReactiveObject
 {
 }

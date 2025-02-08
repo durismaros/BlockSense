@@ -5,9 +5,9 @@
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.Styles>
-        <FluentTheme />
+		<FluentTheme />
 		<StyleInclude Source="/Assets/Styles/AppDefaultStyles.axaml"/>
-    </Application.Styles>
+	</Application.Styles>
 	<Application.Resources>
 		<FontFamily x:Key="Montserrat">
 			avares://BlockSense/Assets/Fonts#Montserrat

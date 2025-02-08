@@ -9,7 +9,6 @@ using Avalonia.Markup.Xaml;
 using BlockSense.DB;
 using BlockSense.Views;
 using MySql.Data.MySqlClient;
-using Tmds.DBus.Protocol;
 using ZstdSharp.Unsafe;
 
 namespace BlockSense;
