@@ -27,8 +27,6 @@ public partial class App : Application
     public async override void OnFrameworkInitializationCompleted()
     {
         base.OnFrameworkInitializationCompleted();
-
-        // Create the main window (or perform any other initialization)
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.MainWindow = new MainWindow();
@@ -44,6 +42,7 @@ public partial class App : Application
                 }
                 else desktop.MainWindow.Content = new LoginView();
             }
+            else desktop.MainWindow.Content = new MainView();
         }
     }
 }

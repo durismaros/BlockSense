@@ -1,5 +1,4 @@
 Ročníkový projekt
-Názov projektu: BlockSense
 Meno: Ďuriš Maroš
 Trieda: 3.A
 
@@ -16,7 +15,12 @@ Medzi hlavné ciele aplikácie patria:
 • Návrh a prepojenie jednotlivých komponentov úvodného rozhrania s obrazovkami registrácie a prihlásenia
 
 
-
-
-
-
+	----- 16.01.2025 -----
+• Databázové prepojenie
+• Autentifikácia používateľov pri Prihlásení a Registrácií
+• Ukladanie hesiel: hashovania hesiel pomocou algoritmu SHA-256
+• Čiastočne hotová token-based Autentifikácia
+• Generovanie šifrovacieho kľúča: Použitie funkcie PKCS5S2 na odvodenie šifrovacieho kľúča z hesla a saltu
+• Ukladanie refresh token hashu
+• Šifrovanie (AES) a ukladanie refresh tokenu (Windows Credential Locker)
+• Automatické prihlásenie (funkcia - remember me)

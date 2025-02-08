@@ -13,5 +13,15 @@
         Background="Transparent"
 		ExtendClientAreaToDecorationsHint="True"
 		CanResize="False">
-	<views:MainView/>
+	<Panel>
+		<ExperimentalAcrylicBorder IsHitTestVisible="False">
+			<ExperimentalAcrylicBorder.Material>
+				<ExperimentalAcrylicMaterial
+					BackgroundSource="Digger"
+					TintColor="Yellow"
+					TintOpacity="0.2"
+					MaterialOpacity="0.8" />
+			</ExperimentalAcrylicBorder.Material>
+		</ExperimentalAcrylicBorder>
+	</Panel>	
 </Window>

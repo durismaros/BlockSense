@@ -14,6 +14,30 @@
 					MaterialOpacity="0.8" />
 			</ExperimentalAcrylicBorder.Material>
 		</ExperimentalAcrylicBorder>
+		
+		<Panel
+			Width="400"
+			HorizontalAlignment="Left"
+			PointerPressed="PfpUploadClick">
+			<Border
+				Name="ProfilePictureOutline"
+				Width="260"
+				Height="260"
+				CornerRadius="130"
+				BorderBrush="#D2B48C"
+				BorderThickness="5">
+				<Border
+					Name="ProfilePictureBorder"
+					CornerRadius="130"
+					ClipToBounds="True">
+					<Image
+						Name="ProfilePicture"
+						Source="avares://BlockSense/Assets/defaultPfp.png"
+						Stretch="UniformToFill"
+						StretchDirection="Both"/>
+				</Border>
+			</Border>
+		</Panel>
 
 		<StackPanel
 			Margin="30, 40, 30, 30"

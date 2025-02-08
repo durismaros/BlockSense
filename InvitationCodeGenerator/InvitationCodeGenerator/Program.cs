@@ -52,14 +52,6 @@ namespace InvitationCodeGenerator
             do
             {
                 RenderHeader();
-                Console.Write("Login: ");
-            }
-            while (!int.TryParse(Console.ReadLine(), out login));
-
-            do
-            {
-                RenderHeader();
-                Console.WriteLine($"Login accepted: {login}"); // Display accepted login
                 Console.Write("How many invitation codes do you want to generate? ");
             }
 
@@ -107,10 +99,9 @@ namespace InvitationCodeGenerator
             {
                 try
                 {
-                    string query = "INSERT INTO InvitationCodes (code, is_used, generated_by) VALUES (@code, FALSE, @user)";
+                    string query = "INSERT INTO InvitationCodes (invitation_code, is_used) VALUES (@code, FALSE)";
                     var command = new MySqlCommand(query, connection);
                     command.Parameters.AddWithValue("@code", code);
-                    command.Parameters.AddWithValue("@user", Login);
                     command.ExecuteNonQuery();
 
                     Console.WriteLine($"Invitation code {code} added successfully.");
