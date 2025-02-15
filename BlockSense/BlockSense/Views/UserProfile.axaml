@@ -4,6 +4,16 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="BlockSense.UserProfile">
+	
+	<UserControl.Styles>
+		<!-- Remove hover effect from MenuItem -->
+		<Style Selector="MenuItem:pointerover">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="0"/>
+		</Style>
+	</UserControl.Styles>
+	
 	<Panel>
 		<ExperimentalAcrylicBorder IsHitTestVisible="False">
 			<ExperimentalAcrylicBorder.Material>
@@ -14,15 +24,29 @@
 					MaterialOpacity="0.8" />
 			</ExperimentalAcrylicBorder.Material>
 		</ExperimentalAcrylicBorder>
-
+		
 		<Panel
 			Width="400"
 			HorizontalAlignment="Left"
 			PointerPressed="PfpUploadClick">
+			<Panel.ContextMenu>
+				<ContextMenu Width="100"
+							 CornerRadius="20"
+							 Padding="0 0 -50 0"
+							 Background="White">
+					<MenuItem Header="Set default"
+							  Click="SetDefaultClick"
+							  Foreground="Gray"
+							  FontWeight="Medium"
+							  FontFamily="{DynamicResource Montserrat}"
+							  Padding="10,5"/>
+				</ContextMenu>
+			</Panel.ContextMenu>
 			<Border
 				Name="ProfilePictureOutline"
-				Width="260"
-				Height="260"
+				Width="230"
+				Height="230"
+				Margin="0,0,0,0"
 				CornerRadius="130"
 				BorderBrush="#D2B48C"
 				BorderThickness="5">
@@ -38,6 +62,7 @@
 				</Border>
 			</Border>
 		</Panel>
+		
 
 		<StackPanel
 			Margin="30, 40, 30, 30"
@@ -45,7 +70,8 @@
 			HorizontalAlignment="Right"
 			VerticalAlignment="Top"
 			Spacing="15">
-
+			
+			
 			<Grid
 				Width="300"
 				Height="40">
@@ -154,10 +180,10 @@
 						Foreground="#6F4E37"
 						FontWeight="Medium">
 						creation date: <Span
-			 Name="creationDate_span"
-			 Foreground="#28282B"
-			 FontWeight="SemiBold"
-			 FontSize="13"></Span>
+							Name="creationDate_span"
+							Foreground="#28282B"
+							FontWeight="SemiBold"
+							FontSize="13"></Span>
 					</TextBlock>
 
 					<TextBlock
@@ -197,5 +223,28 @@
 			</Button>
 		</StackPanel>
 
+		<Panel
+			Width="800"
+			Height="50"
+			Background="Transparent"
+			VerticalAlignment="Bottom">
+			<StackPanel
+				Orientation="Horizontal"
+				Spacing="100"
+				Margin="150 0 0 10">
+				<Button
+					Width="50">
+				</Button>
+				<Button
+					Width="50">
+				</Button>
+				<Button
+					Width="50">
+				</Button>
+				<Button
+					Width="50">
+				</Button>
+			</StackPanel>
+		</Panel>
 	</Panel>
 </UserControl>

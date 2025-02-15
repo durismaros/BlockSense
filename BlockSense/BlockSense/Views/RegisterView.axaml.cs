@@ -6,7 +6,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-using BlockSense.DB;
+using BlockSense.Server.User;
 using BlockSense.Views;
 using MySql.Data.MySqlClient;
 using ZstdSharp.Unsafe;
@@ -57,7 +57,7 @@ public partial class RegisterView : UserControl
             if (password != passwordConfirm)
                 ShowMessage("The passwords you entered don’t match.");
 
-            var (success, message) = await User.RegisterUser(username, email, password, invitationCode);
+            var (success, message) = await User.Register(username, email, password, invitationCode);
             if (message != null) ShowMessage(message);
         }
         catch (Exception ex)

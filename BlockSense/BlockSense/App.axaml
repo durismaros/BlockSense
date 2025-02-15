@@ -6,7 +6,7 @@
 
     <Application.Styles>
 		<FluentTheme />
-		<StyleInclude Source="/Assets/Styles/AppDefaultStyles.axaml"/>
+		<StyleInclude Source="/Assets/AppDefaultStyles.axaml"/>
 	</Application.Styles>
 	<Application.Resources>
 		<FontFamily x:Key="Montserrat">

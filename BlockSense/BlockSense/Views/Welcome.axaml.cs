@@ -52,7 +52,7 @@ public partial class Welcome : UserControl
             }
         };
 
-        await animation.RunAsync(welcomeText);
-        welcomeText.Opacity = 1.0; // Set final opacity
+        await animation.RunAsync(welcomeText!);
+        welcomeText!.Opacity = 1.0; // Set final opacity
     }
 }

@@ -5,7 +5,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Platform;
 using BlockSense.Client_Side.Token_authentication;
-using BlockSense.DB;
+using BlockSense.Server.User;
 using BlockSense.Views;
 using MySql.Data.MySqlClient;
 using System;
@@ -61,7 +61,7 @@ public partial class LoginView : UserControl
             }
             else
             {
-                var(correctLogin, loginMessage) = await User.LoginUser(login, password);
+                var(correctLogin, loginMessage) = await User.Login(login, password);
                 if (correctLogin && !string.IsNullOrEmpty(loginMessage))
                 {
                     ShowMessage(loginMessage);

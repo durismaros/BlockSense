@@ -19,6 +19,7 @@
 			Name="WelcomeText"
 			HorizontalAlignment="Center"
 			VerticalAlignment="Center"
+			Width="290"
 			FontFamily="{StaticResource Pacifico}"
 			FontSize="72"
 			Foreground="White"

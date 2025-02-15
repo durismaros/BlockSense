@@ -1,20 +1,25 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media.Imaging;
 using BlockSense.Client_Side;
-using BlockSense.DB;
+using BlockSense.Server.User;
 using BlockSense.Views;
+using System;
+using System.IO;
 using System.Xml;
 
 namespace BlockSense;
 
 public partial class UserProfile : UserControl
 {
+    private Bitmap _pfpBitmap = ProfilePictureHandler.ExistingPicture();
     public UserProfile()
     {
         InitializeComponent();
-        if (User.Uid != "0")
+        if (User.Uid != null)
         {
             uid_span.Inlines.Add(User.Uid);
             username_span.Inlines.Add(User.Username);
@@ -22,7 +27,7 @@ public partial class UserProfile : UserControl
             type_span.Inlines.Add(User.Type);
             creationDate_span.Inlines.Add(User.CreationDate);
             invitingUser_span.Inlines.Add(User.InvitingUser);
-            ProfilePicture.Source = ProfilePictureHandler.PictureBitmap();
+            ProfilePicture.Source = _pfpBitmap;
         }
 
     }
@@ -31,11 +36,19 @@ public partial class UserProfile : UserControl
         Content = new Welcome();
     }
 
-    private async void PfpUploadClick(object sender, RoutedEventArgs e)
+    private async void PfpUploadClick(object sender, PointerPressedEventArgs e)
     {
-        var parentWindow = this.VisualRoot as Window;
-        await ProfilePictureHandler.UploadFile(parentWindow);
-        ProfilePicture.Source = ProfilePictureHandler.PictureBitmap();
+        if (e.GetCurrentPoint(sender as Avalonia.Visual).Properties.IsLeftButtonPressed)
+        {
+            var parentWindow = this.VisualRoot as Window;
+            await ProfilePictureHandler.UploadFile(parentWindow!);
+            ProfilePicture.Source = ProfilePictureHandler.ExistingPicture();
+        }
+    }
+
+    private void SetDefaultClick(object sender, RoutedEventArgs e)
+    {
+        ProfilePicture.Source = ProfilePictureHandler.setDefaultPfp();
     }
 
     private async void LogoutClick(object sender, RoutedEventArgs e)
