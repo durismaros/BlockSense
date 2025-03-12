@@ -4,11 +4,13 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
+using BlockSense.Client;
 using BlockSense.Client_Side;
 using BlockSense.Server.User;
 using BlockSense.Views;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using System.Xml;
 
 namespace BlockSense;
@@ -31,9 +33,10 @@ public partial class UserProfile : UserControl
         }
 
     }
+
     private void HomeClick(object sender, RoutedEventArgs e)
     {
-        Content = new Welcome();
+        Animations.AnimateTransition(this, new Welcome());
     }
 
     private async void PfpUploadClick(object sender, PointerPressedEventArgs e)
@@ -54,6 +57,6 @@ public partial class UserProfile : UserControl
     private async void LogoutClick(object sender, RoutedEventArgs e)
     {
         await User.Logout();
-        Content = new MainView();
+        Animations.AnimateTransition(this, new MainView());
     }
 }

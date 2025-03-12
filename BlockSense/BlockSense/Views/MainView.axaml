@@ -27,7 +27,6 @@
 				Source="avares://BlockSense/Assets/mainWindowIcon.png"/>
 		</Panel>
 		
-		
 		<StackPanel
 			Margin="30"
 			Width="400"
@@ -59,8 +58,8 @@
 				Foreground="#343434"
 				FontSize="15"
 				FontWeight="Heavy"
-				Text="Manage your crypto assets"
-				TextAlignment="Center"/>
+				TextAlignment="Center"
+				Text="Manage your crypto assets"/>
 			
 			<TextBlock
 				Width="300"
@@ -81,6 +80,7 @@
 
 			<!--Login Button-->
 			<Button
+				Classes="DefaultDarkBrown"
 				Name="loginButton"
 				Width="275"
 				Height="35"
@@ -91,23 +91,17 @@
 				Click="LoginButton">
 				
 				<TextBlock
-					Name="loginText"
 					Text="Login"
 					HorizontalAlignment="Center"
 					VerticalAlignment="Center"
 					FontWeight="SemiBold"
 					Foreground="#F5DEB3"/>
-				
-				<Button.Styles>
-					<Style Selector="Button:pointerover /template/ ContentPresenter">
-						<Setter Property="Background" Value="#5C4033" />
-					</Style>
-				</Button.Styles>
-				
+
 			</Button>
 
 			<!--Register Button-->
 			<Button
+					Classes="DefaultLightBrown"
 					Name="registerButton"
 					Width="275"
 					Height="35"
@@ -116,18 +110,11 @@
 					Background="#F5DEB3"
 					Click="RegisterButton">
 				<TextBlock
-					Name="registerText"
 					Text="Register"
 					HorizontalAlignment="Center"
 					VerticalAlignment="Center"
 					FontWeight="SemiBold"
 					Foreground="#6F4E37"/>
-				<Button.Styles>
-					<Style Selector="Button:pointerover /template/ ContentPresenter">
-						<Setter Property="Background" Value="#D2B48C" />
-					</Style>
-
-				</Button.Styles>
 			</Button>
 			
 		</StackPanel>

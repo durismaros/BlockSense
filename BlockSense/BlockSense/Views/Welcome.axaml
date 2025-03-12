@@ -15,6 +15,7 @@
 			</ExperimentalAcrylicBorder.Material>
 		</ExperimentalAcrylicBorder>
 
+		<!--Main Welcome Text-->
 		<TextBlock
 			Name="WelcomeText"
 			HorizontalAlignment="Center"
@@ -33,30 +34,60 @@
 			</TextBlock.Effect>
 		</TextBlock>
 
-		<Button
-			Name="userProfileButton"
-			Width="120"
-			Height="30"
+		
+		<StackPanel
 			HorizontalAlignment="Center"
 			VerticalAlignment="Bottom"
-			Margin="0,0,0,25"
-			CornerRadius="20"
-			Background="White"
-			Foreground="Gray"
-			Content="User Profile"
-			VerticalContentAlignment="Center"
-			HorizontalContentAlignment="Center"
-			FontWeight="Bold"
-			FontSize="13"
-			Click="UserProfileClick">
-
-			<Button.Styles>
-				<Style Selector="Button:pointerover /template/ ContentPresenter">
-					<Setter Property="Background" Value="LightGray"/>
-					<Setter Property="Foreground" Value="#6E6E6E"/>
-				</Style>
-			</Button.Styles>
+			Margin="0 0 0 25"
+			Orientation="Horizontal"
+			Spacing="20">
 			
-		</Button>
+			<Button
+				Name="userProfileButton"
+				Width="120"
+				Height="30"
+				CornerRadius="20"
+				Background="White"
+				Foreground="Gray"
+				Content="User Profile"
+				VerticalContentAlignment="Center"
+				HorizontalContentAlignment="Center"
+				FontWeight="Bold"
+				FontSize="13"
+				Click="UserProfileClick">
+
+				<Button.Styles>
+					<Style Selector="Button:pointerover ContentPresenter">
+						<Setter Property="Background" Value="LightGray"/>
+						<Setter Property="Foreground" Value="#6E6E6E"/>
+					</Style>
+				</Button.Styles>
+
+			</Button>
+
+			<Button
+				Name="userWalletButton"
+				Width="120"
+				Height="30"
+				CornerRadius="20"
+				Background="White"
+				Foreground="Gray"
+				Content="Wallet"
+				VerticalContentAlignment="Center"
+				HorizontalContentAlignment="Center"
+				FontWeight="Bold"
+				FontSize="13"
+				Click="WalletClick">
+
+				<Button.Styles>
+					<Style Selector="Button:pointerover ContentPresenter">
+						<Setter Property="Background" Value="LightGray"/>
+						<Setter Property="Foreground" Value="#6E6E6E"/>
+					</Style>
+				</Button.Styles>
+
+			</Button>
+		</StackPanel>
+		
 	</Panel>
 </UserControl>

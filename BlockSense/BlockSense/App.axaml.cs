@@ -31,9 +31,9 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.MainWindow = new MainWindow();
-            SystemInit.AllocConsole();
-            await SystemInit.GetIPAddress();
-            desktop.MainWindow.Content = (await SystemInit.IsSessionActive()) ? new Welcome() : new MainView();
+            SystemUtils.AllocConsole();
+            await SystemUtils.GetIPAddress();
+            desktop.MainWindow.Content = (await SystemUtils.IsSessionActive()) ? new Welcome() : new MainView();
         }
     }
 }

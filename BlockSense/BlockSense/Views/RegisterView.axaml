@@ -32,7 +32,10 @@
 			Width="400"
 			HorizontalAlignment="Right"
 			VerticalAlignment="Top"
-			Spacing="15">
+			Spacing="15"
+			KeyDown="OnKeyDown">
+
+			<!--Register Header-->
 			<Grid
 				Width="300"
 				Height="40">
@@ -53,7 +56,7 @@
 					Click="HomeClick">
 
 					<Button.Styles>
-						<Style Selector="Button:pointerover /template/ ContentPresenter">
+						<Style Selector="Button:pointerover ContentPresenter">
 							<Setter Property="Background" Value="#B99978" />
 						</Style>
 					</Button.Styles>
@@ -62,7 +65,6 @@
 						Height="30"
 						Source="avares://BlockSense/Assets/backArrow.png"/>
 				</Button>
-				
 				
 				<TextBlock
 					HorizontalAlignment="Center"
@@ -82,15 +84,14 @@
 				BoxShadow="5 5 10 0 Black"/>
 
 			<!--User register information entries-->
+		
 			<TextBox
 				Name="usernameRegister"
 				Width="320"
 				Height="20"
 				Watermark="username*"
-				Margin="0,10,0,0"
-				VerticalAlignment="Center">
+				Margin="0,10,0,0">
 			</TextBox>
-
 
 			<TextBox
 				Name="emailRegister"
@@ -103,16 +104,18 @@
 				Width="320"
 				Height="20"
 				Watermark="password*"
-				FontFamily="default"
-				PasswordChar="•"/>
+				PasswordChar="•"
+				FontFamily="{DynamicResource Roboto}"
+				FontWeight="Bold"/>
 			
 			<TextBox
 				Name="passwordConfirmRegister"
 				Width="320"
 				Height="20"
-				Watermark="confirm password*"
-				FontFamily="default"
-				PasswordChar="•"/>
+				Watermark="re-enter password*"
+				PasswordChar="•"
+				FontFamily="{DynamicResource Roboto}"
+				FontWeight="Bold"/>
 			
 			<TextBox
 				Name="invitationCodeRegister"
@@ -123,7 +126,8 @@
 			
 			<!--Main register Button-->
 			<Button
-				Name="registerButton"
+				Classes="DefaultLightBrown"
+				Name="RegisterButton"
 				Width="275"
 				Height="35"
 				HorizontalAlignment="Center"
@@ -137,13 +141,9 @@
 					VerticalAlignment="Center"
 					FontWeight="SemiBold"
 					Foreground="#6F4E37"/>
-				<Button.Styles>
-					<Style Selector="Button:pointerover /template/ ContentPresenter">
-						<Setter Property="Background" Value="#D2B48C" />
-					</Style>
-				</Button.Styles>
 			</Button>
 
+			<!--System Output-->
 			<Border
 				Name="registerTextBorder"
 				Width="250"

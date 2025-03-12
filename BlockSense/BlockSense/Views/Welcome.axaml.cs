@@ -9,6 +9,8 @@ using System;
 using System.Diagnostics.Contracts;
 using Avalonia.Interactivity;
 using Org.BouncyCastle.Asn1.BC;
+using BlockSense.Client;
+using BlockSense.Views;
 
 namespace BlockSense;
 
@@ -22,18 +24,14 @@ public partial class Welcome : UserControl
 
     public void UserProfileClick(object sender, RoutedEventArgs e)
     {
-        Content = new UserProfile();
+        Animations.AnimateTransition(this, new UserProfile());
     }
-
-
-    /*
-    private void InviteGenerator(object sender, RoutedEventArgs e)
+    public void WalletClick(object sender, RoutedEventArgs e)
     {
-        Content = new InvitationGenerator();
+        Animations.AnimateTransition(this, new BackupView());
     }
-    */
 
-    private async Task FadeInText()
+    private async void FadeInText()
     {
         var welcomeText = this.FindControl<TextBlock>("WelcomeText");
 

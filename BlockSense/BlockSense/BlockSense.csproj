@@ -23,4 +23,8 @@
     <PackageReference Include="NBitcoin" Version="7.0.50" />
     <PackageReference Include="SkiaSharp" Version="3.116.1" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Assets\Fonts\Roboto\" />
+  </ItemGroup>
 </Project>

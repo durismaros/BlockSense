@@ -6,7 +6,7 @@
              x:Class="BlockSense.UserProfile">
 	
 	<UserControl.Styles>
-		<!-- Remove hover effect from MenuItem -->
+		<!-- Remove hover effect from MenuItems -->
 		<Style Selector="MenuItem:pointerover">
 			<Setter Property="Background" Value="Transparent"/>
 			<Setter Property="BorderBrush" Value="Transparent"/>
@@ -25,42 +25,69 @@
 			</ExperimentalAcrylicBorder.Material>
 		</ExperimentalAcrylicBorder>
 		
+		<!--User Profile Picture Panel-->
 		<Panel
 			Width="400"
-			HorizontalAlignment="Left"
-			PointerPressed="PfpUploadClick">
-			<Panel.ContextMenu>
-				<ContextMenu Width="100"
-							 CornerRadius="20"
-							 Padding="0 0 -50 0"
-							 Background="White">
-					<MenuItem Header="Set default"
-							  Click="SetDefaultClick"
-							  Foreground="Gray"
-							  FontWeight="Medium"
-							  FontFamily="{DynamicResource Montserrat}"
-							  Padding="10,5"/>
-				</ContextMenu>
-			</Panel.ContextMenu>
+			HorizontalAlignment="Left">
+			
+			<!--Profile Picture Outline-->
 			<Border
-				Name="ProfilePictureOutline"
 				Width="230"
 				Height="230"
-				Margin="0,0,0,0"
-				CornerRadius="130"
+				CornerRadius="115"
 				BorderBrush="#D2B48C"
 				BorderThickness="5">
 				<Border
-					Name="ProfilePictureBorder"
-					CornerRadius="130"
+					Background="White"
+					Width="220"
+					Height="220"
+					CornerRadius="110"
+					PointerPressed="PfpUploadClick"
+					Cursor="Hand"
 					ClipToBounds="True">
-					<Image
-						Name="ProfilePicture"
-						Source="avares://BlockSense/Assets/defaultPfp.png"
-						Stretch="UniformToFill"
-						StretchDirection="Both"/>
+					
+					<Border.Clip>
+						<EllipseGeometry RadiusX="110" RadiusY="110" Center="110,110"/>
+					</Border.Clip>
+
+					<Border.ContextMenu>
+						<ContextMenu Width="100"
+									 Background="White"
+									 CornerRadius="130">
+							<MenuItem Header="Set default"
+									  Click="SetDefaultClick"
+									  Foreground="Gray"
+									  FontWeight="Medium"
+									  FontFamily="{DynamicResource Montserrat}"
+									  Padding="10,5">
+								<MenuItem.Styles>
+									<Style Selector="MenuItem">
+										<Setter Property="Template">
+											<ControlTemplate>
+												<Border Background="Transparent"
+														Padding="{TemplateBinding Padding}">
+													<ContentPresenter Content="{TemplateBinding Header}"
+																	  VerticalAlignment="Center"
+																	  HorizontalAlignment="Stretch"/>
+												</Border>
+											</ControlTemplate>
+										</Setter>
+										
+										<!-- Remove the hover background -->
+										<Setter Property="Background" Value="Transparent"/>
+									</Style>
+								</MenuItem.Styles>
+							</MenuItem>
+						</ContextMenu>
+					</Border.ContextMenu>
+					
+					<!--Profile Picture Img-->
+					<Image Name="ProfilePicture"
+						   Source="avares://BlockSense/Assets/defaultPfp.png"
+						   Stretch="UniformToFill"/>
 				</Border>
 			</Border>
+
 		</Panel>
 		
 
@@ -71,7 +98,7 @@
 			VerticalAlignment="Top"
 			Spacing="15">
 			
-			
+			<!--User Profile Header-->
 			<Grid
 				Width="300"
 				Height="40">
@@ -92,7 +119,7 @@
 					Click="HomeClick">
 
 					<Button.Styles>
-						<Style Selector="Button:pointerover /template/ ContentPresenter">
+						<Style Selector="Button:pointerover ContentPresenter">
 							<Setter Property="Background" Value="#4F352B" />
 						</Style>
 					</Button.Styles>
@@ -119,6 +146,7 @@
 				CornerRadius="100"
 				BoxShadow="5 5 10 0 Black"/>
 
+			<!--User's information border-->
 			<Border
 				Width="300"
 				Height="170"
@@ -128,6 +156,7 @@
 				BorderBrush="#D2B48C"
 				BorderThickness="2"
 				BoxShadow="5 5 20 0 #343434">
+				
 				<StackPanel
 					Margin="15"
 					Spacing="5">
@@ -199,8 +228,9 @@
 					</TextBlock>
 				</StackPanel>
 			</Border>
+			
 			<Button
-				Name="logoutButton"
+				Classes="DefaultLightBrown"
 				Width="150"
 				Height="29"
 				HorizontalAlignment="Center"
@@ -215,36 +245,7 @@
 					VerticalAlignment="Center"
 					FontWeight="SemiBold"
 					Foreground="#6F4E37"/>
-				<Button.Styles>
-					<Style Selector="Button:pointerover /template/ ContentPresenter">
-						<Setter Property="Background" Value="#D2B48C" />
-					</Style>
-				</Button.Styles>
 			</Button>
 		</StackPanel>
-
-		<Panel
-			Width="800"
-			Height="50"
-			Background="Transparent"
-			VerticalAlignment="Bottom">
-			<StackPanel
-				Orientation="Horizontal"
-				Spacing="100"
-				Margin="150 0 0 10">
-				<Button
-					Width="50">
-				</Button>
-				<Button
-					Width="50">
-				</Button>
-				<Button
-					Width="50">
-				</Button>
-				<Button
-					Width="50">
-				</Button>
-			</StackPanel>
-		</Panel>
 	</Panel>
 </UserControl>
