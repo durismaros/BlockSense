@@ -14,4 +14,14 @@ public partial class BackupView : UserControl
     {
         InitializeComponent();
     }
+
+    private void ManualBackupClick(object sender, RoutedEventArgs e)
+    {
+        Animations.AnimateTransition(this, new SecretPhrase());
+    }
+
+    private void BackupLaterClick(object sender, RoutedEventArgs e)
+    {
+        Animations.AnimateTransition(this, new Test());
+    }
 }

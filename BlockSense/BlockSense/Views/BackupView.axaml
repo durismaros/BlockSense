@@ -34,7 +34,7 @@
 			<TextBlock
 				HorizontalAlignment="Center"
 				FontSize="20"
-				FontWeight="Bold"
+				FontWeight="ExtraBold"
 				Foreground="#353935"
 				Text="Back up your secret phrase"/>
 			
@@ -51,7 +51,7 @@
 				Height="20"
 				Foreground="#343434"
 				FontSize="15"
-				FontWeight="Heavy"
+				FontWeight="Bold"
 				LineSpacing="10"
 				TextAlignment="Center"
 				Text="Protect your assets by backing up"/>
@@ -62,7 +62,7 @@
 				Height="20"
 				Foreground="#343434"
 				FontSize="15"
-				FontWeight="Heavy"
+				FontWeight="Bold"
 				LineSpacing="10"
 				TextAlignment="Center"
 				Text="the seed phrase first"/>
@@ -75,7 +75,8 @@
 				Margin="0,20,0,0"
 				HorizontalAlignment="Center"
 				CornerRadius="15"
-				Background="#6F4E37">
+				Background="#6F4E37"
+				Click="ManualBackupClick">
 				<TextBlock
 					Text="Manual Backup"
 					HorizontalAlignment="Center"
@@ -93,7 +94,8 @@
 					Height="35"
 					HorizontalAlignment="Center"
 					CornerRadius="15"
-					Background="#F5DEB3">
+					Background="#F5DEB3"
+					Click="BackupLaterClick">
 				<TextBlock
 					Text="Back up later . . ."
 					HorizontalAlignment="Center"

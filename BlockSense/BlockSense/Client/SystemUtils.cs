@@ -6,12 +6,14 @@ using BlockSense.Client_Side.Token_authentication;
 using BlockSense.DB;
 using BlockSense.Server.User;
 using BlockSense.Server_Based.Cryptography.Token_authentication.Refresh_Token;
+using K4os.Compression.LZ4.Encoders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -52,7 +54,7 @@ namespace BlockSense.Client
             return false;
         }
 
-        public static void StartCheckTimer()
+        public static bool CheckTimeOut()
         {
             void Timer_event(object? sender, EventArgs e)
             {
@@ -69,6 +71,9 @@ namespace BlockSense.Client
             }
 
             timer.Start();
+
+            return (User.Attempts >= 5) ? false : true; 
+
         }
     }
 }

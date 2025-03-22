@@ -1,6 +1,8 @@
 ﻿using BlockSense.DB;
 using BlockSense.Server.Cryptography.Hashing;
 using BlockSense.Server.User;
+using NBitcoin.Crypto;
+using Org.BouncyCastle.Cms;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using System;
@@ -32,6 +34,7 @@ namespace BlockSense.Server_Based.Cryptography.Token_authentication
             // Convert password to bytes
             byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
             byte[] saltBytes = Encoding.UTF8.GetBytes(salt);
+
 
             // Create an instance of PBKDF2 using HMAC-SHA256
             Pkcs5S2ParametersGenerator generator = new Pkcs5S2ParametersGenerator(new Org.BouncyCastle.Crypto.Digests.Sha256Digest());

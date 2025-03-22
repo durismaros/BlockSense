@@ -49,13 +49,6 @@ public partial class RegisterView : UserControl
     /// 
     private async void RegisterClick(object sender, RoutedEventArgs e)
     {
-        if (User.Attempts >= 5)
-        {
-            SystemUtils.StartCheckTimer();
-            ShowMessage("Try again later . . .");
-            return;
-        }
-
         string username = usernameRegister.Text?.Trim() ?? string.Empty;
         string email = emailRegister.Text?.Trim() ?? string.Empty;
         string password = passwordRegister.Text?.Trim() ?? string.Empty;
@@ -78,6 +71,12 @@ public partial class RegisterView : UserControl
 
             else
             {
+                if (!SystemUtils.CheckTimeOut())
+                {
+                    ShowMessage("Try again later . . .");
+                    return;
+                }
+
                 var (success, message) = await User.Register(username, email, password, invitationCode);
                 if (success && !string.IsNullOrEmpty(message))
                 {

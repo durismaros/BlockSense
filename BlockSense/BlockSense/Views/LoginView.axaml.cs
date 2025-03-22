@@ -56,14 +56,6 @@ public partial class LoginView : UserControl
 
     private async void LoginClick(object sender, RoutedEventArgs e)
     {
-
-        if (User.Attempts >= 5)
-        {
-            SystemUtils.StartCheckTimer();
-            ShowMessage("Try again later . . .");
-            return;
-        }
-
         string login = loginLogin.Text?.Trim() ?? string.Empty;
         string password = passwordLogin.Text?.Trim() ?? string.Empty;
 
@@ -82,7 +74,13 @@ public partial class LoginView : UserControl
             }
             else
             {
-                var(success, message) = await User.Login(login, password);
+                if (!SystemUtils.CheckTimeOut())
+                {
+                    ShowMessage("Try again later . . .");
+                    return;
+                }
+
+                var (success, message) = await User.Login(login, password);
                 if (success && !string.IsNullOrEmpty(message))
                 {
                     ShowMessage(message);

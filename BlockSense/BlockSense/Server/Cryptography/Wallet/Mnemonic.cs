@@ -9,9 +9,11 @@ namespace BlockSense.Server.Cryptography.Wallet
 {
     class Mnemonic
     {
-        private static readonly string[] BIP39_WORDLIST = File.ReadAllLines(@"C:\Users\d3str\Desktop\School\BlockSense\BlockSense\BlockSense\Assets\bip39_english.txt");
-        private static byte[] _entropySource = HashUtils.SecureRandomGenerator();
-        private static List<string> mnemonicWords = GenerateMnemonic(_entropySource);
+        public static readonly string[] BIP39_WORDLIST = File.ReadAllLines(@"C:\Users\d3str\Desktop\School\BlockSense\BlockSense\BlockSense\Assets\bip39_english.txt");
+
+        private static byte[] _sourceEntropy = HashUtils.SecureRandomGenerator();
+        private static byte[] _finalEntropy = AppendChecksum(_sourceEntropy);
+        public static List<string> MnemonicWords { get; } = GenerateMnemonic(_finalEntropy);
 
 
         private static byte[] AppendChecksum(byte[] entropySource)

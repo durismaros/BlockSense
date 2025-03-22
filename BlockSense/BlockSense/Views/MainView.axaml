@@ -38,7 +38,7 @@
 			<TextBlock
 				HorizontalAlignment="Center"
 				FontSize="40"
-				FontWeight="Bold"
+				FontWeight="ExtraBold"
 				Foreground="#353935">
 				Block<Span Foreground="#28282B">Sense</Span>
 			</TextBlock>
@@ -57,7 +57,7 @@
 				Height="20"
 				Foreground="#343434"
 				FontSize="15"
-				FontWeight="Heavy"
+				FontWeight="Bold"
 				TextAlignment="Center"
 				Text="Manage your crypto assets"/>
 			
@@ -66,7 +66,7 @@
 				Height="20"
 				Foreground="#343434"
 				FontSize="15"
-				FontWeight="Heavy"
+				FontWeight="Bold"
 				Text="easily and securely"
 				TextAlignment="Center"/>
 			
@@ -82,11 +82,11 @@
 			<Button
 				Classes="DefaultDarkBrown"
 				Name="loginButton"
-				Width="275"
+				Width="280"
 				Height="35"
 				Margin="0,20,0,0"
 				HorizontalAlignment="Center"
-				CornerRadius="15"
+				CornerRadius="20"
 				Background="#6F4E37"
 				Click="LoginButton">
 				
@@ -101,14 +101,15 @@
 
 			<!--Register Button-->
 			<Button
-					Classes="DefaultLightBrown"
-					Name="registerButton"
-					Width="275"
-					Height="35"
-					HorizontalAlignment="Center"
-					CornerRadius="15"
-					Background="#F5DEB3"
-					Click="RegisterButton">
+				Classes="DefaultLightBrown"
+				Name="registerButton"
+				Width="280"
+				Height="35"
+				HorizontalAlignment="Center"
+				CornerRadius="20"
+				Background="#F5DEB3"
+				Click="RegisterButton">
+				
 				<TextBlock
 					Text="Register"
 					HorizontalAlignment="Center"

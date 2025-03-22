@@ -103,10 +103,10 @@ namespace BlockSense.Server.User
                             // Server related
                             string refreshToken = Convert.ToBase64String(HashUtils.SecureRandomGenerator(32));
                             await RemoteRefreshToken.Store(refreshToken);
-
-                            // Client Related
                             var (encryptionKey, initializationVector) = await EncryptionKey.Fetch();
                             string encryptedRefreshToken = Encryption.EncryptRefreshToken(refreshToken, encryptionKey, initializationVector);
+
+                            // Client Related
                             LocalRefreshToken.Store(encryptedRefreshToken);
                             ConsoleHelper.WriteLine("User logged in successfully");
                             return (true, "Welcome back! You’re all set");
@@ -134,17 +134,15 @@ namespace BlockSense.Server.User
 
         public static async Task<(bool correctRegister, string? registerMessage)> Register(string username, string email, string password, string invitationCode)
         {
-            try
+            // Check if the invitation code is valid and unused
+            if (await InvitationCheck(invitationCode))
             {
-                // Check if the invitation code is valid and unused
-                if (await InvitationCheck(invitationCode))
-                {
-                    // Generate salt and hash the password
-                    string salt = Convert.ToBase64String(HashUtils.SecureRandomGenerator());
-                    string hashedPassword = HashUtils.GenerateHash(password, salt);
+                // Generate salt and hash the password
+                string salt = Convert.ToBase64String(HashUtils.SecureRandomGenerator());
+                string hashedPassword = HashUtils.GenerateHash(password, salt);
 
-                    // Add parameters from user TextBoxex
-                    Dictionary<string, string> parameters = new()
+                // Add parameters from user TextBoxex
+                Dictionary<string, string> parameters = new()
                     {
                         {"@username", username},
                         {"@email", email},
@@ -153,42 +151,36 @@ namespace BlockSense.Server.User
                         {"@invitation_code", invitationCode}
                     };
 
-                    // Insert user into the database
-                    string query = "INSERT INTO users (username, email, password, salt, invitation_code) VALUES (@username, @email, @password, @salt, @invitation_code)";
-                    if (await Database.StoreData(query, parameters))
+                // Insert user into the database
+                string query = "INSERT INTO users (username, email, password, salt, invitation_code) VALUES (@username, @email, @password, @salt, @invitation_code)";
+                if (await Database.StoreData(query, parameters))
+                {
+                    query = "SELECT LAST_INSERT_ID() AS uid";
+                    using (var reader = await Database.FetchData(query, parameters))
                     {
-                        query = "SELECT LAST_INSERT_ID() AS uid";
-                        using (var reader = await Database.FetchData(query, parameters))
+                        if (reader.Read())
                         {
-                            if (reader.Read())
-                            {
-                                string uid = reader.GetInt16("uid").ToString();
+                            string uid = reader.GetInt16("uid").ToString();
 
-                                // Server Related
-                                string encryptionKey = EncryptionKey.Generate(password, salt);
-                                await EncryptionKey.DatabaseStore(uid, encryptionKey);
-                            }
+                            // Server Related
+                            string encryptionKey = EncryptionKey.Generate(password, salt);
+                            await EncryptionKey.DatabaseStore(uid, encryptionKey);
                         }
-
-                        // Set the invitation code as used
-                        query = "UPDATE InvitationCodes SET is_used = TRUE WHERE invitation_code = @invitation_code";
-                        await Database.StoreData(query, parameters);
-
-                        ConsoleHelper.WriteLine($"User registered successfully");
-                        return (true, "Registration complete! Welcome");
                     }
 
-                    // Request not handled correctly
-                    Console.WriteLine("There has been a problem with storing user into DB");
-                    return (false, "We couldn’t register your account");
+                    // Set the invitation code as used
+                    query = "UPDATE InvitationCodes SET is_used = TRUE WHERE invitation_code = @invitation_code";
+                    await Database.StoreData(query, parameters);
+
+                    ConsoleHelper.WriteLine($"User registered successfully");
+                    return (true, "Registration complete! Welcome");
                 }
-                return (false, "Invitation code doesn’t seem right");
+
+                // Request not handled correctly
+                Console.WriteLine("There has been a problem with storing user into DB");
+                return (false, "We couldn’t register your account");
             }
-            catch (Exception ex)
-            {
-                ConsoleHelper.WriteLine("Error: " + ex.Message);
-                return (false, "Something went wrong");
-            }
+            return (false, "Invitation code doesn’t seem right");
         }
 
         public static async Task Logout()

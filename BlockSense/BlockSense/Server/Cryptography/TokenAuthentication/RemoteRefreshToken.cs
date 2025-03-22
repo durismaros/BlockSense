@@ -32,7 +32,7 @@ namespace BlockSense.Server_Based.Cryptography.Token_authentication.Refresh_Toke
                 {"@refresh_token", hashedRefreshToken},
                 {"@device_identifier", User.deviceIdentifier},
                 {"@issued_at", timeStamp.ToString("yyyy-MM-dd HH:mm:ss")},
-                {"@expires_at", timeStamp.AddDays(1).ToString("yyyy-MM-dd HH:mm:ss")}
+                {"@expires_at", timeStamp.AddDays(3).ToString("yyyy-MM-dd HH:mm:ss")}
             };
 
             string query = "INSERT INTO refreshtokens (user_id, refresh_token, ip_address, device_identifier, issued_at, expires_at) " +
