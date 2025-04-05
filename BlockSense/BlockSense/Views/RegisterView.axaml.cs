@@ -10,7 +10,8 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.TextFormatting.Unicode;
 using BlockSense.Client;
-using BlockSense.Server.User;
+using BlockSense.Client.Utilities;
+using BlockSense.Server;
 using BlockSense.Views;
 using MySql.Data.MySqlClient;
 using ZstdSharp.Unsafe;
@@ -91,7 +92,7 @@ public partial class RegisterView : UserControl
         }
         catch (Exception ex)
         {
-            ConsoleHelper.WriteLine("Error: " + ex.Message);
+            ConsoleHelper.Log("Error: " + ex.Message);
         }
     }
 }

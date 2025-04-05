@@ -42,39 +42,30 @@
 				Foreground="#353935">
 				Block<Span Foreground="#28282B">Sense</Span>
 			</TextBlock>
-			
+
 			<Border
-				Width="300"
+				Width="320"
 				Height="1"
-				Background="#C2B280"
+				Background="#D4C9A8"
 				CornerRadius="100"
 				BoxShadow="5 5 10 0 Black"/>
 
 			<!--Motivational text-->
 			<TextBlock
-				Margin="0,0,0,-10"
-				Width="300"
-				Height="20"
+				Width="240"
 				Foreground="#343434"
-				FontSize="15"
+				FontSize="14"
 				FontWeight="Bold"
 				TextAlignment="Center"
-				Text="Manage your crypto assets"/>
-			
-			<TextBlock
-				Width="300"
-				Height="20"
-				Foreground="#343434"
-				FontSize="15"
-				FontWeight="Bold"
-				Text="easily and securely"
-				TextAlignment="Center"/>
-			
-			
+				LineHeight="22"
+				TextWrapping="Wrap"
+				Text="Manage your crypto assets easily and securely"/>
+
+
 			<Border
-				Width="300"
+				Width="320"
 				Height="1"
-				Background="#C2B280"
+				Background="#D4C9A8"
 				CornerRadius="100"
 				BoxShadow="5 5 10 0 Black"/>
 

@@ -6,7 +6,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using BlockSense.Client;
 using BlockSense.Client_Side;
-using BlockSense.Server.User;
+using BlockSense.Server;
 using BlockSense.Views;
 using System;
 using System.IO;

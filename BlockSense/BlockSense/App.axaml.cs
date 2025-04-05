@@ -13,8 +13,9 @@ using BlockSense.Client_Side.Token_authentication;
 using Avalonia.DesignerSupport.Remote;
 using BlockSense.Server_Based.Cryptography.Token_authentication.Refresh_Token;
 using BlockSense.Server_Based.Cryptography;
-using BlockSense.Server.User;
 using BlockSense.Client;
+using BlockSense.Client.Utilities;
+using BlockSense.Server.Cryptography.Hashing;
 
 namespace BlockSense;
 
@@ -30,8 +31,9 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow();
             SystemUtils.AllocConsole();
+            DirStructure.InitializeSecureStorage();
+            desktop.MainWindow = new MainWindow();
             await SystemUtils.GetIPAddress();
             desktop.MainWindow.Content = (await SystemUtils.IsSessionActive()) ? new Welcome() : new MainView();
         }

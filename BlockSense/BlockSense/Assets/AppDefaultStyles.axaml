@@ -49,5 +49,72 @@
 		<Setter Property="BorderBrush" Value="#D2B48C"/>
 		<Setter Property="Background" Value="#B99978"/>
 	</Style>
-	
+
+
+	<Style Selector="CheckBox">
+		<Setter Property="Foreground" Value="#5C5C5C"/>
+		<Setter Property="BorderBrush" Value="#8B4513"/>
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Grid
+                    Background="Transparent"
+                    VerticalAlignment="Center"
+                    ColumnDefinitions="Auto,*">
+					<Border Name="PART_CheckBoxBorder"
+							Width="18" Height="18"
+							Margin="0,0,8,0"
+							BorderBrush="{TemplateBinding BorderBrush}"
+							BorderThickness="2"
+							CornerRadius="6">
+						<Canvas Width="18" Height="18">
+							<Path Name="PART_CheckMark"
+								  Opacity="0"
+								  Data="M 4,9 L 8,13 L 14,5"
+								  Stroke="#654321"
+								  StrokeThickness="2">
+								<Path.Transitions>
+									<Transitions>
+										<DoubleTransition
+											Property="Opacity" Duration="0:0:0.2"/>
+										<TransformOperationsTransition
+											Property="RenderTransform" Duration="0:0:0.2"/>
+									</Transitions>
+								</Path.Transitions>
+							</Path>
+						</Canvas>
+					</Border>
+					<ContentPresenter Name="PART_ContentPresenter"
+                                    Grid.Column="1"
+                                    Content="{TemplateBinding Content}"/>
+				</Grid>
+			</ControlTemplate>
+		</Setter>
+	</Style>
+
+
+	<Style Selector="CheckBox ContentPresenter">
+		<Setter Property="Transitions">
+			<Transitions>
+				<BrushTransition Property="Foreground" Duration="0:0:0.2"/>
+			</Transitions>
+		</Setter>
+	</Style>
+
+	<Style Selector="CheckBox:pointerover ContentPresenter">
+		<Setter Property="Foreground" Value="#343434"/>
+	</Style>
+
+	<Style Selector="CheckBox:checked">
+		<Setter Property="Foreground" Value="#5C5C5C"/>
+	</Style>
+
+	<Style Selector="CheckBox:checked /template/ Border#PART_CheckBoxBorder">
+		<Setter Property="BorderThickness" Value="0"/>
+	</Style>
+	<Style Selector="CheckBox:checked /template/ Path#PART_CheckMark">
+		<Setter Property="Opacity" Value="1"/>
+		<Setter Property="RenderTransform">
+			<ScaleTransform ScaleX="1" ScaleY="1"/>
+		</Setter>
+	</Style>
 </Styles>

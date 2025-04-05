@@ -7,8 +7,9 @@ using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using BlockSense.Client;
+using BlockSense.Client.Utilities;
 using BlockSense.Client_Side.Token_authentication;
-using BlockSense.Server.User;
+using BlockSense.Server;
 using BlockSense.Views;
 using MySql.Data.MySqlClient;
 using System;
@@ -99,7 +100,7 @@ public partial class LoginView : UserControl
 
         catch (Exception ex)
         {
-            ConsoleHelper.WriteLine("Error: " + ex.Message);
+            ConsoleHelper.Log("Error: " + ex.Message);
         }
     }
 }

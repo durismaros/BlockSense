@@ -11,31 +11,8 @@ namespace BlockSense.Server.Cryptography.Wallet
     {
         public static readonly string[] BIP39_WORDLIST = File.ReadAllLines(@"C:\Users\d3str\Desktop\School\BlockSense\BlockSense\BlockSense\Assets\bip39_english.txt");
 
-        private static byte[] _sourceEntropy = HashUtils.SecureRandomGenerator();
-        private static byte[] _finalEntropy = AppendChecksum(_sourceEntropy);
-        public static List<string> MnemonicWords { get; } = GenerateMnemonic(_finalEntropy);
 
-
-        private static byte[] AppendChecksum(byte[] entropySource)
-        {
-            // Create a SHA256 instance from BouncyCastle
-            var sha256Digest = new Sha256Digest();
-            sha256Digest.BlockUpdate(entropySource, 0, entropySource.Length);
-
-            // Compute the hash
-            byte[] hashedEntropy = new byte[sha256Digest.GetDigestSize()];
-            sha256Digest.DoFinal(hashedEntropy, 0);
-
-            byte checksum = (byte)(hashedEntropy[0] >> (8 - 4));
-
-            byte[] verifiedEntropy = new byte[entropySource.Length + 1];
-
-            // Combine entropy and checksum into one array
-            Array.Copy(entropySource, verifiedEntropy, entropySource.Length);
-            verifiedEntropy[entropySource.Length] = checksum;
-
-            return verifiedEntropy;
-        }
+        public static List<string> MnemonicWords { get; } = GenerateMnemonic(WalletEntropyManager.Generate128bit());
 
         private static List<string> GenerateMnemonic(byte[] entropyWithChecksum)
         {

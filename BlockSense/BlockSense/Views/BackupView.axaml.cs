@@ -22,6 +22,6 @@ public partial class BackupView : UserControl
 
     private void BackupLaterClick(object sender, RoutedEventArgs e)
     {
-        Animations.AnimateTransition(this, new Test());
+        Animations.AnimateTransition(this, new MainWalletView());
     }
 }

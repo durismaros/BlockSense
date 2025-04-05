@@ -22,5 +22,5 @@ Medzi hlavné ciele aplikácie patria:
 • Čiastočne hotová token-based Autentifikácia
 • Generovanie šifrovacieho kľúča: Použitie funkcie PKCS5S2 na odvodenie šifrovacieho kľúča z hesla a saltu
 • Ukladanie refresh token hashu
-• Šifrovanie (AES) a ukladanie refresh tokenu (Windows Credential Locker)
+• Šifrovanie (AES-256 CBC) a ukladanie refresh tokenu (Windows Credential Locker)
 • Automatické prihlásenie (funkcia - remember me)

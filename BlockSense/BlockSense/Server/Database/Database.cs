@@ -33,13 +33,13 @@ namespace BlockSense.DB
             catch (Exception ex)
             {
                 // Log or handle the exception appropriately
-                ConsoleHelper.WriteLine("Error: " + ex.Message);
+                ConsoleHelper.Log("Error: " + ex.Message);
             }
 
             return connection;
         }
 
-        public static async Task<DbDataReader> FetchData(string query, Dictionary<string, string> parameters)
+        public static async Task<DbDataReader> FetchData(string query, Dictionary<string, object> parameters)
         {
             var connection = await GetConnectionAsync();
             try
@@ -50,17 +50,16 @@ namespace BlockSense.DB
                     command.Parameters.AddWithValue(param.Key, param.Value);
                 }
                 var reader = await command.ExecuteReaderAsync();
-                ConsoleHelper.WriteLine("Data fetched successfully");
                 return reader;
             }
             catch (Exception ex)
             {
-                ConsoleHelper.WriteLine("Error: " + ex.Message);
+                ConsoleHelper.Log("Error: " + ex.Message);
                 throw;
             }
         }
 
-        public static async Task<bool> StoreData(string query, Dictionary<string, string> parameters)
+        public static async Task<bool> StoreData(string query, Dictionary<string, object> parameters)
         {
             using (var connection = await GetConnectionAsync())
             {
@@ -72,13 +71,12 @@ namespace BlockSense.DB
                         command.Parameters.AddWithValue(param.Key, param.Value);
                     }
                     await command.ExecuteNonQueryAsync();
-                    ConsoleHelper.WriteLine("Data stored successfully");
                     return true;
 
                 }
                 catch (Exception ex)
                 {
-                    ConsoleHelper.WriteLine("Error: " + ex.Message);
+                    ConsoleHelper.Log("Error: " + ex.Message);
                     return false;
                 }
             }

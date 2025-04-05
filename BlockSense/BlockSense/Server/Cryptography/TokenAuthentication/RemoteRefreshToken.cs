@@ -1,10 +1,14 @@
 ﻿using BlockSense.DB;
+using BlockSense.Server;
+using BlockSense.Server.Cryptography.Encryption;
 using BlockSense.Server.Cryptography.Hashing;
 using BlockSense.Server.Cryptography.TokenAuthentication;
-using BlockSense.Server.User;
+using Org.BouncyCastle.Crypto.Paddings;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,34 +16,60 @@ namespace BlockSense.Server_Based.Cryptography.Token_authentication.Refresh_Toke
 {
     class RemoteRefreshToken
     {
-        private static string _hashedToken = string.Empty;
-        public static int tokenId;
-        private static DateTime _expiresAt;
+        public static byte[] PlainToken { get; private set; } = null!;
+        public static Guid TokenId { get; private set; }
+        public static DateTime IssuedAt { get; private set; }
+        public static DateTime ExpiresAt { get; private set; }
+        
+        /// <summary>
+        /// Generates a new token
+        /// </summary>
+        public static void Generate()
+        {
+            PlainToken = HashUtils.SecureRandomGenerator(32);
+            TokenId = Guid.NewGuid();
+            IssuedAt = DateTime.UtcNow;
+            ExpiresAt = IssuedAt.AddDays(3);
+        }
+
+        /// <summary>
+        /// Server simulated API
+        /// </summary>
+        /// <returns>TokenChace object filled with token data</returns>
+        public static TokenCache GetTokenData()
+        {
+            return new TokenCache()
+            {
+                TokenId = TokenId,
+                IssuedAt = IssuedAt,
+                ExpiresAt = ExpiresAt,
+                EncryptedData = PlainToken
+            };
+        }
 
         /// <summary>
         /// Stores hashed Token, IP address, device id, Issuance & Expiration Date
         /// </summary>
         /// <param name="refreshToken">plain refresh token</param>
         /// <returns></returns>
-        public static async Task Store(string refreshToken)
+        public static async Task Store()
         {
-            string hashedRefreshToken = HashUtils.GenerateHash(refreshToken, null);
-            DateTime timeStamp = DateTime.UtcNow;
-            Dictionary<string, string> parameters = new()
+            string hashedToken = Convert.ToBase64String(HashUtils.ComputeSha256(PlainToken));
+            Dictionary<string, object> parameters = new()
             {
+                {"@refreshtoken_id", TokenId},
                 {"@user_id", User.Uid},
-                {"@ip_address", User.ipAddress},
-                {"@refresh_token", hashedRefreshToken},
-                {"@device_identifier", User.deviceIdentifier},
-                {"@issued_at", timeStamp.ToString("yyyy-MM-dd HH:mm:ss")},
-                {"@expires_at", timeStamp.AddDays(3).ToString("yyyy-MM-dd HH:mm:ss")}
+                {"@ip_address", User.IpAddress},
+                {"@refresh_token", hashedToken},
+                {"@device_identifier", User.DeviceIdentifier},
+                {"@issued_at", IssuedAt},
+                {"@expires_at", ExpiresAt}
             };
 
-            string query = "INSERT INTO refreshtokens (user_id, refresh_token, ip_address, device_identifier, issued_at, expires_at) " +
-                           "VALUES (@user_id, @refresh_token, @ip_address, @device_identifier, @issued_at, @expires_at)";
+            string query = "insert into refreshtokens values (@refreshtoken_id, @user_id, @refresh_token, @ip_address, @device_identifier, @issued_at, @expires_at, default)";
             if (await Database.StoreData(query, parameters))
             {
-                ConsoleHelper.WriteLine("Refresh token stored successfully");
+                ConsoleHelper.Log("Refresh token stored successfully");
             }
         }
 
@@ -47,79 +77,30 @@ namespace BlockSense.Server_Based.Cryptography.Token_authentication.Refresh_Toke
         /// Sets hashed Token & expiration Date
         /// </summary>
         /// <returns>fundation of valid token</returns>
-        public static async Task<bool> Fetch()
+        public static async Task<byte[]> Fetch(Guid tokenId)
         {
-            Dictionary<string, string> parameters = new()
+            Dictionary<string, object> parameters = new()
                 {
-                    {"@user_id", User.Uid},
-                    {"@ip_address", User.ipAddress},
-                    {"@device_identifier", User.deviceIdentifier}
+                    {"@refreshtoken_id", tokenId},
+                    {"@ip_address", User.IpAddress},
+                    {"@device_identifier", User.DeviceIdentifier}
                 };
-            string query = "SELECT refreshtoken_id, refresh_token, ip_address, device_identifier, expires_at, revoked FROM refreshtokens WHERE user_id = @user_id AND ip_address = @ip_address AND device_identifier = @device_identifier AND revoked = 0";
+            string query = "SELECT refreshtoken_id, refresh_token, ip_address, device_identifier, expires_at, revoked FROM refreshtokens WHERE refreshtoken_id = @refreshtoken_id AND ip_address = @ip_address AND device_identifier = @device_identifier AND revoked = 0";
             using (var reader = await Database.FetchData(query, parameters))
             {
                 if (reader.Read())
                 {
-                    _hashedToken = reader.GetString("refresh_token");
-                    _expiresAt = reader.GetDateTime("expires_at");
-                    tokenId = reader.GetInt32("refreshtoken_id");
-
-
                     // Check if the token is expired
-                    if (DateTime.UtcNow > _expiresAt)
+                    if (reader.GetDateTime("expires_at") < DateTime.UtcNow)
                     {
-                        await Revoke(tokenId);
-                        return false;
+                        await TokenUtils.Revoke(reader.GetGuid("refreshtoken_id"));
+                        ConsoleHelper.Log("Token expired");
+                        return Array.Empty<byte>();
                     }
 
-                    return true;
+                    return Convert.FromBase64String(reader.GetString("refresh_token"));
                 }
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Revokes specified user refresh Token
-        /// </summary>
-        /// <param name="refreshTokenId">id of desired Token</param>
-        /// <returns></returns>
-        public static async Task Revoke(int refreshTokenId)
-        {
-            Dictionary<string, string> parameters = new()
-            {
-                {"@user_id", User.Uid},
-                {"@refreshtoken_id", refreshTokenId.ToString()}
-            };
-            string query = "UPDATE refreshtokens set revoked = 1 WHERE user_id = @user_id AND refreshtoken_id = @refreshtoken_id AND revoked = 0";
-            await Database.StoreData(query, parameters);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="encryptedRefreshToken"></param>
-        /// <returns>Comparison between locally stored and valid Token</returns>
-        public static async Task<bool> Comparison(string encryptedRefreshToken)
-        {
-            try
-            {
-                // Fetch encryption key and IV for the user
-                var (encryptionKey, initializationVector) = await EncryptionKey.Fetch();
-                // Decrypt the refresh token sent by the client
-                string plainToken = Encryption.DecryptRefreshToken(encryptedRefreshToken, encryptionKey, initializationVector);
-                // Hash the decrypted token
-                string clientHashedToken = HashUtils.GenerateHash(plainToken, null);
-
-                if (await RemoteRefreshToken.Fetch() && clientHashedToken.Equals(_hashedToken))
-                {
-                    return true;
-                }
-                return false;
-            }
-            catch (Exception ex)
-            {
-                ConsoleHelper.WriteLine("Error: " + ex.Message);
-                throw;
+                return Array.Empty<byte>();
             }
         }
     }

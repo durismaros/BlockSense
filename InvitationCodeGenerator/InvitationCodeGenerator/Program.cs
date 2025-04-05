@@ -99,7 +99,7 @@ namespace InvitationCodeGenerator
             {
                 try
                 {
-                    string query = "INSERT INTO InvitationCodes (invitation_code, is_used) VALUES (@code, FALSE)";
+                    string query = "INSERT INTO InvitationCodes (invitation_code) values (@code)";
                     var command = new MySqlCommand(query, connection);
                     command.Parameters.AddWithValue("@code", code);
                     command.ExecuteNonQuery();
