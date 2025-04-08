@@ -9,12 +9,23 @@
 		<Setter Property="FontFamily" Value="{DynamicResource Montserrat}"/>
 	</Style>
 
+	<Style Selector="Button.PrimaryButton">
+		<Setter Property="Background" Value="#5D87E8"/>
+		<Setter Property="Foreground" Value="White"/>
+		<Setter Property="BorderThickness" Value="0"/>
+	</Style>
+
 	<Style Selector="Button ContentPresenter">
 		<Setter Property="Transitions">
 			<Transitions>
 				<BrushTransition Property="Background" Duration="0:0:0.2"/>
+				<TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
 			</Transitions>
 		</Setter>
+	</Style>
+
+	<Style Selector="Button:not(#PART_CloseButton):not(#PART_MinimizeButton):pointerover">
+		<Setter Property="RenderTransform" Value="scale(1.02)" />
 	</Style>
 
 	<Style Selector="Button.DefaultLightBrown:pointerover ContentPresenter">

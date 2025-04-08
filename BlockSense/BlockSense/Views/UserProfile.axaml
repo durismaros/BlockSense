@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="BlockSense.UserProfile">
-	
+
 	<UserControl.Styles>
 		<!-- Remove hover effect from MenuItems -->
 		<Style Selector="MenuItem:pointerover">
@@ -13,7 +13,7 @@
 			<Setter Property="BorderThickness" Value="0"/>
 		</Style>
 	</UserControl.Styles>
-	
+
 	<Panel>
 		<ExperimentalAcrylicBorder IsHitTestVisible="False">
 			<ExperimentalAcrylicBorder.Material>
@@ -24,12 +24,12 @@
 					MaterialOpacity="0.8" />
 			</ExperimentalAcrylicBorder.Material>
 		</ExperimentalAcrylicBorder>
-		
+
 		<!--User Profile Picture Panel-->
 		<Panel
 			Width="400"
 			HorizontalAlignment="Left">
-			
+
 			<!--Profile Picture Outline-->
 			<Border
 				Width="230"
@@ -45,7 +45,7 @@
 					PointerPressed="PfpUploadClick"
 					Cursor="Hand"
 					ClipToBounds="True">
-					
+
 					<Border.Clip>
 						<EllipseGeometry RadiusX="110" RadiusY="110" Center="110,110"/>
 					</Border.Clip>
@@ -72,7 +72,7 @@
 												</Border>
 											</ControlTemplate>
 										</Setter>
-										
+
 										<!-- Remove the hover background -->
 										<Setter Property="Background" Value="Transparent"/>
 									</Style>
@@ -80,7 +80,7 @@
 							</MenuItem>
 						</ContextMenu>
 					</Border.ContextMenu>
-					
+
 					<!--Profile Picture Img-->
 					<Image Name="ProfilePicture"
 						   Source="avares://BlockSense/Assets/defaultPfp.png"
@@ -89,7 +89,7 @@
 			</Border>
 
 		</Panel>
-		
+
 
 		<StackPanel
 			Margin="30, 40, 30, 30"
@@ -97,7 +97,7 @@
 			HorizontalAlignment="Right"
 			VerticalAlignment="Top"
 			Spacing="15">
-			
+
 			<!--User Profile Header-->
 			<Grid
 				Width="300"
@@ -106,7 +106,8 @@
 					Width="300"
 					Height="40"
 					Background="#6F4E37"
-					CornerRadius="20"/>
+					CornerRadius="20"
+					BoxShadow="0 2 8 0 #30000000"/>
 
 				<!--Return to the Home page Button-->
 				<Button
@@ -154,9 +155,8 @@
 				CornerRadius="20,20,30,30"
 				Background="#B99978"
 				BorderBrush="#D2B48C"
-				BorderThickness="2"
-				BoxShadow="5 5 20 0 #343434">
-				
+				BorderThickness="2">
+
 				<StackPanel
 					Margin="15"
 					Spacing="5">
@@ -165,10 +165,10 @@
 						Foreground="#6F4E37"
 						FontWeight="Medium">
 						uid: <Span
-					   Name="uid_span"
-					   Foreground="#28282B"
-					   FontWeight="SemiBold"
-					   FontSize="13"></Span>
+				  Name="uid_span"
+				  Foreground="#28282B"
+				  FontWeight="SemiBold"
+				  FontSize="13"></Span>
 					</TextBlock>
 
 					<TextBlock
@@ -176,10 +176,10 @@
 						Foreground="#6F4E37"
 						FontWeight="Medium">
 						username: <Span
-				  Name="username_span"
-				  Foreground="#28282B"
-				  FontWeight="SemiBold"
-				  FontSize="13"></Span>
+		Name="username_span"
+		Foreground="#28282B"
+		FontWeight="SemiBold"
+		FontSize="13"></Span>
 					</TextBlock>
 
 					<TextBlock
@@ -187,10 +187,10 @@
 						Foreground="#6F4E37"
 						FontWeight="Medium">
 						email: <Span
-					 Name="email_span"
-					 Foreground="#28282B"
-					 FontWeight="SemiBold"
-					 FontSize="13"></Span>
+			  Name="email_span"
+			  Foreground="#28282B"
+			  FontWeight="SemiBold"
+			  FontSize="13"></Span>
 					</TextBlock>
 
 					<TextBlock
@@ -198,10 +198,10 @@
 						Foreground="#6F4E37"
 						FontWeight="Medium">
 						type: <Span
-					  Name="type_span"
-					  Foreground="#28282B"
-					  FontWeight="SemiBold"
-					  FontSize="13"></Span>
+				Name="type_span"
+				Foreground="#28282B"
+				FontWeight="SemiBold"
+				FontSize="13"></Span>
 					</TextBlock>
 
 					<TextBlock
@@ -209,10 +209,10 @@
 						Foreground="#6F4E37"
 						FontWeight="Medium">
 						creation date: <Span
-							Name="creationDate_span"
-							Foreground="#28282B"
-							FontWeight="SemiBold"
-							FontSize="13"></Span>
+			 Name="creationDate_span"
+			 Foreground="#28282B"
+			 FontWeight="SemiBold"
+			 FontSize="13"></Span>
 					</TextBlock>
 
 					<TextBlock
@@ -220,15 +220,15 @@
 						Foreground="#6F4E37"
 						FontWeight="Medium">
 						invited by: <Span
-				Name="invitingUser_span"
-				Foreground="#28282B"
-				FontWeight="Bold"
-				FontSize="13"
-				FontStyle="Italic"></Span>
+	Name="invitingUser_span"
+	Foreground="#28282B"
+	FontWeight="Bold"
+	FontSize="13"
+	FontStyle="Italic"></Span>
 					</TextBlock>
 				</StackPanel>
 			</Border>
-			
+
 			<Button
 				Classes="DefaultLightBrown"
 				Width="150"

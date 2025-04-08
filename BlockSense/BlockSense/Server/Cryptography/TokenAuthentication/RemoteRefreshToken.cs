@@ -1,10 +1,10 @@
-﻿using BlockSense.DB;
+﻿using BlockSense.Client.Identifiers;
 using BlockSense.Server;
-using BlockSense.Server.Cryptography.Encryption;
 using BlockSense.Server.Cryptography.Hashing;
 using BlockSense.Server.Cryptography.TokenAuthentication;
 using Org.BouncyCastle.Crypto.Paddings;
 using System;
+using BlockSense.DatabaseUtils;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -59,14 +59,16 @@ namespace BlockSense.Server_Based.Cryptography.Token_authentication.Refresh_Toke
             {
                 {"@refreshtoken_id", TokenId},
                 {"@user_id", User.Uid},
-                {"@ip_address", User.IpAddress},
                 {"@refresh_token", hashedToken},
-                {"@device_identifier", User.DeviceIdentifier},
+                {"@hardware_identifier", HardwareIdentifier.HardwareId},
+                {"@network_identifier", NetworkIdentifier.MacAddress},
+                {"@ip_address", NetworkIdentifier.IpAddress},
+                {"@device_identifier", HardwareIdentifier.DeviceId},
                 {"@issued_at", IssuedAt},
                 {"@expires_at", ExpiresAt}
             };
 
-            string query = "insert into refreshtokens values (@refreshtoken_id, @user_id, @refresh_token, @ip_address, @device_identifier, @issued_at, @expires_at, default)";
+            string query = "insert into refreshtokens values (@refreshtoken_id, @user_id, @refresh_token, @hardware_identifier, @network_identifier, @ip_address, @device_identifier, @issued_at, @expires_at, default)";
             if (await Database.StoreData(query, parameters))
             {
                 ConsoleHelper.Log("Refresh token stored successfully");
@@ -82,10 +84,10 @@ namespace BlockSense.Server_Based.Cryptography.Token_authentication.Refresh_Toke
             Dictionary<string, object> parameters = new()
                 {
                     {"@refreshtoken_id", tokenId},
-                    {"@ip_address", User.IpAddress},
-                    {"@device_identifier", User.DeviceIdentifier}
+                    {"@ip_address", NetworkIdentifier.IpAddress},
+                    {"@device_identifier", HardwareIdentifier.DeviceId}
                 };
-            string query = "SELECT refreshtoken_id, refresh_token, ip_address, device_identifier, expires_at, revoked FROM refreshtokens WHERE refreshtoken_id = @refreshtoken_id AND ip_address = @ip_address AND device_identifier = @device_identifier AND revoked = 0";
+            string query = "select refreshtoken_id, refresh_token, ip_address, device_identifier, expires_at, revoked from refreshtokens where refreshtoken_id = @refreshtoken_id and revoked = 0";
             using (var reader = await Database.FetchData(query, parameters))
             {
                 if (reader.Read())
@@ -93,7 +95,7 @@ namespace BlockSense.Server_Based.Cryptography.Token_authentication.Refresh_Toke
                     // Check if the token is expired
                     if (reader.GetDateTime("expires_at") < DateTime.UtcNow)
                     {
-                        await TokenUtils.Revoke(reader.GetGuid("refreshtoken_id"));
+                        await TokenUtils.Revoke(tokenId);
                         ConsoleHelper.Log("Token expired");
                         return Array.Empty<byte>();
                     }

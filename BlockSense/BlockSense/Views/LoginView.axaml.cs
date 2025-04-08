@@ -29,7 +29,7 @@ public partial class LoginView : UserControl
         InitializeComponent();
     }
 
-    private void OnKeyDown(object? sender, KeyEventArgs e)
+    private void OnKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter)
         {
@@ -45,7 +45,19 @@ public partial class LoginView : UserControl
     /// <param name="e"></param>
     public static void ResetPasswordClick(object sender, RoutedEventArgs e)
     {
-        User.ResetPassword();
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://www.google.com/",
+                UseShellExecute = true
+            }
+            );
+        }
+        catch (Exception ex)
+        {
+            ConsoleHelper.Log("Error: " + ex.Message);
+        }
     }
 
 
@@ -69,18 +81,18 @@ public partial class LoginView : UserControl
         try
         {
 
-            if (!InputHelper.Check(login, password))
+            if (!SystemUtils.CheckTimeOut())
             {
-                ShowMessage("Looks like you missed a required field");
+                ShowMessage("Try again later . . .");
+                return;
             }
+
+            else if (!InputHelper.Check(login, password))
+                ShowMessage("Looks like you missed a required field");
+
+
             else
             {
-                if (!SystemUtils.CheckTimeOut())
-                {
-                    ShowMessage("Try again later . . .");
-                    return;
-                }
-
                 var (success, message) = await User.Login(login, password);
                 if (success && !string.IsNullOrEmpty(message))
                 {

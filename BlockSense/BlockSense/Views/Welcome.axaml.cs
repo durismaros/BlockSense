@@ -28,7 +28,7 @@ public partial class Welcome : UserControl
     }
     public void WalletClick(object sender, RoutedEventArgs e)
     {
-        Animations.AnimateTransition(this, new BackupView());
+        Animations.AnimateTransition(this, new PinEntry());
     }
 
     private async void FadeInText()

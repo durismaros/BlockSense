@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Immutable;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
@@ -12,6 +13,7 @@ using Avalonia.Media.TextFormatting.Unicode;
 using BlockSense.Client;
 using BlockSense.Client.Utilities;
 using BlockSense.Server;
+using BlockSense.Server.Cryptography.Hashing;
 using BlockSense.Views;
 using MySql.Data.MySqlClient;
 using ZstdSharp.Unsafe;
@@ -25,7 +27,7 @@ public partial class RegisterView : UserControl
         InitializeComponent();
     }
 
-    private void OnKeyDown(object? sender, KeyEventArgs e)
+    private void OnKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter)
         {
@@ -64,26 +66,30 @@ public partial class RegisterView : UserControl
 
         try
         {
-            if (!InputHelper.Check(username, email, password, passwordConfirm, invitationCode))
+
+            if (!SystemUtils.CheckTimeOut())
+            {
+                ShowMessage("Try again later . . .");
+                return;
+            }
+
+            else if (!InputHelper.Check(username, email, password, passwordConfirm, invitationCode))
                 ShowMessage("Looks like you missed a required field");
 
             else if (password != passwordConfirm)
                 ShowMessage("Passwords do not match");
 
+            else if (Zxcvbn.Core.EvaluatePassword(password).Score < 3)
+                ShowMessage("Too weak! Try a stronger password");
+
+
             else
             {
-                if (!SystemUtils.CheckTimeOut())
-                {
-                    ShowMessage("Try again later . . .");
-                    return;
-                }
-
                 var (success, message) = await User.Register(username, email, password, invitationCode);
-                if (success && !string.IsNullOrEmpty(message))
-                {
+                if (success)
                     ShowMessage(message);
-                }
-                else if (!success && !string.IsNullOrEmpty(message))
+
+                else
                 {
                     User.Attempts++;
                     ShowMessage(message);

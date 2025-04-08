@@ -16,6 +16,8 @@ using BlockSense.Server_Based.Cryptography;
 using BlockSense.Client;
 using BlockSense.Client.Utilities;
 using BlockSense.Server.Cryptography.Hashing;
+using NBitcoin;
+using BlockSense.Client.Identifiers;
 
 namespace BlockSense;
 
@@ -34,7 +36,7 @@ public partial class App : Application
             SystemUtils.AllocConsole();
             DirStructure.InitializeSecureStorage();
             desktop.MainWindow = new MainWindow();
-            await SystemUtils.GetIPAddress();
+            await NetworkIdentifier.GetIpAddress();
             desktop.MainWindow.Content = (await SystemUtils.IsSessionActive()) ? new Welcome() : new MainView();
         }
     }

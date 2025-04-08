@@ -8,7 +8,9 @@ using BlockSense.Client;
 using BlockSense.Client_Side;
 using BlockSense.Server;
 using BlockSense.Views;
+using Google.Protobuf;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using System.Xml;
@@ -18,16 +20,30 @@ namespace BlockSense;
 public partial class UserProfile : UserControl
 {
     private Bitmap _pfpBitmap = ProfilePictureHandler.ExistingPicture();
+
+    static string GetDaySuffix(int day)
+    {
+        return (day % 10) switch
+        {
+            1 when day != 11 => "st",
+            2 when day != 12 => "nd",
+            3 when day != 13 => "rd",
+            _ => "th",
+        };
+    }
+
     public UserProfile()
     {
         InitializeComponent();
         if (User.Uid != null)
         {
+            DateTime creationDate = DateTime.ParseExact(User.CreationDate, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+
             uid_span.Inlines.Add(User.Uid);
             username_span.Inlines.Add(User.Username);
             email_span.Inlines.Add(User.Email);
             type_span.Inlines.Add(User.Type);
-            creationDate_span.Inlines.Add(User.CreationDate);
+            creationDate_span.Inlines.Add($"{creationDate.ToString("MMMM d", CultureInfo.InvariantCulture)}{GetDaySuffix(creationDate.Day)}, {creationDate:yyyy}");
             invitingUser_span.Inlines.Add(User.InvitingUser);
             ProfilePicture.Source = _pfpBitmap;
         }
