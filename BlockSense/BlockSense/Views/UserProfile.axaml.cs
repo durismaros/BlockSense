@@ -4,16 +4,13 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
-using BlockSense.Client;
 using BlockSense.Client_Side;
 using BlockSense.Server;
 using BlockSense.Views;
-using Google.Protobuf;
-using System;
 using System.Globalization;
-using System.IO;
+using System;
+using BlockSense.Client.Utilities;
 using System.Threading.Tasks;
-using System.Xml;
 
 namespace BlockSense;
 
@@ -21,38 +18,60 @@ public partial class UserProfile : UserControl
 {
     private Bitmap _pfpBitmap = ProfilePictureHandler.ExistingPicture();
 
-    static string GetDaySuffix(int day)
-    {
-        return (day % 10) switch
-        {
-            1 when day != 11 => "st",
-            2 when day != 12 => "nd",
-            3 when day != 13 => "rd",
-            _ => "th",
-        };
-    }
-
     public UserProfile()
     {
-        InitializeComponent();
-        if (User.Uid != null)
+        var userBadge = new Border()
         {
-            DateTime creationDate = DateTime.ParseExact(User.CreationDate, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+            Classes = { "badge" },
+            Child = new TextBlock()
+            {
+                Classes = { "badgeText" },
+                Text = "user"
+            }
+        };
 
-            uid_span.Inlines.Add(User.Uid);
-            username_span.Inlines.Add(User.Username);
-            email_span.Inlines.Add(User.Email);
-            type_span.Inlines.Add(User.Type);
-            creationDate_span.Inlines.Add($"{creationDate.ToString("MMMM d", CultureInfo.InvariantCulture)}{GetDaySuffix(creationDate.Day)}, {creationDate:yyyy}");
-            invitingUser_span.Inlines.Add(User.InvitingUser);
-            ProfilePicture.Source = _pfpBitmap;
+        var adminBadge = new Border()
+        {
+            Classes = { "badge" },
+            Child = new TextBlock()
+            {
+                Classes = { "badgeText" },
+                Text = "admin"
+            }
+        };
+
+        InitializeComponent();
+        if (User.Uid != 0)
+        {
+            ProfilePictureImage.Source = _pfpBitmap;
+            UsernameTextBlock.Text = User.Username;
+            UidTextBlock.Text = User.Uid.ToString();
+            EmailTextBlock.Text = User.Email;
+            switch (User.Type)
+            {
+                case User.UserType.User:
+                    AccountBadgesPanel.Children.Add(userBadge);
+                    break;
+
+                case User.UserType.Admin:
+                    AccountBadgesPanel.Children.Add(userBadge);
+                    AccountBadgesPanel.Children.Add(adminBadge);
+                    break;
+            }
+            CreationDateTextBlock.Text = SystemUtils.DateTransform(User.CreatedAt);
+            InvitationUserTextBlock.Text = User.InvitingUser;
+            LastUpdateTextBlock.Text = SystemUtils.DateTransform(User.UpdatedAt);
+            int invitedUsers = User.AdditionalInformation.InvitedUsers;
+            UsersInvitedTextBlock.Text = $"{invitedUsers.ToString()} {(invitedUsers > 1 ? "Users" : "User")}";
+            int activeDevices = User.AdditionalInformation.ActiveDevices;
+            ActiveDevicesTextBlock.Text = $"{activeDevices.ToString()} {(activeDevices > 1 ? "Devices" : "Device")}";
         }
 
     }
 
-    private void HomeClick(object sender, RoutedEventArgs e)
+    private async void HomeClick(object sender, RoutedEventArgs e)
     {
-        Animations.AnimateTransition(this, new Welcome());
+        await MainWindow.SwitchView(new Welcome());
     }
 
     private async void PfpUploadClick(object sender, PointerPressedEventArgs e)
@@ -61,18 +80,18 @@ public partial class UserProfile : UserControl
         {
             var parentWindow = this.VisualRoot as Window;
             await ProfilePictureHandler.UploadFile(parentWindow!);
-            ProfilePicture.Source = ProfilePictureHandler.ExistingPicture();
+            ProfilePictureImage.Source = ProfilePictureHandler.ExistingPicture();
         }
     }
 
     private void SetDefaultClick(object sender, RoutedEventArgs e)
     {
-        ProfilePicture.Source = ProfilePictureHandler.setDefaultPfp();
+        ProfilePictureImage.Source = ProfilePictureHandler.setDefaultPfp();
     }
 
     private async void LogoutClick(object sender, RoutedEventArgs e)
     {
         await User.Logout();
-        Animations.AnimateTransition(this, new MainView());
+        await MainWindow.SwitchView(new MainView());
     }
 }

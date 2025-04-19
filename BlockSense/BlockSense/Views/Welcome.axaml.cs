@@ -22,19 +22,17 @@ public partial class Welcome : UserControl
         FadeInText();
     }
 
-    public void UserProfileClick(object sender, RoutedEventArgs e)
+    public async void UserProfileClick(object sender, RoutedEventArgs e)
     {
-        Animations.AnimateTransition(this, new UserProfile());
+        await MainWindow.SwitchView(new UserProfile());
     }
-    public void WalletClick(object sender, RoutedEventArgs e)
+    public async void WalletClick(object sender, RoutedEventArgs e)
     {
-        Animations.AnimateTransition(this, new PinEntry());
+        await MainWindow.SwitchView(new PinEntry());
     }
 
     private async void FadeInText()
     {
-        var welcomeText = this.FindControl<TextBlock>("WelcomeText");
-
         // Create and run fade-in animation
         var animation = new Animation
         {
@@ -50,7 +48,7 @@ public partial class Welcome : UserControl
             }
         };
 
-        await animation.RunAsync(welcomeText!);
-        welcomeText!.Opacity = 1.0; // Set final opacity
+        await animation.RunAsync(WelcomeText);
+        WelcomeText.Opacity = 1.0; // Set final opacity
     }
 }

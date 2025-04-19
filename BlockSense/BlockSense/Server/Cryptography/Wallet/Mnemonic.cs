@@ -1,5 +1,4 @@
-﻿using BlockSense.Server.Cryptography.Hashing;
-using NBitcoin.BIP322;
+﻿using NBitcoin.BIP322;
 using Org.BouncyCastle.Crypto.Digests;
 using System;
 using System.Collections.Generic;

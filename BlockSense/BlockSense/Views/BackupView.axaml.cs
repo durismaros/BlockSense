@@ -15,13 +15,13 @@ public partial class BackupView : UserControl
         InitializeComponent();
     }
 
-    private void ManualBackupClick(object sender, RoutedEventArgs e)
+    private async void ManualBackupClick(object sender, RoutedEventArgs e)
     {
-        Animations.AnimateTransition(this, new SecretPhrase());
+        await MainWindow.SwitchView(new SecretPhrase());
     }
 
-    private void BackupLaterClick(object sender, RoutedEventArgs e)
+    private async void BackupLaterClick(object sender, RoutedEventArgs e)
     {
-        Animations.AnimateTransition(this, new MainWalletView());
+        await MainWindow.SwitchView(new MainWalletView());
     }
 }

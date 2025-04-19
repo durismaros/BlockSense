@@ -8,7 +8,7 @@ namespace InvitationCodeGenerator
 
     public class InvitationCodeGenerator
     {
-
+        
         private static string connectionString = "Server=localhost;Database=BlockSense;User=root;Password=Pa$$w0rd;";
         private static int login;
 

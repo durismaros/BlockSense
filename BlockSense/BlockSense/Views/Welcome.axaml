@@ -5,16 +5,7 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="BlockSense.Welcome">
 	<Panel>
-		<ExperimentalAcrylicBorder IsHitTestVisible="False">
-			<ExperimentalAcrylicBorder.Material>
-				<ExperimentalAcrylicMaterial
-					BackgroundSource="Digger"
-					TintColor="Yellow"
-					TintOpacity="0.2"
-					MaterialOpacity="0.8" />
-			</ExperimentalAcrylicBorder.Material>
-		</ExperimentalAcrylicBorder>
-
+		
 		<!--Main Welcome Text-->
 		<TextBlock
 			Name="WelcomeText"
@@ -43,48 +34,26 @@
 			Spacing="20">
 			
 			<Button
+				Classes="DefaultWhite"
 				Name="userProfileButton"
-				Width="120"
-				Height="30"
-				CornerRadius="20"
-				Background="White"
-				Foreground="Gray"
 				Content="User Profile"
 				VerticalContentAlignment="Center"
 				HorizontalContentAlignment="Center"
-				FontWeight="Bold"
-				FontSize="13"
+				FontWeight="SemiBold"
+				FontSize="12"
 				Click="UserProfileClick">
-
-				<Button.Styles>
-					<Style Selector="Button:pointerover ContentPresenter">
-						<Setter Property="Background" Value="LightGray"/>
-						<Setter Property="Foreground" Value="#6E6E6E"/>
-					</Style>
-				</Button.Styles>
 
 			</Button>
 
 			<Button
+				Classes="DefaultWhite"
 				Name="userWalletButton"
-				Width="120"
-				Height="30"
-				CornerRadius="20"
-				Background="White"
-				Foreground="Gray"
 				Content="Wallet"
 				VerticalContentAlignment="Center"
 				HorizontalContentAlignment="Center"
-				FontWeight="Bold"
-				FontSize="13"
+				FontWeight="SemiBold"
+				FontSize="12"
 				Click="WalletClick">
-
-				<Button.Styles>
-					<Style Selector="Button:pointerover ContentPresenter">
-						<Setter Property="Background" Value="LightGray"/>
-						<Setter Property="Foreground" Value="#6E6E6E"/>
-					</Style>
-				</Button.Styles>
 
 			</Button>
 		</StackPanel>

@@ -1,10 +1,12 @@
 using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Platform;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using BlockSense.Client;
 using BlockSense.Client.Utilities;
@@ -23,7 +25,6 @@ namespace BlockSense;
 
 public partial class LoginView : UserControl
 {
-
     public LoginView()
     {
         InitializeComponent();
@@ -61,9 +62,9 @@ public partial class LoginView : UserControl
     }
 
 
-    private void HomeClick(object sender, RoutedEventArgs e)
+    private async void HomeClick(object sender, RoutedEventArgs e)
     {
-        Animations.AnimateTransition(this, new MainView());
+        await MainWindow.SwitchView(new MainView());
     }
 
 
@@ -72,10 +73,15 @@ public partial class LoginView : UserControl
         string login = loginLogin.Text?.Trim() ?? string.Empty;
         string password = passwordLogin.Text?.Trim() ?? string.Empty;
 
-        void ShowMessage(string message)
+        async void ShowMessage(string message)
         {
-            loginTextBorder.IsVisible = true;
-            loginText.Text = message;
+
+            if (!loginTextBorder.IsVisible || loginText.Text != message)
+            {
+                loginText.Text = message;
+                loginTextBorder.IsVisible = true;
+                await Animations.FadeInAnimation.RunAsync(loginTextBorder);
+            }
         }
 
         try
@@ -99,7 +105,7 @@ public partial class LoginView : UserControl
                     ShowMessage(message);
 
                     await Task.Delay(2000);
-                    Animations.AnimateTransition(this, new Welcome());
+                    await MainWindow.SwitchView(new Welcome());
                 }
                 else if (!success && !string.IsNullOrEmpty(message))
                 {

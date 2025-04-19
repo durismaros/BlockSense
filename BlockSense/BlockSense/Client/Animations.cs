@@ -1,44 +1,57 @@
 ﻿using Avalonia.Animation;
-using Avalonia.Controls;
 using Avalonia.Styling;
-using Avalonia.Threading;
-using BlockSense.Views;
+using Avalonia.Controls;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace BlockSense.Client
 {
-    class Animations : UserControl
+    class Animations : Control
     {
-        public static async void AnimateTransition(UserControl content, UserControl newView)
-        {
-            content.Content = newView;
+        public static Animation FadeOutAnimation { get; set; } = new Animation();
+        public static Animation FadeInAnimation { get; set; } = new Animation();
 
-            // Define the fade-in animation with easing
-            var fadeInAnimation = new Animation
+
+        public static void InitializeAnimations()
+        {
+            // Create animations once
+            FadeOutAnimation = new Animation
             {
-                Duration = TimeSpan.FromSeconds(0.3),
+                Duration = TimeSpan.FromSeconds(0.35),
+                FillMode = FillMode.Forward,
                 Children =
-            {
-                new KeyFrame
                 {
-                    Cue = new Cue(0),
-                    Setters = { new Setter(OpacityProperty, 0.0) }
-                },
-                new KeyFrame
-                {
-                    Cue = new Cue(1),
-                    Setters = { new Setter(OpacityProperty, 1.0) },
-                    KeySpline = new KeySpline(0.4, 0, 0.2, 1)
+                    new KeyFrame
+                    {
+                        KeyTime = TimeSpan.FromSeconds(0),
+                        Setters = { new Setter(OpacityProperty, 1.0) }
+                    },
+                    new KeyFrame
+                    {
+                        KeyTime = TimeSpan.FromSeconds(0.35),
+                        Setters = { new Setter(OpacityProperty, 0.0) }
+                    }
                 }
-            }
+            };
+            
+            FadeInAnimation = new Animation
+            {
+                Duration = TimeSpan.FromSeconds(0.35),
+                FillMode = FillMode.Forward,
+                Children =
+                {
+                    new KeyFrame
+                    {
+                        KeyTime = TimeSpan.FromSeconds(0),
+                        Setters = { new Setter(OpacityProperty, 0.0) }
+                    },
+                    new KeyFrame
+                    {
+                        KeyTime = TimeSpan.FromSeconds(0.35),
+                        Setters = { new Setter(OpacityProperty, 1.0) }
+                    }
+                }
             };
 
-            await fadeInAnimation.RunAsync(newView);
+            ConsoleHelper.Log("Animations initialized");
         }
     }
 }

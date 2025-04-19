@@ -1,6 +1,5 @@
 ﻿using BlockSense.Client.Identifiers;
 using BlockSense.Server;
-using BlockSense.Server.Cryptography.Hashing;
 using BlockSense.Server.Cryptography.TokenAuthentication;
 using Org.BouncyCastle.Crypto.Paddings;
 using System;
@@ -11,6 +10,8 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using BlockSense.Client.Cryptography.Hashing;
+using BlockSense.Client.Cryptography;
 
 namespace BlockSense.Server_Based.Cryptography.Token_authentication.Refresh_Token
 {
@@ -26,7 +27,7 @@ namespace BlockSense.Server_Based.Cryptography.Token_authentication.Refresh_Toke
         /// </summary>
         public static void Generate()
         {
-            PlainToken = HashUtils.SecureRandomGenerator(32);
+            PlainToken = CryptoUtils.SecureRandomGenerator(32);
             TokenId = Guid.NewGuid();
             IssuedAt = DateTime.UtcNow;
             ExpiresAt = IssuedAt.AddDays(3);
@@ -95,7 +96,6 @@ namespace BlockSense.Server_Based.Cryptography.Token_authentication.Refresh_Toke
                     // Check if the token is expired
                     if (reader.GetDateTime("expires_at") < DateTime.UtcNow)
                     {
-                        await TokenUtils.Revoke(tokenId);
                         ConsoleHelper.Log("Token expired");
                         return Array.Empty<byte>();
                     }

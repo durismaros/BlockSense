@@ -4,13 +4,71 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="BlockSense.UserProfile">
-
+	
 	<UserControl.Styles>
-		<!-- Remove hover effect from MenuItems -->
-		<Style Selector="MenuItem:pointerover">
-			<Setter Property="Background" Value="Transparent"/>
-			<Setter Property="BorderBrush" Value="Transparent"/>
-			<Setter Property="BorderThickness" Value="0"/>
+		<Style Selector="Border.card">
+			<Setter Property="Background" Value="#FBF7F1"/>
+			<Setter Property="CornerRadius" Value="18"/>
+			<Setter Property="BoxShadow" Value="0 2 8 0 #30000000"/>
+			<Setter Property="Padding" Value="30"/>
+			<Setter Property="Margin" Value="20"/>
+		</Style>
+
+		<Style Selector="TextBlock.label">
+			<Setter Property="FontSize" Value="14"/>
+			<Setter Property="FontWeight" Value="Medium"/>
+			<Setter Property="Foreground" Value="#4A4238"/>
+			<Setter Property="Margin" Value="0 10 0 5"/>
+		</Style>
+
+		<Style Selector="TextBlock.value">
+			<Setter Property="FontSize" Value="16"/>
+			<Setter Property="FontWeight" Value="Normal"/>
+			<Setter Property="Foreground" Value="#6D4C41"/>
+			<Setter Property="Opacity" Value="0.8"/>
+			<Setter Property="Margin" Value="0 0 0 15"/>
+		</Style>
+
+		<Style Selector="Border.badge">
+			<Setter Property="Background" Value="#D4B38C"/>
+			<Setter Property="CornerRadius" Value="12"/>
+			<Setter Property="Padding" Value="10 5"/>
+			<Setter Property="HorizontalAlignment" Value="Left"/>
+		</Style>
+
+		<Style Selector="Border.status">
+			<Setter Property="Width" Value="90"/>
+			<Setter Property="Height" Value="24"/>
+			<Setter Property="Background" Value="#D4B38C"/>
+			<Setter Property="CornerRadius" Value="4"/>
+			<Setter Property="Padding" Value="8 4"/>
+		</Style>
+
+		<Style Selector="Border.SecurityChecked">
+			<Setter Property="Width" Value="20"/>
+			<Setter Property="Height" Value="10"/>
+			<Setter Property="Background" Value="#8B6B4A"/>
+			<Setter Property="CornerRadius" Value="4"/>
+		</Style>
+
+		<Style Selector="Border.SecurityUnchecked">
+			<Setter Property="Width" Value="20"/>
+			<Setter Property="Height" Value="10"/>
+			<Setter Property="Background" Value="#E6DDD1"/>
+			<Setter Property="CornerRadius" Value="4"/>
+		</Style>
+
+		<Style Selector="TextBlock.badgeText">
+			<Setter Property="FontSize" Value="14"/>
+			<Setter Property="FontWeight" Value="Medium"/>
+			<Setter Property="Foreground" Value="#F5E1C5"/>
+		</Style>
+
+		<Style Selector="Separator">
+			<Setter Property="Height" Value="1"/>
+			<Setter Property="Background" Value="#E6DDD1"/>
+			<Setter Property="CornerRadius" Value="100"/>
+			<Setter Property="Margin" Value="0 15"/>
 		</Style>
 	</UserControl.Styles>
 
@@ -19,233 +77,275 @@
 			<ExperimentalAcrylicBorder.Material>
 				<ExperimentalAcrylicMaterial
 					BackgroundSource="Digger"
-					TintColor="Yellow"
-					TintOpacity="0.2"
-					MaterialOpacity="0.8" />
+					TintColor="White"
+					TintOpacity="0.25"
+					MaterialOpacity="0.7"/>
 			</ExperimentalAcrylicBorder.Material>
 		</ExperimentalAcrylicBorder>
 
-		<!--User Profile Picture Panel-->
-		<Panel
-			Width="400"
-			HorizontalAlignment="Left">
+		<StackPanel>
 
-			<!--Profile Picture Outline-->
-			<Border
-				Width="230"
-				Height="230"
-				CornerRadius="115"
-				BorderBrush="#D2B48C"
-				BorderThickness="5">
-				<Border
-					Background="White"
-					Width="220"
-					Height="220"
-					CornerRadius="110"
-					PointerPressed="PfpUploadClick"
-					Cursor="Hand"
-					ClipToBounds="True">
+			<StackPanel Orientation="Horizontal" Spacing="12" Margin="30 30 30 10">
 
-					<Border.Clip>
-						<EllipseGeometry RadiusX="110" RadiusY="110" Center="110,110"/>
-					</Border.Clip>
-
-					<Border.ContextMenu>
-						<ContextMenu Width="100"
-									 Background="White"
-									 CornerRadius="130">
-							<MenuItem Header="Set default"
-									  Click="SetDefaultClick"
-									  Foreground="Gray"
-									  FontWeight="Medium"
-									  FontFamily="{DynamicResource Montserrat}"
-									  Padding="10,5">
-								<MenuItem.Styles>
-									<Style Selector="MenuItem">
-										<Setter Property="Template">
-											<ControlTemplate>
-												<Border Background="Transparent"
-														Padding="{TemplateBinding Padding}">
-													<ContentPresenter Content="{TemplateBinding Header}"
-																	  VerticalAlignment="Center"
-																	  HorizontalAlignment="Stretch"/>
-												</Border>
-											</ControlTemplate>
-										</Setter>
-
-										<!-- Remove the hover background -->
-										<Setter Property="Background" Value="Transparent"/>
-									</Style>
-								</MenuItem.Styles>
-							</MenuItem>
-						</ContextMenu>
-					</Border.ContextMenu>
-
-					<!--Profile Picture Img-->
-					<Image Name="ProfilePicture"
-						   Source="avares://BlockSense/Assets/defaultPfp.png"
-						   Stretch="UniformToFill"/>
-				</Border>
-			</Border>
-
-		</Panel>
-
-
-		<StackPanel
-			Margin="30, 40, 30, 30"
-			Width="400"
-			HorizontalAlignment="Right"
-			VerticalAlignment="Top"
-			Spacing="15">
-
-			<!--User Profile Header-->
-			<Grid
-				Width="300"
-				Height="40">
-				<Border
-					Width="300"
-					Height="40"
-					Background="#6F4E37"
-					CornerRadius="20"
-					BoxShadow="0 2 8 0 #30000000"/>
-
-				<!--Return to the Home page Button-->
 				<Button
-					Name="HomeButton"
+					Classes="DefaultWhite"
 					Width="40"
-					Height="30"
-					Margin="5 0 0 0"
-					CornerRadius="20"
-					Background="#5C4033"
+					Opacity="0.8"
 					Click="HomeClick">
-
-					<Button.Styles>
-						<Style Selector="Button:pointerover ContentPresenter">
-							<Setter Property="Background" Value="#4F352B" />
-						</Style>
-					</Button.Styles>
-
 					<Image
 						Height="30"
 						Source="avares://BlockSense/Assets/backArrow.png"/>
 				</Button>
 
+				<!-- Header -->
 				<TextBlock
-					HorizontalAlignment="Center"
-					VerticalAlignment="Center"
-					FontSize="18"
-					FontWeight="Bold"
-					Foreground="#F5DEB3"
-					Text="User Profile"/>
-			</Grid>
+					Text="User Profile"
+					Foreground="#4A4238"
+					FontSize="24"
+					FontWeight="SemiBold"/>
+			</StackPanel>
 
 
-			<Border
-				Width="320"
-				Height="1"
-				Background="#C2B280"
-				CornerRadius="100"
-				BoxShadow="5 5 10 0 Black"/>
 
-			<!--User's information border-->
-			<Border
-				Width="300"
-				Height="170"
-				Margin="0 10 0 10"
-				CornerRadius="20,20,30,30"
-				Background="#B99978"
-				BorderBrush="#D2B48C"
-				BorderThickness="2">
+			<ScrollViewer Height="380" Margin="10 0">
+				<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,*">
 
-				<StackPanel
-					Margin="15"
-					Spacing="5">
-					<TextBlock
-						Name="uid"
-						Foreground="#6F4E37"
-						FontWeight="Medium">
-						uid: <Span
-				  Name="uid_span"
-				  Foreground="#28282B"
-				  FontWeight="SemiBold"
-				  FontSize="13"></Span>
-					</TextBlock>
+					<!-- User Data Card -->
+					<Border Classes="card" Grid.Column="0" Grid.Row="0">
+						<StackPanel>
 
-					<TextBlock
-						Name="username"
-						Foreground="#6F4E37"
-						FontWeight="Medium">
-						username: <Span
-		Name="username_span"
-		Foreground="#28282B"
-		FontWeight="SemiBold"
-		FontSize="13"></Span>
-					</TextBlock>
+							<!--Profile Picture Border-->
+							<Border
+								Background="White"
+								Width="120"
+								Height="120"
+								CornerRadius="60"
+								PointerPressed="PfpUploadClick"
+								Cursor="Hand"
+								ClipToBounds="True"
+								Margin="0 0 0 20">
 
-					<TextBlock
-						Name="email"
-						Foreground="#6F4E37"
-						FontWeight="Medium">
-						email: <Span
-			  Name="email_span"
-			  Foreground="#28282B"
-			  FontWeight="SemiBold"
-			  FontSize="13"></Span>
-					</TextBlock>
+								<Border.Clip>
+									<EllipseGeometry RadiusX="60" RadiusY="60" Center="60,60"/>
+								</Border.Clip>
 
-					<TextBlock
-						Name="type"
-						Foreground="#6F4E37"
-						FontWeight="Medium">
-						type: <Span
-				Name="type_span"
-				Foreground="#28282B"
-				FontWeight="SemiBold"
-				FontSize="13"></Span>
-					</TextBlock>
+								<Border.ContextMenu>
+									<ContextMenu Width="80"
+												 Background="White"
+												 CornerRadius="40">
+										<MenuItem Header="Set default"
+												  Click="SetDefaultClick"
+												  Foreground="Gray"
+												  FontSize="10"
+												  FontWeight="Medium"
+												  FontFamily="{DynamicResource Montserrat}"
+												  Padding="11 5">
+											<MenuItem.Styles>
+												<Style Selector="MenuItem">
+													<Setter Property="Template">
+														<ControlTemplate>
+															<Border Background="Transparent"
+																	Padding="{TemplateBinding Padding}">
+																<ContentPresenter Content="{TemplateBinding Header}"
+																				  VerticalAlignment="Center"
+																				  HorizontalAlignment="Stretch"/>
+															</Border>
+														</ControlTemplate>
+													</Setter>
 
-					<TextBlock
-						Name="creationDate"
-						Foreground="#6F4E37"
-						FontWeight="Medium">
-						creation date: <Span
-			 Name="creationDate_span"
-			 Foreground="#28282B"
-			 FontWeight="SemiBold"
-			 FontSize="13"></Span>
-					</TextBlock>
+													<!-- Removes the hover background -->
+													<Setter Property="Background" Value="Transparent"/>
+												</Style>
+											</MenuItem.Styles>
+										</MenuItem>
+									</ContextMenu>
+								</Border.ContextMenu>
 
-					<TextBlock
-						Name="invitingUser"
-						Foreground="#6F4E37"
-						FontWeight="Medium">
-						invited by: <Span
-	Name="invitingUser_span"
-	Foreground="#28282B"
-	FontWeight="Bold"
-	FontSize="13"
-	FontStyle="Italic"></Span>
-					</TextBlock>
-				</StackPanel>
-			</Border>
+								<!--Profile Picture Img-->
+								<Image Name="ProfilePictureImage"
+									   Source="avares://BlockSense/Assets/defaultPfp.png"
+									   Stretch="UniformToFill"/>
+							</Border>
 
-			<Button
-				Classes="DefaultLightBrown"
-				Width="150"
-				Height="29"
-				HorizontalAlignment="Center"
-				CornerRadius="10"
-				Margin="0,-5,0,0"
-				Background="#F5DEB3"
-				Click="LogoutClick">
-				<TextBlock
-					Name="logoutButtonText"
-					Text="Log Out"
-					HorizontalAlignment="Center"
-					VerticalAlignment="Center"
-					FontWeight="SemiBold"
-					Foreground="#6F4E37"/>
-			</Button>
+							<!--Username-->
+							<TextBlock Classes="label" Text="Username"/>
+							<TextBlock Classes="value" Name="UsernameTextBlock"/>
+
+							<!--User Id-->
+							<TextBlock Classes="label" Text="User ID"/>
+							<TextBlock Classes="value" Name="UidTextBlock"/>
+
+							<!--User Email-->
+							<TextBlock Classes="label" Text="Email"/>
+							<TextBlock Classes="value" Name="EmailTextBlock"/>
+
+							<!--User type (badges)-->
+							<TextBlock Classes="label" Text="Account Badges"/>
+							<StackPanel Name="AccountBadgesPanel" Orientation="Horizontal" Spacing="10">
+							</StackPanel>
+
+							<Separator/>
+
+							<!--User account creation date-->
+							<TextBlock Classes="label" Text="Creation Date"/>
+							<TextBlock Classes="value" Name="CreationDateTextBlock"/>
+
+							<!--User invitiation user-->
+							<TextBlock Classes="label" Text="Invited By"/>
+							<TextBlock Classes="value" Name="InvitationUserTextBlock" FontStyle="Italic"/>
+						</StackPanel>
+					</Border>
+
+					<!-- Wallet Statistics card -->
+					<Border Classes="card" Grid.Column="1" Grid.Row="0">
+						<StackPanel>
+
+							<!--Header-->
+							<TextBlock
+								Text="Wallet Statistics"
+								Foreground="#4A4238"
+								FontSize="22"
+								FontWeight="Medium"
+								Margin="0 0 0 20"/>
+
+							<!--User last login date-->
+							<TextBlock Classes="label" Text="Last Updated"/>
+							<TextBlock Classes="value" Name="LastUpdateTextBlock"/>
+
+
+							<!--Users account security level-->
+							<TextBlock Classes="label" Text="Security Level"/>
+							<StackPanel Name="SecurityLevelPanel" Orientation="Horizontal" Margin="0 5 0 15" Spacing="4">
+								<Border Classes="SecurityChecked"/>
+								<Border Classes="SecurityChecked"/>
+								<Border Classes="SecurityChecked"/>
+								<Border Classes="SecurityChecked"/>
+								<Border Classes="SecurityChecked"/>
+								<TextBlock Name="SecurityLevelTextBlock" Text="Perfect" Foreground="#6D4C41" FontSize="14" Margin="10 0 0 0"/>
+							</StackPanel>
+
+							<!--Users 2fa status (enabled/disabled)-->
+							<TextBlock Classes="label" Text="2FA Status"/>
+							<TextBlock Classes="value" Name="TwoFactorAuthTextBlock" Text="Disabled"/>
+
+							<!--Active devices-->
+							<TextBlock Classes="label" Text="Active Devices"/>
+							<TextBlock Classes="value" Name="ActiveDevicesTextBlock"/>
+
+							<Button
+								Classes="DefaultDarkBrown"
+								Width="220"
+								Height="40"
+								Margin="0 18 0 18"
+								Padding="15 10"
+								CornerRadius="8">
+								<TextBlock
+									Text="Manage Security Settings"
+									HorizontalAlignment="Center"
+									VerticalAlignment="Center"
+									FontWeight="Medium"
+									Foreground="#E6C8A0"/>
+							</Button>
+							
+							<Separator/>
+
+							<TextBlock Classes="label" Text="Total Invited Users"/>
+							<TextBlock Classes="value" Name="UsersInvitedTextBlock"/>
+
+							<Button
+								Classes="DefaultLightBrown"
+								Width="200"
+								Height="38"
+								Margin="0 18 0 18"
+								Padding="15 10"
+								CornerRadius="12">
+								<TextBlock
+									Text="Invite Manager"
+									HorizontalAlignment="Center"
+									VerticalAlignment="Center"
+									FontWeight="Medium"
+									Foreground="#B08C5D"/>
+							</Button>							
+						</StackPanel>
+					</Border>
+
+					<!-- Activity Log Card-->
+					<Border Classes="card" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1">
+						<StackPanel>
+
+							<!-- Header -->
+							<TextBlock
+								Text="Recent Activity"
+								Foreground="#4A4238"
+								FontSize="18"
+								FontWeight="Medium"
+								Margin="0 0 0 10"/>
+
+							<!-- Table definition -->
+							<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*,Auto" Margin="0 10">
+								<!-- Columns -->
+								<TextBlock Grid.Row="0" Grid.Column="0" Text="Date" FontWeight="SemiBold" Foreground="#8B6B4A"/>
+								<TextBlock Grid.Row="0" Grid.Column="1" Text="Activity" FontWeight="SemiBold" Foreground="#8B6B4A"/>
+								<TextBlock Grid.Row="0" Grid.Column="2" Text="Status" FontWeight="SemiBold" Foreground="#8B6B4A"/>
+
+								<Separator Grid.Row="1" Grid.ColumnSpan="3" Margin="0 10"/>
+
+								<!-- Row 1 -->
+								<TextBlock Grid.Row="2" Grid.Column="0" Text="Apr 15, 2025" Foreground="#5D4B35" Margin="0 0 20 0"/>
+								<TextBlock Grid.Row="2" Grid.Column="1" Text="Password Changed" Foreground="#5D4B35"/>
+								<Border Grid.Row="2" Grid.Column="2" Classes="status">
+									<TextBlock Text="Completed" Height="16" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
+								</Border>
+
+								<!-- Row 2 -->
+								<TextBlock Grid.Row="3" Grid.Column="0" Text="Apr 12, 2025" Foreground="#5D4B35" Margin="0 15 20 0"/>
+								<TextBlock Grid.Row="3" Grid.Column="1" Text="New Device Login" Foreground="#5D4B35" Margin="0 15 0 0"/>
+								<Border Grid.Row="3" Grid.Column="2" Classes="status" Margin="0 15 0 0">
+									<TextBlock Text="Verified" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
+								</Border>
+
+								<!-- Row 3 -->
+								<TextBlock Grid.Row="4" Grid.Column="0" Text="Apr 10, 2025" Foreground="#5D4B35" Margin="0 15 20 0"/>
+								<TextBlock Grid.Row="4" Grid.Column="1" Text="Wallet Backup" Foreground="#5D4B35" Margin="0 15 0 0"/>
+								<Border Grid.Row="4" Grid.Column="2" Classes="status" Margin="0 15 0 0">
+									<TextBlock Text="Completed" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
+								</Border>
+							</Grid>
+
+							<!-- Full Activity Log Button -->
+							<Button
+								Width="200"
+								Height="40"
+								Background="Transparent"
+								HorizontalAlignment="Center"
+								Margin="0 14 0 0"
+								Padding="15 10"
+								BorderBrush="#6D4C41"
+								BorderThickness="1"
+								CornerRadius="8">
+
+								<TextBlock
+									Text="View Full Activity Log"
+									HorizontalAlignment="Center"
+									VerticalAlignment="Center"
+									FontWeight="Medium"
+									Foreground="#5D3F36"/>
+
+								<Button.Styles>
+									<Style Selector="Button:pointerover ContentPresenter">
+										<Setter Property="Background" Value="Transparent" />
+										<Setter Property="BorderBrush" Value="#6D4C41"/>
+									</Style>
+								</Button.Styles>
+							</Button>
+
+						</StackPanel>
+					</Border>
+				</Grid>
+			</ScrollViewer>
 		</StackPanel>
+
+
+
 	</Panel>
 </UserControl>

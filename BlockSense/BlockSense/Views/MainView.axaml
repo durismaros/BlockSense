@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+	<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -8,15 +8,6 @@
              x:DataType="vm:MainViewModel">
 
 	<Panel>
-		<ExperimentalAcrylicBorder IsHitTestVisible="False">
-			<ExperimentalAcrylicBorder.Material>
-				<ExperimentalAcrylicMaterial
-					BackgroundSource="Digger"
-					TintColor="Yellow"
-					TintOpacity="0.2"
-					MaterialOpacity="0.8" />
-			</ExperimentalAcrylicBorder.Material>
-		</ExperimentalAcrylicBorder>
 
 		<!--MainApplicationIcon-->
 		<Panel
@@ -32,61 +23,49 @@
 			Width="400"
 			HorizontalAlignment="Right"
 			VerticalAlignment="Center"
-			Spacing="15">
+			Spacing="18">
 
 			<!--Application header-->
 			<TextBlock
 				HorizontalAlignment="Center"
 				FontSize="40"
-				FontWeight="ExtraBold"
-				Foreground="#353935">
-				Block<Span Foreground="#28282B">Sense</Span>
+				FontWeight="Light"
+				Foreground="#4A4238">
+				Block<Span Foreground="#2A2118">Sense</Span>
 			</TextBlock>
 
+			<!--Separator-->
 			<Border
-				Width="320"
-				Height="1"
-				Background="#D4C9A8"
-				CornerRadius="100"
-				BoxShadow="5 5 10 0 Black"/>
+				Classes="DefaultSeparator"
+				Width="120"
+				Margin="0 0 0 10"/>
+			
 
 			<!--Motivational text-->
 			<TextBlock
-				Width="240"
-				Foreground="#343434"
+				Width="280"
+				Foreground="#2A2118"
 				FontSize="14"
-				FontWeight="Bold"
+				FontWeight="SemiBold"
 				TextAlignment="Center"
 				LineHeight="22"
+				Opacity="0.9"
 				TextWrapping="Wrap"
 				Text="Manage your crypto assets easily and securely"/>
-
-
-			<Border
-				Width="320"
-				Height="1"
-				Background="#D4C9A8"
-				CornerRadius="100"
-				BoxShadow="5 5 10 0 Black"/>
 
 			<!--Login Button-->
 			<Button
 				Classes="DefaultDarkBrown"
 				Name="loginButton"
-				Width="280"
-				Height="35"
 				Margin="0,20,0,0"
-				HorizontalAlignment="Center"
-				CornerRadius="20"
-				Background="#6F4E37"
-				Click="LoginButton">
+				Click="LoginClick">
 				
 				<TextBlock
 					Text="Login"
 					HorizontalAlignment="Center"
 					VerticalAlignment="Center"
-					FontWeight="SemiBold"
-					Foreground="#F5DEB3"/>
+					FontWeight="Medium"
+					Foreground="#E6C8A0"/>
 
 			</Button>
 
@@ -94,19 +73,14 @@
 			<Button
 				Classes="DefaultLightBrown"
 				Name="registerButton"
-				Width="280"
-				Height="35"
-				HorizontalAlignment="Center"
-				CornerRadius="20"
-				Background="#F5DEB3"
-				Click="RegisterButton">
+				Click="RegisterClick">
 				
 				<TextBlock
 					Text="Register"
 					HorizontalAlignment="Center"
 					VerticalAlignment="Center"
-					FontWeight="SemiBold"
-					Foreground="#6F4E37"/>
+					FontWeight="Medium"
+					Foreground="#5D3F36"/>
 			</Button>
 			
 		</StackPanel>

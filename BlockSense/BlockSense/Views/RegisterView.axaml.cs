@@ -13,7 +13,6 @@ using Avalonia.Media.TextFormatting.Unicode;
 using BlockSense.Client;
 using BlockSense.Client.Utilities;
 using BlockSense.Server;
-using BlockSense.Server.Cryptography.Hashing;
 using BlockSense.Views;
 using MySql.Data.MySqlClient;
 using ZstdSharp.Unsafe;
@@ -41,9 +40,9 @@ public partial class RegisterView : UserControl
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
-    private void HomeClick(object sender, RoutedEventArgs e)
+    private async void HomeClick(object sender, RoutedEventArgs e)
     {
-        Animations.AnimateTransition(this, new MainView());
+        await MainWindow.SwitchView(new MainView());
     }
 
     /// <summary>
@@ -58,10 +57,14 @@ public partial class RegisterView : UserControl
         string passwordConfirm = passwordConfirmRegister.Text?.Trim() ?? string.Empty;
         string invitationCode = invitationCodeRegister.Text?.Trim() ?? string.Empty;
 
-        void ShowMessage(string message)
+        async void ShowMessage(string message)
         {
-            registerTextBorder.IsVisible = true;
-            registerText.Text = message;
+            if (!registerTextBorder.IsVisible || registerText.Text != message)
+            {
+                registerText.Text = message;
+                registerTextBorder.IsVisible = true;
+                await Animations.FadeInAnimation.RunAsync(registerTextBorder);
+            }
         }
 
         try

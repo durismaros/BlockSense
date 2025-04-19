@@ -9,12 +9,21 @@
 		<Setter Property="FontFamily" Value="{DynamicResource Montserrat}"/>
 	</Style>
 
+	
+	<Style Selector="Border.DefaultSeparator">
+		<Setter Property="Height" Value="1"/>
+		<Setter Property="Background" Value="#D4C9A8"/>
+		<Setter Property="CornerRadius" Value="100"/>
+		<Setter Property="BoxShadow" Value="5 5 10 0 Black"/>
+	</Style>
+
 	<Style Selector="Button.PrimaryButton">
 		<Setter Property="Background" Value="#5D87E8"/>
 		<Setter Property="Foreground" Value="White"/>
 		<Setter Property="BorderThickness" Value="0"/>
 	</Style>
 
+	
 	<Style Selector="Button ContentPresenter">
 		<Setter Property="Transitions">
 			<Transitions>
@@ -28,17 +37,48 @@
 		<Setter Property="RenderTransform" Value="scale(1.02)" />
 	</Style>
 
-	<Style Selector="Button.DefaultLightBrown:pointerover ContentPresenter">
-		<Setter Property="Background" Value="#D2B48C"/>
+	<Style Selector="Button.DefaultDarkBrown">
+		<Setter Property="Width" Value="280"/>
+		<Setter Property="Height" Value="34"/>
+		<Setter Property="HorizontalAlignment" Value="Center"/>
+		<Setter Property="CornerRadius" Value="20"/>
+		<Setter Property="Background" Value="#6D4C41"/>
 	</Style>
 
 	<Style Selector="Button.DefaultDarkBrown:pointerover ContentPresenter">
-		<Setter Property="Background" Value="#5C4033" />
+		<Setter Property="Background" Value="#5D3F36" />
 	</Style>
 
+	<Style Selector="Button.DefaultLightBrown">
+		<Setter Property="Width" Value="280"/>
+		<Setter Property="Height" Value="34"/>
+		<Setter Property="HorizontalAlignment" Value="Center"/>
+		<Setter Property="CornerRadius" Value="20"/>
+		<Setter Property="Background" Value="#E6C8A0"/>
+	</Style>
+	
+	<Style Selector="Button.DefaultLightBrown:pointerover ContentPresenter">
+		<Setter Property="Background" Value="#D4B38C"/>
+	</Style>
+
+	<Style Selector="Button.DefaultWhite">
+		<Setter Property="Width" Value="120"/>
+		<Setter Property="Height" Value="30"/>
+		<Setter Property="Background" Value="White"/>
+		<Setter Property="Foreground" Value="Gray"/>
+		<Setter Property="CornerRadius" Value="20"/>
+		<Setter Property="HorizontalAlignment" Value="Center"/>
+	</Style>
+
+	<Style Selector="Button.DefaultWhite:pointerover ContentPresenter">
+		<Setter Property="Background" Value="LightGray"/>
+		<Setter Property="Foreground" Value="#6E6E6E"/>
+	</Style>
+
+	
 	<Style Selector="TextBox">
 		<Setter Property="FontFamily" Value="{DynamicResource Montserrat}"/>
-		<Setter Property="CornerRadius" Value="10"/>
+		<Setter Property="CornerRadius" Value="12"/>
 		<Setter Property="Background" Value="#B99978"/>
 		<Setter Property="Foreground" Value="#6F4E37"/>
 		<Setter Property="BorderBrush" Value="#D2B48C"/>
@@ -64,7 +104,7 @@
 
 	<Style Selector="CheckBox">
 		<Setter Property="Foreground" Value="#5C5C5C"/>
-		<Setter Property="BorderBrush" Value="#8B4513"/>
+		<Setter Property="BorderBrush" Value="#654321"/>
 		<Setter Property="Template">
 			<ControlTemplate>
 				<Grid
@@ -102,7 +142,6 @@
 		</Setter>
 	</Style>
 
-
 	<Style Selector="CheckBox ContentPresenter">
 		<Setter Property="Transitions">
 			<Transitions>
@@ -122,10 +161,47 @@
 	<Style Selector="CheckBox:checked /template/ Border#PART_CheckBoxBorder">
 		<Setter Property="BorderThickness" Value="0"/>
 	</Style>
+	
 	<Style Selector="CheckBox:checked /template/ Path#PART_CheckMark">
 		<Setter Property="Opacity" Value="1"/>
 		<Setter Property="RenderTransform">
 			<ScaleTransform ScaleX="1" ScaleY="1"/>
+		</Setter>
+	</Style>
+
+	<Style Selector="ScrollBar">
+		<Setter Property="Background" Value="Transparent"/>
+		<Setter Property="MinWidth" Value="4"/>
+	</Style>
+
+	
+	<Style Selector="ScrollBar:vertical">
+		<Setter Property="Width" Value="4"/>
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="Transparent"
+						Padding="0"
+						Margin="0 0 0 20">
+					<Track IsDirectionReversed="True"
+						   Maximum="{TemplateBinding Maximum}"
+						   Minimum="{TemplateBinding Minimum}"
+						   Orientation="Vertical"
+						   ViewportSize="{TemplateBinding ViewportSize}"
+						   Value="{TemplateBinding Value, Mode=TwoWay}">
+						<Track.Thumb>
+							<Thumb MinHeight="30">
+								<Thumb.Template>
+									<ControlTemplate>
+										<Border Background="Gray"
+												CornerRadius="10"
+												Opacity="0.6"/>
+									</ControlTemplate>
+								</Thumb.Template>
+							</Thumb>
+						</Track.Thumb>
+					</Track>
+				</Border>
+			</ControlTemplate>
 		</Setter>
 	</Style>
 </Styles>

@@ -15,7 +15,6 @@ using BlockSense.Server_Based.Cryptography.Token_authentication.Refresh_Token;
 using BlockSense.Server_Based.Cryptography;
 using BlockSense.Client;
 using BlockSense.Client.Utilities;
-using BlockSense.Server.Cryptography.Hashing;
 using NBitcoin;
 using BlockSense.Client.Identifiers;
 
@@ -33,11 +32,14 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            SystemUtils.AllocConsole();
+            if (SystemUtils.AllocConsole())
+                ConsoleHelper.Log("Console has been allocated");
             DirStructure.InitializeSecureStorage();
+            Animations.InitializeAnimations();
             desktop.MainWindow = new MainWindow();
             await NetworkIdentifier.GetIpAddress();
-            desktop.MainWindow.Content = (await SystemUtils.IsSessionActive()) ? new Welcome() : new MainView();
+            bool isSessionActive = await SystemUtils.IsSessionActive();
+            MainWindow.SetContent(isSessionActive ? new Welcome() : new MainView());
         }
     }
 }

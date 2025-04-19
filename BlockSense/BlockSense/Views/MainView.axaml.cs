@@ -27,9 +27,9 @@ public partial class MainView : UserControl
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
-    private void LoginButton(object? sender, RoutedEventArgs e)
+    private async void LoginClick(object? sender, RoutedEventArgs e)
     {
-        Animations.AnimateTransition(this, new LoginView());
+        await MainWindow.SwitchView(new LoginView());
     }
 
     /// <summary>
@@ -37,8 +37,8 @@ public partial class MainView : UserControl
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
-    private void RegisterButton(object? sender, RoutedEventArgs e)
+    private async void RegisterClick(object? sender, RoutedEventArgs e)
     {
-        Animations.AnimateTransition(this, new RegisterView());
+        await MainWindow.SwitchView(new RegisterView());
     }
 }
