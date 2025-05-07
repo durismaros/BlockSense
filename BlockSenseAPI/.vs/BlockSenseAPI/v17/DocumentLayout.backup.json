@@ -48,7 +48,7 @@
               "RelativeDocumentMoniker": "BlockSenseAPI\\Controllers\\UserController.cs",
               "ToolTip": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\BlockSenseAPI\\BlockSenseAPI\\Controllers\\UserController.cs",
               "RelativeToolTip": "BlockSenseAPI\\Controllers\\UserController.cs",
-              "ViewState": "AgIAACoAAAAAAAAAAAAuwC8AAABaAAAAAAAAAA==",
+              "ViewState": "AgIAAB8AAAAAAAAAAAAmwEEAAAASAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-05-06T09:19:09.499Z",
               "EditorCaption": ""
@@ -63,7 +63,8 @@
               "RelativeToolTip": "BlockSenseAPI\\Models\\TokenCache.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAqwAIAAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-06T18:20:26.389Z"
+              "WhenOpened": "2025-05-06T18:20:26.389Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
