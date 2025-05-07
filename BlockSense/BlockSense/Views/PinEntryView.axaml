@@ -1,0 +1,168 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="BlockSense.PinEntryView">
+	<Panel>
+		<Panel Name="MainPanel">
+			<StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+
+				<TextBlock
+					Name="InitialPinPromt"
+                    Text="Enter PIN"
+                    FontSize="24"
+                    FontWeight="SemiBold"
+                    Foreground="#4A3C30"
+                    Margin="0,0,0,12"
+                    HorizontalAlignment="Center"/>
+
+				<TextBlock
+                    Text="Please enter a 6-digit PIN code"
+                    FontSize="14"
+                    Foreground="#553B2A"
+                    Opacity="0.8"
+                    Margin="0,0,0,32"
+                    HorizontalAlignment="Center"/>
+
+				<StackPanel
+                    Name="DotsPanel"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,40">
+					<!-- PIN dots are added automatically -->
+				</StackPanel>
+
+				<Button
+                    Name="EnterPinButton"
+					Classes="DefaultDarkBrown"
+					Width="140"
+					Height="44"
+                    CornerRadius="14"
+                    Opacity="0.5"
+                    IsEnabled="False">
+					<TextBlock
+						Name="ConfirmPinButtonText"
+						Text="Confirm PIN"
+						HorizontalAlignment="Center"
+						VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="#E6C8A0"/>
+				</Button>
+
+				<TextBlock
+                    Text="Press Enter or click the button when ready"
+                    FontSize="12"
+                    Foreground="#553B2A"
+                    Opacity="0.6"
+                    Margin="0,16,0,0"
+                    HorizontalAlignment="Center"/>
+			</StackPanel>
+			<TextBlock
+				Text="( By pressing ESC you can return back )"
+				FontSize="10"
+				FontStyle="Italic"
+				Foreground="Black"
+				Opacity="0.8"
+				Margin="0,0,0,10"
+				HorizontalAlignment="Center"
+				VerticalAlignment="Bottom"/>
+		</Panel>
+
+
+
+		<!-- Confirmation Slide Panel -->
+		<Panel Name="SlidePanel" Background="#F5E9D8">
+
+			<!-- Top Window Panel -->
+			<Border
+                Name="DragBorder"
+				Height="30"
+                Background="Transparent"
+				VerticalAlignment="Top"
+				PointerPressed="DragWindow"/>
+
+			<StackPanel
+				HorizontalAlignment="Center"
+				VerticalAlignment="Center">
+
+				<TextBlock
+                    Text="Confirm Your PIN"
+                    Foreground="#614E3E"
+                    FontSize="24"
+                    FontWeight="SemiBold"
+                    Margin="0,0,0,12"
+                    HorizontalAlignment="Center"/>
+
+				<TextBlock
+                    Text="Please re-enter your PIN to confirm"
+                    FontSize="14"
+                    Foreground="#6F4E37"
+                    Opacity="0.8"
+                    Margin="0,0,0,32"
+                    HorizontalAlignment="Center"/>
+
+				<StackPanel
+                    Name="ConfirmDotsPanel"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,40">
+					<!-- PIN dots are added automatically -->
+				</StackPanel>
+
+				<StackPanel
+					Orientation="Horizontal"
+					HorizontalAlignment="Center"
+					Margin="0,0,0,20">
+
+					<Button
+						Name="BackButton"
+						Classes="DefaultLightBrown"
+						Width="100"
+						Height="40"
+						HorizontalAlignment="Center"
+						VerticalAlignment="Center"
+						Margin="0,0,10,0"
+						CornerRadius="14">
+						<TextBlock
+							Text="Go Back"
+							HorizontalAlignment="Center"
+							VerticalAlignment="Center"
+							FontWeight="Medium"
+							Foreground="#5D3F36"/>
+					</Button>
+
+					<Button
+						Name="ConfirmPinButton"
+						Classes="DefaultDarkBrown"
+						Width="100"
+						Height="40"
+						HorizontalAlignment="Center"
+						VerticalAlignment="Center"
+						Margin="10,0,0,0"
+						CornerRadius="14"
+						Opacity="0.5"
+						IsEnabled="False">
+						<TextBlock
+							Text="Confirm"
+							HorizontalAlignment="Center"
+							VerticalAlignment="Center"
+							FontWeight="Medium"
+							Foreground="#E6C8A0"/>
+					</Button>
+
+				</StackPanel>
+
+				<TextBlock
+                    Text="Press Enter or click Confirm when ready"
+                    FontSize="12"
+                    Foreground="#6F4E37"
+                    Opacity="0.6"
+                    Margin="0,0,0,0"
+                    HorizontalAlignment="Center"/>
+			</StackPanel>
+		</Panel>
+	</Panel>
+</UserControl>

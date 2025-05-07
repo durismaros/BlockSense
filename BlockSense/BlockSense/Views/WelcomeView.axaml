@@ -1,0 +1,62 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="BlockSense.WelcomeView">
+	<Panel>
+		
+		<!--Main Welcome Text-->
+		<TextBlock
+			Name="WelcomeText"
+			HorizontalAlignment="Center"
+			VerticalAlignment="Center"
+			Width="290"
+			FontFamily="{StaticResource Pacifico}"
+			FontSize="72"
+			Foreground="White"
+			Opacity="0"
+			RenderTransformOrigin="0.5,0.5"
+			Text="Welcome">
+			<TextBlock.Effect>
+				<DropShadowEffect
+					Color="DarkGray"
+					BlurRadius="10"/>
+			</TextBlock.Effect>
+		</TextBlock>
+
+		
+		<StackPanel
+			HorizontalAlignment="Center"
+			VerticalAlignment="Bottom"
+			Margin="0 0 0 25"
+			Orientation="Horizontal"
+			Spacing="20">
+			
+			<Button
+				Classes="DefaultWhite"
+				Name="userProfileButton"
+				Content="User Profile"
+				VerticalContentAlignment="Center"
+				HorizontalContentAlignment="Center"
+				FontWeight="SemiBold"
+				FontSize="12"
+				Click="UserProfileClick">
+
+			</Button>
+
+			<Button
+				Classes="DefaultWhite"
+				Name="userWalletButton"
+				Content="Wallet"
+				VerticalContentAlignment="Center"
+				HorizontalContentAlignment="Center"
+				FontWeight="SemiBold"
+				FontSize="12"
+				Click="WalletClick">
+
+			</Button>
+		</StackPanel>
+		
+	</Panel>
+</UserControl>

@@ -16,13 +16,7 @@
 		<Setter Property="CornerRadius" Value="100"/>
 		<Setter Property="BoxShadow" Value="5 5 10 0 Black"/>
 	</Style>
-
-	<Style Selector="Button.PrimaryButton">
-		<Setter Property="Background" Value="#5D87E8"/>
-		<Setter Property="Foreground" Value="White"/>
-		<Setter Property="BorderThickness" Value="0"/>
-	</Style>
-
+	
 	
 	<Style Selector="Button ContentPresenter">
 		<Setter Property="Transitions">
@@ -46,7 +40,7 @@
 	</Style>
 
 	<Style Selector="Button.DefaultDarkBrown:pointerover ContentPresenter">
-		<Setter Property="Background" Value="#5D3F36" />
+		<Setter Property="Background" Value="#5D3F36"/>
 	</Style>
 
 	<Style Selector="Button.DefaultLightBrown">
@@ -73,6 +67,44 @@
 	<Style Selector="Button.DefaultWhite:pointerover ContentPresenter">
 		<Setter Property="Background" Value="LightGray"/>
 		<Setter Property="Foreground" Value="#6E6E6E"/>
+	</Style>
+
+	<Style Selector="Button.MacButton">
+		<Setter Property="Width" Value="14"/>
+		<Setter Property="Height" Value="14"/>
+		<Setter Property="HorizontalAlignment" Value="Right"/>
+		<Setter Property="CornerRadius" Value="7"/>
+		<Setter Property="Background" Value="Red"/>
+		<Setter Property="Padding" Value="0"/>
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Grid>
+					<!-- Button Background (visible circle) -->
+					<Border
+						Background="{TemplateBinding Background}"
+						CornerRadius="{TemplateBinding CornerRadius}"
+						Width="{TemplateBinding Width}"
+						Height="{TemplateBinding Height}"/>
+
+					<!-- X Icon -->
+					<Path
+						 Width="6"
+						 Height="6"
+						 HorizontalAlignment="Center"
+						 VerticalAlignment="Center"
+						 Stretch="Uniform"
+						 Stroke="Black"
+						 StrokeThickness="1.25"
+						 Margin="0.5 0 0 0"
+						 Data="M 0,0 L 6,6 M 6,0 L 0,6"
+						 IsVisible="False"/>
+				</Grid>
+			</ControlTemplate>
+		</Setter>
+	</Style>
+
+	<Style Selector="Button.MacButton:pointerover Path">
+		<Setter Property="IsVisible" Value="True"/>
 	</Style>
 
 	
@@ -173,7 +205,7 @@
 		<Setter Property="Background" Value="Transparent"/>
 		<Setter Property="MinWidth" Value="4"/>
 	</Style>
-
+	
 	
 	<Style Selector="ScrollBar:vertical">
 		<Setter Property="Width" Value="4"/>
@@ -203,5 +235,79 @@
 				</Border>
 			</ControlTemplate>
 		</Setter>
+	</Style>
+
+	<Style Selector="ScrollBar.NoBottomMargin:vertical">
+		<Setter Property="Width" Value="4"/>
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="Transparent"
+						Padding="0"
+						Margin="0">
+					<Track IsDirectionReversed="True"
+						   Maximum="{TemplateBinding Maximum}"
+						   Minimum="{TemplateBinding Minimum}"
+						   Orientation="Vertical"
+						   ViewportSize="{TemplateBinding ViewportSize}"
+						   Value="{TemplateBinding Value, Mode=TwoWay}">
+						<Track.Thumb>
+							<Thumb MinHeight="30">
+								<Thumb.Template>
+									<ControlTemplate>
+										<Border Background="Gray"
+												CornerRadius="10"
+												Opacity="0.6"/>
+									</ControlTemplate>
+								</Thumb.Template>
+							</Thumb>
+						</Track.Thumb>
+					</Track>
+				</Border>
+			</ControlTemplate>
+		</Setter>
+	</Style>
+
+
+	<Style Selector="ContextMenu">
+		<Setter Property="Background" Value="White"/>
+		<Setter Property="CornerRadius" Value="40"/>
+		<Setter Property="BorderBrush" Value="#6B6B6B"/>
+		<Setter Property="Transitions">
+			<Transitions>
+				<BrushTransition Property="Background" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+			</Transitions>
+		</Setter>
+	</Style>
+
+	<Style Selector="ContextMenu:pointerover">
+		<Setter Property="Background" Value="#FAFAFA"/>
+	</Style>
+
+	<Style Selector="MenuItem">
+		<Setter Property="Foreground" Value="Gray"/>
+		<Setter Property="FontSize" Value="10"/>
+		<Setter Property="FontWeight" Value="SemiBold"/>
+		<Setter Property="FontFamily" Value="{DynamicResource Montserrat}"/>
+		<Setter Property="Padding" Value="11 5"/>
+		<Setter Property="Background" Value="Transparent"/>
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="Transparent"
+						Padding="{TemplateBinding Padding}">
+					<ContentPresenter Content="{TemplateBinding Header}"
+									  VerticalAlignment="Center"
+									  HorizontalAlignment="Stretch"/>
+				</Border>
+			</ControlTemplate>
+		</Setter>
+		<Setter Property="Transitions">
+			<Transitions>
+				<BrushTransition Property="Foreground" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+			</Transitions>
+		</Setter>
+	</Style>
+
+	<Style Selector="MenuItem:pointerover">
+		<Setter Property="Foreground" Value="#6B6B6B"/>
 	</Style>
 </Styles>

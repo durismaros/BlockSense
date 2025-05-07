@@ -54,7 +54,7 @@ namespace InvitationCodeGenerator
                 RenderHeader();
                 Console.Write("How many invitation codes do you want to generate? ");
             }
-
+    
             while (!int.TryParse(Console.ReadLine(), out numberOfCodes));
 
             for (int i = 0; i < numberOfCodes; i++)
@@ -99,9 +99,10 @@ namespace InvitationCodeGenerator
             {
                 try
                 {
-                    string query = "INSERT INTO InvitationCodes (invitation_code) values (@code)";
+                    string query = "INSERT INTO InvitationCodes (invitation_code, expires_at) values (@code, @expires_at)";
                     var command = new MySqlCommand(query, connection);
                     command.Parameters.AddWithValue("@code", code);
+                    command.Parameters.AddWithValue("@expires_at", DateTime.UtcNow.AddMonths(1));
                     command.ExecuteNonQuery();
 
                     Console.WriteLine($"Invitation code {code} added successfully.");

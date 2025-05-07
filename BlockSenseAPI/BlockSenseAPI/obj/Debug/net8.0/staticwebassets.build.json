@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "rUc1LNmqJtgSeoSiW9RVvhcO/nCBaRqrXFH5R7lJUZs=",
+  "Source": "BlockSenseAPI",
+  "BasePath": "_content/BlockSenseAPI",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
