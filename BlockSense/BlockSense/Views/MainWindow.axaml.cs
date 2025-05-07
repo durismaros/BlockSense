@@ -14,12 +14,12 @@ namespace BlockSense.Views;
 public partial class MainWindow : Window
 {
     private ContentControl _contentContainer;
-    private static MainWindow _instance;
+    public static MainWindow Instance;
     public MainWindow()
     {
         InitializeComponent();
         _contentContainer = this.FindControl<ContentControl>("ContentContainer")!;
-        _instance = this;
+        Instance = this;
     }
 
     private void InitializeComponent()
@@ -29,7 +29,7 @@ public partial class MainWindow : Window
 
     public static void SetContent(UserControl newView)
     {
-        _instance._contentContainer.Content = newView;
+        Instance._contentContainer.Content = newView;
     }
 
     private async Task Animate(UserControl newView)
@@ -52,11 +52,11 @@ public partial class MainWindow : Window
 
     public static async Task SwitchView(UserControl newView)
     {
-        if (_instance == null)
+        if (Instance == null)
         {
             throw new InvalidOperationException("MainWindow instance not available");
         }
 
-        await _instance.Animate(newView);
+        await Instance.Animate(newView);
     }
 }

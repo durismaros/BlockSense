@@ -25,9 +25,11 @@ namespace BlockSense;
 
 public partial class LoginView : UserControl
 {
+    private readonly User _userService;
     public LoginView()
     {
         InitializeComponent();
+        _userService = new User();
     }
 
     private void OnKeyDown(object sender, KeyEventArgs e)
@@ -99,13 +101,14 @@ public partial class LoginView : UserControl
 
             else
             {
-                var (success, message) = await User.Login(login, password);
+                var (success, message) = await _userService.Login(login, password);
+
                 if (success && !string.IsNullOrEmpty(message))
                 {
                     ShowMessage(message);
 
                     await Task.Delay(2000);
-                    await MainWindow.SwitchView(new Welcome());
+                    await MainWindow.SwitchView(new WelcomeView());
                 }
                 else if (!success && !string.IsNullOrEmpty(message))
                 {
