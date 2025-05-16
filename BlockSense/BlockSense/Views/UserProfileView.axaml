@@ -200,7 +200,7 @@
 
 							<!--Users 2fa status (enabled/disabled)-->
 							<TextBlock Classes="label" Text="2FA Status"/>
-							<TextBlock Classes="value" Name="TwoFactorAuthTextBlock" Text="Disabled"/>
+							<TextBlock Classes="value" Name="TwoFactorAuthTextBlock"/>
 
 							<!--Active devices-->
 							<TextBlock Classes="label" Text="Active Devices"/>
@@ -213,7 +213,7 @@
 								Margin="0 18 0 18"
 								Padding="15 10"
 								CornerRadius="8"
-								Click="SecurityManagerClick">
+								Click="OpenSecurityManagerClick">
 								<TextBlock
 									Text="Manage Security Settings"
 									HorizontalAlignment="Center"
@@ -247,32 +247,35 @@
 
 					<!-- Security Manager card -->
 					<Border Classes="card" Name="SecurityManager" Grid.Column="1" Grid.Row="0"
-							IsVisible="True">
+							IsVisible="False">
 						<StackPanel>
 							<!-- Header -->
-							<StackPanel Orientation="Horizontal" Margin="0 0 0 15">
+							<Panel Margin="0 0 0 20">
 								<TextBlock
 									Text="Security Manager"
 									Foreground="#4A4238"
 									FontSize="22"
 									FontWeight="Medium"/>
 
+
 								<Button
-									Name="CloseSecurityManager"
-									
-									HorizontalAlignment="Right"
-									Margin="80 0 0 0"
-									Width="30"
-									Height="30"
+									Classes="DefaultWhite"
+									Width="32"
+									Height="32"
 									Background="Transparent"
-									BorderThickness="0">
-									<Path
-										Data="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"
-										Fill="#6D4C41"
-										Width="16"
-										Height="16"/>
+									HorizontalAlignment="Right"
+									Click="CloseSecurityManagerClick">
+									<Viewbox Width="24" Height="24" Stretch="Uniform">
+										<Canvas Width="24" Height="24">
+											<Path
+												Margin="0 1 0 0"
+												Data="M18.3,5.71L18.3,5.71C18.69,5.32 18.69,4.69 18.3,4.3C17.91,3.91 17.28,3.91 16.89,4.3L12,9.19L7.11,4.3C6.72,3.91 6.09,3.91 5.7,4.3C5.31,4.69 5.31,5.32 5.7,5.71L10.59,10.6L5.7,15.49C5.31,15.88 5.31,16.51 5.7,16.9C5.9,17.09 6.16,17.19 6.42,17.19C6.68,17.19 6.95,17.09 7.14,16.9L12,12.01L16.89,16.9C17.09,17.09 17.35,17.19 17.61,17.19C17.87,17.19 18.13,17.09 18.33,16.9C18.72,16.51 18.72,15.88 18.33,15.49L13.44,10.6L18.3,5.71Z"
+												Fill="#6D4C41"
+												Opacity="0.7"/>
+										</Canvas>
+									</Viewbox>
 								</Button>
-							</StackPanel>
+							</Panel>
 
 							<!-- Two-Factor Authentication Section -->
 							<TextBlock
@@ -292,23 +295,34 @@
 										Name="TwoFAStatusText"
 										Text="2FA is currently disabled. Enable it to increase your account security."
 										Foreground="#6D4C41"
-										TextWrapping="Wrap"
-										Margin="0 0 0 10"/>
+										FontSize="13"
+										FontWeight="Medium"
+										TextAlignment="Center"
+										LineHeight="18"
+										Opacity="0.9"
+										Margin="0 0 0 10"
+										TextWrapping="Wrap"/>
 
 									<!-- QR Code and Setup Info -->
-									<Grid Name="TwoFASetupGrid" IsVisible="{Binding !TwoFAEnabled}">
+									<Grid Name="TwoFASetupGrid">
 										<!-- QR Code Container -->
 										<StackPanel HorizontalAlignment="Center" Margin="0 5 0 10">
 											<Border
-												Width="150"
-												Height="150"
+												Width="200"
+												Height="200"
 												Background="White"
 												BorderBrush="#D4B38C"
 												BorderThickness="1"
-												CornerRadius="8"
+												CornerRadius="12"
 												HorizontalAlignment="Center"
 												Margin="0 0 0 10">
-												<Image Name="QRCodeImage" Stretch="Uniform" Margin="10"/>
+												<Image
+													Name="QRCodeImage"
+													Width="190"
+													Height="190"
+													Stretch="UniformToFill"
+													HorizontalAlignment="Center"
+													VerticalAlignment="Center"/>
 											</Border>
 
 											<TextBlock
@@ -320,7 +334,7 @@
 									</Grid>
 
 									<!-- Setup Key -->
-									<StackPanel Name="SetupKeyPanel" IsVisible="{Binding !TwoFAEnabled}" Margin="0 10 0 0">
+									<StackPanel Name="SetupKeyPanel" Margin="0 10 0 0">
 										<TextBlock
 											Text="Setup Key"
 											FontWeight="Medium"
@@ -329,38 +343,21 @@
 											HorizontalAlignment="Center"/>
 
 										<Border
+											Width="260"
 											Background="#F5F0E8"
-											Padding="10"
-											CornerRadius="6"
-											Margin="40 0"
+											Padding="12"
+											CornerRadius="8"
 											HorizontalAlignment="Center">
-											<Grid ColumnDefinitions="*,Auto">
-												<TextBlock
-													Name="SetupKeyText"
-													Text="ABCD EFGH IJKL MNOP"
-													FontFamily="Consolas, Courier New, monospace"
-													Foreground="#6D4C41"/>
-
-												<Button
-													Grid.Column="1"
-													Width="24"
-													Height="24"
-													Background="Transparent"
-													Padding="0"
-													
-													ToolTip.Tip="Copy to clipboard">
-													<Path
-														Data="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"
-														Fill="#8B6B4A"
-														Width="16"
-														Height="16"/>
-												</Button>
-											</Grid>
+											<TextBlock
+												Name="SetupKeyText"
+												FontSize="11"
+												Foreground="#6D4C41"
+												HorizontalAlignment="Center"/>
 										</Border>
 									</StackPanel>
 
 									<!-- Verification Code -->
-									<StackPanel Name="VerificationPanel" IsVisible="{Binding !TwoFAEnabled}" Margin="0 15 0 0">
+									<StackPanel Name="VerificationPanel" Margin="0 15 0 0">
 										<TextBlock
 											Text="Verification Code"
 											FontWeight="Medium"
@@ -386,7 +383,7 @@
 											Width="140"
 											Height="36"
 											CornerRadius="8"
-											>
+											Click="ToggleTwoFaClick">
 											<TextBlock
 												Name="ToggleTwoFAText"
 												Text="Enable 2FA"
@@ -398,12 +395,11 @@
 
 										<Button
 											Name="VerifyTwoFAButton"
-											IsVisible="{Binding !TwoFAEnabled}"
 											Classes="DefaultLightBrown"
 											Width="80"
 											Height="36"
 											CornerRadius="8"
-											>
+											Click="VerifyTwoFaClick">
 											<TextBlock
 												Text="Verify"
 												FontWeight="Medium"

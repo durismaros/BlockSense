@@ -11,11 +11,13 @@ using Avalonia.Interactivity;
 using Org.BouncyCastle.Asn1.BC;
 using BlockSense.Client;
 using BlockSense.Views;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BlockSense;
 
 public partial class WelcomeView : UserControl
 {
+
     public WelcomeView()
     {
         InitializeComponent();
@@ -24,11 +26,11 @@ public partial class WelcomeView : UserControl
 
     public async void UserProfileClick(object sender, RoutedEventArgs e)
     {
-        await MainWindow.SwitchView(new UserProfileView());
+        //await MainWindow.SwitchView(App.Services.GetRequiredService<UserProfileView>());
     }
     public async void WalletClick(object sender, RoutedEventArgs e)
     {
-        await MainWindow.SwitchView(new PinEntryView());
+        //await MainWindow.SwitchView(new PinEntryView());
 
         //DraggableOverlayWindow _overlayWindow;
         //_overlayWindow = new DraggableOverlayWindow();

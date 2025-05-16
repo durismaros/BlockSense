@@ -9,9 +9,8 @@ using Avalonia.Styling;
 using System.Threading.Tasks;
 using System;
 using BlockSense.Views;
-using BlockSense.Client.Cryptography.Wallet;
-using BlockSense.Server.Cryptography.Wallet;
 using System.Collections.Generic;
+using BlockSense.Cryptography.Wallet.MnemonicManager;
 
 namespace BlockSense;
 
@@ -40,7 +39,7 @@ public partial class PinEntryView : UserControl
     public PinEntryView()
     {
         InitializeComponent();
-        SetMode(false); // set initial mode Here
+        SetMode(true); // set initial mode Here
 
         // Initialize sliding panel position
         SlidePanel.RenderTransform = new TranslateTransform(0, -450);
@@ -170,7 +169,7 @@ public partial class PinEntryView : UserControl
         // Handle Escape key
         else if (e.Key.Equals(Key.Escape) && !_isPanelVisible)
         {
-            await MainWindow.SwitchView(new WelcomeView());
+            //await MainWindow.SwitchView(new WelcomeView());
             ResetPin();
         }
     }
@@ -184,11 +183,11 @@ public partial class PinEntryView : UserControl
     {
         if (_currentPin.Equals(_confirmPin))
         {
-            MnemonicManager.StoreMnemonic(Mnemonic.MnemonicWords, _confirmPin);
+            MnemonicManager.StoreMnemonic(MnemonicManager.MnemonicWords, _confirmPin);
             SetupMode = false;
             AnimatePanel(false);
             ResetPin();
-            await MainWindow.SwitchView(new SecretPhraseView());
+            //await MainWindow.SwitchView(new SecretPhraseView());
             // Wallet generation logic here
         }
         else

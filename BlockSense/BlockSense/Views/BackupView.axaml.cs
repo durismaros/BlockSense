@@ -17,11 +17,11 @@ public partial class BackupView : UserControl
 
     private async void ManualBackupClick(object sender, RoutedEventArgs e)
     {
-        await MainWindow.SwitchView(new SecretPhraseView());
+        //await MainWindow.SwitchView(new SecretPhraseView());
     }
 
     private async void BackupLaterClick(object sender, RoutedEventArgs e)
     {
-        await MainWindow.SwitchView(new MainWalletView());
+        //await MainWindow.SwitchView(new MainWalletView());
     }
 }

@@ -6,14 +6,12 @@ namespace BlockSenseAPI.Services
 {
     public class DatabaseContext : IDisposable
     {
-        private readonly IConfiguration _configuration;
         private readonly string _connectionString;
-        private MySqlConnection _connection;
+        private MySqlConnection? _connection;
 
         public DatabaseContext(IConfiguration configuration)
         {
-            _configuration = configuration;
-            _connectionString = _configuration.GetConnectionString("DefaultConnection");
+            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
         }
 
         private async Task<MySqlConnection> GetConnectionAsync()

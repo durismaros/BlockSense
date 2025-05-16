@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BlockSenseAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1f950e8f5faec79845a463fda21f7d9fe29acb61")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3642bfc290e9c06bb713df79112294b928c875ea")]
 [assembly: System.Reflection.AssemblyProductAttribute("BlockSenseAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BlockSenseAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

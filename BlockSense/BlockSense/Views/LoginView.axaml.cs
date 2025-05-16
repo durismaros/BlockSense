@@ -8,11 +8,12 @@ using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Styling;
 using Avalonia.Threading;
-using BlockSense.Client;
-using BlockSense.Client.Utilities;
 using BlockSense.Client_Side.Token_authentication;
-using BlockSense.Server;
+using BlockSense.Models.Requests;
+using BlockSense.Services;
+using BlockSense.Utilities;
 using BlockSense.Views;
+using DynamicData.Kernel;
 using MySql.Data.MySqlClient;
 using System;
 using System.Data;
@@ -25,11 +26,14 @@ namespace BlockSense;
 
 public partial class LoginView : UserControl
 {
-    private readonly User _userService;
-    public LoginView()
+    private readonly UserService _userService;
+    private readonly MainView _mainView;
+    
+    public LoginView(UserService userService, MainView mainView)
     {
+        _userService = userService;
+        _mainView = mainView;
         InitializeComponent();
-        _userService = new User();
     }
 
     private void OnKeyDown(object sender, KeyEventArgs e)
@@ -66,7 +70,7 @@ public partial class LoginView : UserControl
 
     private async void HomeClick(object sender, RoutedEventArgs e)
     {
-        await MainWindow.SwitchView(new MainView());
+        //await MainWindow.SwitchView(_mainView);
     }
 
 
@@ -82,38 +86,30 @@ public partial class LoginView : UserControl
             {
                 loginText.Text = message;
                 loginTextBorder.IsVisible = true;
-                await Animations.FadeInAnimation.RunAsync(loginTextBorder);
+                await AnimationManager.FadeInAnimation.RunAsync(loginTextBorder);
             }
         }
 
         try
         {
-
-            if (!SystemUtils.CheckTimeOut())
-            {
-                ShowMessage("Try again later . . .");
-                return;
-            }
-
-            else if (!InputHelper.Check(login, password))
+            if (!InputHelper.Check(login, password))
                 ShowMessage("Looks like you missed a required field");
 
 
             else
             {
-                var (success, message) = await _userService.Login(login, password);
+                var request = new LoginRequestModel(login, password);
+                var response = await _userService.Login(request);
 
-                if (success && !string.IsNullOrEmpty(message))
+                if (response is null || string.IsNullOrEmpty(response.Message))
+                    return;
+
+                ShowMessage(response.Message);
+
+                if (response.Success)
                 {
-                    ShowMessage(message);
-
                     await Task.Delay(2000);
-                    await MainWindow.SwitchView(new WelcomeView());
-                }
-                else if (!success && !string.IsNullOrEmpty(message))
-                {
-                    User.Attempts++;
-                    ShowMessage(message);
+                    //await MainWindow.SwitchView(new WelcomeView());
                 }
             }
 

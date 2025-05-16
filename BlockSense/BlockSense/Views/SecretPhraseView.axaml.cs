@@ -9,7 +9,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Styling;
 using BlockSense.Client;
-using BlockSense.Server.Cryptography.Wallet;
+using BlockSense.Cryptography.Wallet.MnemonicManager;
 using BlockSense.Views;
 using DynamicData;
 using System;
@@ -37,7 +37,7 @@ public partial class SecretPhraseView : UserControl
 
     private async void FinishClick(object sender, RoutedEventArgs e)
     {
-        await MainWindow.SwitchView(new MainWalletView());
+        //await MainWindow.SwitchView(new MainWalletView());
     }
 
     private void OnCheckboxChanged(object? sender, RoutedEventArgs e)
@@ -51,7 +51,7 @@ public partial class SecretPhraseView : UserControl
         int wordIndex = 0;
 
         // Loop through the text items and create a Border for each
-        foreach (var word in Mnemonic.MnemonicWords)
+        foreach (var word in MnemonicManager.MnemonicWords)
         {
             wordIndex++;
 

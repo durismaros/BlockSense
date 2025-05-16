@@ -10,9 +10,9 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.TextFormatting.Unicode;
-using BlockSense.Client;
-using BlockSense.Client.Utilities;
-using BlockSense.Server;
+using BlockSense.Models.Requests;
+using BlockSense.Services;
+using BlockSense.Utilities;
 using BlockSense.Views;
 using MySql.Data.MySqlClient;
 using ZstdSharp.Unsafe;
@@ -21,8 +21,12 @@ namespace BlockSense;
 
 public partial class RegisterView : UserControl
 {
-    public RegisterView()
+    private readonly UserService _userService;
+    private readonly MainView _mainView;
+    public RegisterView(UserService userService, MainView mainView)
     {
+        _userService = userService;
+        _mainView = mainView;
         InitializeComponent();
     }
 
@@ -42,7 +46,7 @@ public partial class RegisterView : UserControl
     /// <param name="e"></param>
     private async void HomeClick(object sender, RoutedEventArgs e)
     {
-        await MainWindow.SwitchView(new MainView());
+        //await MainWindow.SwitchView(_mainView);
     }
 
     /// <summary>
@@ -63,20 +67,13 @@ public partial class RegisterView : UserControl
             {
                 registerText.Text = message;
                 registerTextBorder.IsVisible = true;
-                await Animations.FadeInAnimation.RunAsync(registerTextBorder);
+                await AnimationManager.FadeInAnimation.RunAsync(registerTextBorder);
             }
         }
 
         try
         {
-
-            if (!SystemUtils.CheckTimeOut())
-            {
-                ShowMessage("Try again later . . .");
-                return;
-            }
-
-            else if (!InputHelper.Check(username, email, password, passwordConfirm, invitationCode))
+            if (!InputHelper.Check(username, email, password, passwordConfirm, invitationCode))
                 ShowMessage("Looks like you missed a required field");
 
             else if (password != passwordConfirm)
@@ -88,13 +85,13 @@ public partial class RegisterView : UserControl
 
             else
             {
-                var (success, message) = await User.Register(username, email, password, invitationCode);
+                var newRegisterRequest = new RegisterRequestModel(username, email, password, invitationCode);
+                var (success, message) = await _userService.Register(newRegisterRequest);
                 if (success)
                     ShowMessage(message);
 
                 else
                 {
-                    User.Attempts++;
                     ShowMessage(message);
                 }
             }

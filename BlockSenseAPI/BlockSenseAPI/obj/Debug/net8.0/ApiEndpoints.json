@@ -1,50 +1,212 @@
 [
   {
-    "ContainingType": "BlockSenseAPI.Controllers.UserController",
-    "Method": "LoadUserInfo",
-    "RelativePath": "api/users/{uid}",
+    "ContainingType": "BlockSenseAPI.Controllers.AuthController",
+    "Method": "LoginEndpoint",
+    "RelativePath": "api/auth/login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "BlockSenseAPI.Models.Requests.LoginRequestModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "BlockSense.Models.Responses.LoginResponseModel",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "BlockSenseAPI.Controllers.AuthController",
+    "Method": "VerifyOtpEndpoint",
+    "RelativePath": "api/auth/otp-verify",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "BlockSenseAPI.Models.TwoFactorAuth.TwoFactorVerificationRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "BlockSenseAPI.Models.TwoFactorAuth.TwoFactorVerificationResponse",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "BlockSenseAPI.Controllers.AuthController",
+    "Method": "RegisterEndpoint",
+    "RelativePath": "api/auth/register",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "BlockSenseAPI.Models.Requests.RegisterRequestModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "BlockSenseAPI.Models.Responses.RegisterResponseModel",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "BlockSenseAPI.Controllers.AuthController",
+    "Method": "TokenRefreshEndpoint",
+    "RelativePath": "api/auth/token-refresh",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "BlockSenseAPI.Models.Requests.TokenRefreshRequestModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "BlockSense.Models.Responses.TokenRefreshResponseModel",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "BlockSenseAPI.Controllers.InviteCodeController",
+    "Method": "FetchInviteInfoEndpoint",
+    "RelativePath": "api/invites/fetch-all",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [
+    "Parameters": [],
+    "ReturnTypes": [
       {
-        "Name": "uid",
-        "Type": "System.Int32",
-        "IsRequired": true
+        "Type": "System.Collections.Generic.List\u00601[[BlockSenseAPI.Models.InviteInfoModel, BlockSenseAPI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
       }
-    ],
-    "ReturnTypes": []
+    ]
   },
   {
     "ContainingType": "BlockSenseAPI.Controllers.UserController",
-    "Method": "Login",
-    "RelativePath": "api/users/login",
+    "Method": "GetUserInfoEndpoint",
+    "RelativePath": "api/users/get",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "BlockSenseAPI.Models.User.UserInfoModel",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "BlockSenseAPI.Controllers.UserController",
+    "Method": "GetAddUserInfoEndpoint",
+    "RelativePath": "api/users/get-additional",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "BlockSenseAPI.Models.User.AdditionalUserInfoModel",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "BlockSenseAPI.Controllers.UserController",
+    "Method": "EnableOtpEndpoint",
+    "RelativePath": "api/users/otp-enable",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
         "Name": "request",
-        "Type": "BlockSenseAPI.Models.Requests.LoginRequest",
+        "Type": "BlockSenseAPI.Models.TwoFactorAuth.TwoFactorSetupRequestModel",
         "IsRequired": true
       }
     ],
-    "ReturnTypes": []
+    "ReturnTypes": [
+      {
+        "Type": "BlockSenseAPI.Models.TwoFactorAuth.TwoFactorVerificationResponse",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "BlockSenseAPI.Controllers.UserController",
-    "Method": "Register",
-    "RelativePath": "api/users/register",
-    "HttpMethod": "POST",
+    "Method": "OtpSetupEndpoint",
+    "RelativePath": "api/users/otp-setup",
+    "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [
+    "Parameters": [],
+    "ReturnTypes": [
       {
-        "Name": "request",
-        "Type": "BlockSenseAPI.Models.Requests.RegisterRequest",
-        "IsRequired": true
+        "Type": "BlockSenseAPI.Models.TwoFactorAuth.TwoFactorSetupResponseModel",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
       }
-    ],
-    "ReturnTypes": []
+    ]
   }
 ]

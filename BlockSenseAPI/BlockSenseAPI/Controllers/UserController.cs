@@ -1,7 +1,15 @@
 ﻿using BlockSenseAPI.Models.Requests;
-using BlockSenseAPI.Services;
+using BlockSenseAPI.Models.TwoFactorAuth;
+using BlockSenseAPI.Models.User;
+using BlockSenseAPI.Services.UserServices;
+using MaxMind.GeoIP2.Responses;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing.Matching;
+using MySqlX.XDevAPI.Common;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace BlockSenseAPI.Controllers
 {
@@ -10,18 +18,28 @@ namespace BlockSenseAPI.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly ITwoFactorAuthService _twoFactorAuthService;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, ITwoFactorAuthService twoFactorAuthService)
         {
             _userService = userService;
+            _twoFactorAuthService = twoFactorAuthService;
         }
 
-        [HttpGet("{uid}")]
-        public async Task<IActionResult> LoadUserInfo(int uid)
+        [HttpGet("get")]
+        [Authorize]
+        public async Task<ActionResult<UserInfoModel>> GetUserInfoEndpoint()
         {
             try
             {
-                var userInfo = await _userService.LoadUserInfo(uid);
+                if (!int.TryParse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out int userId))
+                    return Unauthorized("User ID not found in token");
+
+                var userInfo = await _userService.FetchUserInfo(userId);
+
+                if (userInfo is null)
+                    return NotFound("User not found");
+
                 return Ok(userInfo);
             }
             catch (Exception ex)
@@ -30,22 +48,21 @@ namespace BlockSenseAPI.Controllers
             }
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        [HttpGet("get-additional")]
+        [Authorize]
+        public async Task<ActionResult<AdditionalUserInfoModel>> GetAddUserInfoEndpoint()
         {
             try
             {
-                var result = await _userService.Login(request.Login, request.Password, request.Identifiers);
-                if (result.correctLogin)
-                {
-                    return Ok(new
-                    {
-                        success = true,
-                        message = result.loginMessage,
-                        tokendata = result.tokenData,
-                    });
-                }
-                return BadRequest(new { success = false, message = result.loginMessage });
+                if (!int.TryParse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out int userId))
+                    return Unauthorized("User ID not found in token");
+
+                var addUserInfo = await _userService.FetchAddUserInfo(userId);
+                
+                if (addUserInfo is null)
+                    return NotFound("User not found");
+
+                return Ok(addUserInfo);
             }
             catch (Exception ex)
             {
@@ -53,23 +70,47 @@ namespace BlockSenseAPI.Controllers
             }
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        [HttpGet("otp-setup")]
+        [Authorize]
+        public async Task<ActionResult<TwoFactorSetupResponseModel>> OtpSetupEndpoint()
         {
             try
             {
-                var result = await _userService.Register(
-                    request.Username,
-                    request.Email,
-                    request.Password,
-                    request.InvitationCode
-                );
+                if (!int.TryParse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out int userId))
+                    return Unauthorized("User ID not found in token");
 
-                if (result.correctRegister)
+                var twoFaResponse = await _twoFactorAuthService.BeginSetup(userId);
+                
+                if (twoFaResponse is null)
+                    return NotFound("User not found");
+
+                return Ok(twoFaResponse);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost("otp-enable")]
+        [Authorize]
+        public async Task<ActionResult<TwoFactorVerificationResponse>> EnableOtpEndpoint([FromBody] TwoFactorSetupRequestModel request)
+        {
+            try
+            {
+                if (!int.TryParse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out int userId))
+                    return Unauthorized("User ID not found in token");
+
+                var twoFaResponse = await _twoFactorAuthService.CompleteSetup(userId, request);
+
+                if (!twoFaResponse)
+                    return BadRequest("Error");
+
+                return Ok(new TwoFactorVerificationResponse
                 {
-                    return Ok(new { success = true, message = result.registerMessage });
-                }
-                return BadRequest(new { success = false, message = result.registerMessage });
+                    Message = "enabled",
+                    Verification = true
+                });
             }
             catch (Exception ex)
             {

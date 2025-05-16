@@ -5,8 +5,10 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
 using BlockSense.Client;
-using BlockSense.ViewModels;
+using BlockSense.Utilities;
 using Google.Protobuf.WellKnownTypes;
+using Microsoft.Extensions.DependencyInjection;
+using Org.BouncyCastle.Asn1.Ocsp;
 using Org.BouncyCastle.Pqc.Crypto.Crystals.Dilithium;
 using System;
 using System.ComponentModel;
@@ -17,8 +19,10 @@ namespace BlockSense.Views;
 
 public partial class MainView : UserControl
 {
-    public MainView()
+    private readonly IViewSwitcher _viewSwitcher;
+    public MainView(IViewSwitcher viewSwitcher)
     {
+        _viewSwitcher = viewSwitcher;
         InitializeComponent();
     }
 
@@ -29,7 +33,7 @@ public partial class MainView : UserControl
     /// <param name="e"></param>
     private async void LoginClick(object? sender, RoutedEventArgs e)
     {
-        await MainWindow.SwitchView(new LoginView());
+        await _viewSwitcher.NavigateToAsync<LoginView>();
     }
 
     /// <summary>
@@ -39,6 +43,6 @@ public partial class MainView : UserControl
     /// <param name="e"></param>
     private async void RegisterClick(object? sender, RoutedEventArgs e)
     {
-        await MainWindow.SwitchView(new RegisterView());
+        await _viewSwitcher.NavigateToAsync<RegisterView>();
     }
 }
