@@ -1,27 +1,12 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+	<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:BlockSense.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="BlockSense.Views.MainView"
-             x:DataType="vm:MainViewModel">
-  <Design.DataContext>
-    <!-- This only sets the DataContext for the previewer in an IDE,
-         to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-    <vm:MainViewModel />
-  </Design.DataContext>
+             x:Class="BlockSense.Views.MainView">
 
 	<Panel>
-		<ExperimentalAcrylicBorder IsHitTestVisible="False">
-			<ExperimentalAcrylicBorder.Material>
-				<ExperimentalAcrylicMaterial
-					BackgroundSource="Digger"
-					TintColor="Yellow"
-					TintOpacity="0.2"
-					MaterialOpacity="0.8" />
-			</ExperimentalAcrylicBorder.Material>
-		</ExperimentalAcrylicBorder>
 
 		<!--MainApplicationIcon-->
 		<Panel
@@ -32,103 +17,69 @@
 				Source="avares://BlockSense/Assets/mainWindowIcon.png"/>
 		</Panel>
 		
-		
 		<StackPanel
 			Margin="30"
 			Width="400"
 			HorizontalAlignment="Right"
 			VerticalAlignment="Center"
-			Spacing="15">
+			Spacing="18">
 
 			<!--Application header-->
 			<TextBlock
 				HorizontalAlignment="Center"
 				FontSize="40"
-				FontWeight="Bold"
-				Foreground="#353935">
-				Block<Span Foreground="#28282B">Sense</Span>
+				FontWeight="Light"
+				Foreground="#4A4238">
+				Block<Span Foreground="#2A2118">Sense</Span>
 			</TextBlock>
-			
+
+			<!--Separator-->
 			<Border
-				Width="300"
-				Height="1"
-				Background="#C2B280"
-				CornerRadius="100"
-				BoxShadow="5 5 10 0 Black"/>
+				Classes="DefaultSeparator"
+				Width="120"
+				Margin="0 0 0 10"/>
+			
 
 			<!--Motivational text-->
 			<TextBlock
-				Margin="0,0,0,-10"
-				Width="300"
-				Height="20"
-				Foreground="#343434"
-				FontSize="15"
-				FontWeight="Heavy"
-				Text="Manage your crypto assets"
-				TextAlignment="Center"/>
-			
-			<TextBlock
-				Width="300"
-				Height="20"
-				Foreground="#343434"
-				FontSize="15"
-				FontWeight="Heavy"
-				Text="easily and securely"
-				TextAlignment="Center"/>
-			
-			
-			<Border
-				Width="300"
-				Height="1"
-				Background="#C2B280"
-				CornerRadius="100"
-				BoxShadow="5 5 10 0 Black"/>
+				Width="280"
+				Foreground="#2A2118"
+				FontSize="14"
+				FontWeight="SemiBold"
+				TextAlignment="Center"
+				LineHeight="22"
+				Opacity="0.9"
+				TextWrapping="Wrap"
+				Text="Manage your crypto assets easily and securely"/>
 
 			<!--Login Button-->
 			<Button
+				Classes="DefaultDarkBrown"
 				Name="loginButton"
-				Width="275"
-				Height="35"
 				Margin="0,20,0,0"
-				HorizontalAlignment="Center"
-				CornerRadius="10"
-				Background="#6F4E37"
 				Click="LoginClick">
+				
 				<TextBlock
-					Name="loginText"
 					Text="Login"
 					HorizontalAlignment="Center"
 					VerticalAlignment="Center"
-					FontWeight="SemiBold"
-					Foreground="#F5DEB3"/>
-				<Button.Styles>
-					<Style Selector="Button:pointerover /template/ ContentPresenter">
-						<Setter Property="Background" Value="#5C4033" />
-					</Style>
-				</Button.Styles>
+					FontWeight="Medium"
+					Foreground="#E6C8A0"/>
+
 			</Button>
 
 			<!--Register Button-->
 			<Button
-					Name="registerButton"
-					Width="275"
-					Height="35"
-					HorizontalAlignment="Center"
-					CornerRadius="10"
-					Background="#F5DEB3"
-					Click="RegisterClick">
+				Classes="DefaultLightBrown"
+				Name="registerButton"
+				Click="RegisterClick">
+				
 				<TextBlock
-					Name="registerText"
 					Text="Register"
 					HorizontalAlignment="Center"
 					VerticalAlignment="Center"
-					FontWeight="SemiBold"
-					Foreground="#6F4E37"/>
-				<Button.Styles>
-					<Style Selector="Button:pointerover /template/ ContentPresenter">
-						<Setter Property="Background" Value="#D2B48C" />
-					</Style>
-				</Button.Styles>
+					FontWeight="Medium"
+					Foreground="#5D3F36"/>
 			</Button>
 			
 		</StackPanel>

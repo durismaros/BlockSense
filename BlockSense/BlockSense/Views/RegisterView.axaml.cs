@@ -1,21 +1,41 @@
 using System;
+using System.Collections.Immutable;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media.TextFormatting.Unicode;
+using BlockSense.Models.Requests;
+using BlockSense.Services;
+using BlockSense.Utilities;
 using BlockSense.Views;
 using MySql.Data.MySqlClient;
-using Tmds.DBus.Protocol;
 using ZstdSharp.Unsafe;
 
 namespace BlockSense;
 
 public partial class RegisterView : UserControl
 {
-    public RegisterView()
+    private readonly UserService _userService;
+    private readonly IViewSwitcher _viewSwitcher;
+    public RegisterView(UserService userService, IViewSwitcher viewSwitcher)
     {
+        _userService = userService;
+        _viewSwitcher = viewSwitcher;
         InitializeComponent();
+    }
+
+    private void OnKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            RegisterButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        }
     }
 
 
@@ -24,99 +44,59 @@ public partial class RegisterView : UserControl
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
-    private void HomeClick(object sender, RoutedEventArgs e)
+    private async void HomeClick(object sender, RoutedEventArgs e)
     {
-        Content = new MainView();
+        await _viewSwitcher.NavigateToAsync<MainView>();
     }
 
     /// <summary>
     /// 
     /// </summary>
-    /// 
-    private void RegisterClick(object sender, RoutedEventArgs e)
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    private async void RegisterClick(object sender, RoutedEventArgs e)
     {
-        string? username = usernameRegister.Text, email = emailRegister.Text, password = passwordRegister.Text, passwordconfirm = passwordConfirmRegister.Text, invitationcode = invitationCodeRegister.Text;
+        string username = usernameRegister.Text?.Trim() ?? string.Empty;
+        string email = emailRegister.Text?.Trim() ?? string.Empty;
+        string password = passwordRegister.Text?.Trim() ?? string.Empty;
+        string passwordConfirmation = passwordConfirmRegister.Text?.Trim() ?? string.Empty;
+        string invitationCode = invitationCodeRegister.Text?.Trim() ?? string.Empty;
+
+        async void ShowMessage(string message)
+        {
+            if (!registerTextBorder.IsVisible || registerText.Text != message)
+            {
+                registerText.Text = message;
+                registerTextBorder.IsVisible = true;
+                await AnimationManager.FadeInAnimation.RunAsync(registerTextBorder);
+            }
+        }
+
         try
         {
-
-            if (username == null || email == null || password == null || passwordconfirm == null || invitationcode == null)
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(passwordConfirmation) || string.IsNullOrWhiteSpace(invitationCode))
             {
-                registerText.Text = "mandatory field is empty";
-                registerTextBorder.IsVisible = true;
-            }
-            else if (passwordRegister.Text != passwordConfirmRegister.Text)
-            {
-                registerText.Text = "passwords do not match";
-                registerTextBorder.IsVisible = true;
-            }
-            else if (usernameRegister.Text != null && emailRegister.Text != null && invitationCodeRegister.Text != null)
-            {
-                RegisterUser(username, email, password, invitationcode);
+                ShowMessage("Looks like you missed a required field");
+                return;
             }
 
+            if (password != passwordConfirmation)
+            {
+                ShowMessage("Passwords do not match");
+                return;
+            }
+
+            var request = new RegisterRequestModel(username, email, password, invitationCode);
+            var response = await _userService.Register(request);
+
+            if (response is null || response.Message is null)
+                return;
+
+            ShowMessage(response.Message);
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error: " + ex.Message);
+            ConsoleLogger.Log("Error: " + ex.Message);
         }
-    }
-
-
-
-    private void RegisterUser(string username, string email, string password, string invitationCode)
-    {
-        using (var connection = Database.GetConnection())  // Use the shared connection from Database class
-        {
-            try
-            {
-                // Check if the invitation code is valid and unused
-                string query = "SELECT is_used FROM InvitationCodes WHERE code = @code";
-                var command = new MySqlCommand(query, connection);
-                command.Parameters.AddWithValue("@code", invitationCode);
-                var result = command.ExecuteScalar();
-
-                if (result == null || (bool)result)
-                {
-                    string message = (result == null) ? "Invalid invitation code." : "Invitation code already used.";
-                    Console.WriteLine(message);
-
-                    registerTextBorder.IsVisible = true;
-                    registerText.Text = message;
-                    
-                    return;
-                }
-
-                // Generate salt and hash the password
-                string salt = Hash.GenerateSalt();
-                string hashedPassword = Hash.HashPassword(password, salt);
-
-                // Insert user into the database
-                query = "INSERT INTO Users (username, email, password_hash, salt, invitation_code) VALUES (@username, @email, @password_hash, @salt, @invitation_code)";
-                command = new MySqlCommand(query, connection);
-                command.Parameters.AddWithValue("@username", username);
-                command.Parameters.AddWithValue("@email", email);
-                command.Parameters.AddWithValue("@password_hash", hashedPassword);
-                command.Parameters.AddWithValue("@salt", salt);
-                command.Parameters.AddWithValue("@invitation_code", invitationCode);
-                command.ExecuteNonQuery();
-
-                // Mark the invitation code as used
-                query = "UPDATE InvitationCodes SET is_used = TRUE WHERE code = @code";
-                command = new MySqlCommand(query, connection);
-                command.Parameters.AddWithValue("@code", invitationCode);
-                command.ExecuteNonQuery();
-
-                Console.WriteLine("User registered successfully.");
-                registerTextBorder.IsVisible = true;
-                registerText.Text = "User registered successfully";
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error: " + ex.Message);
-                registerTextBorder.IsVisible = true;
-                registerText.Text = "Error";
-            }
-        }
-
     }
 }

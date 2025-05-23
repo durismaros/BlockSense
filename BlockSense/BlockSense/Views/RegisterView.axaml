@@ -4,17 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="BlockSense.RegisterView">
-	
+
 	<Panel>
-		<ExperimentalAcrylicBorder IsHitTestVisible="False">
-			<ExperimentalAcrylicBorder.Material>
-				<ExperimentalAcrylicMaterial
-					BackgroundSource="Digger"
-					TintColor="Yellow"
-					TintOpacity="0.2"
-					MaterialOpacity="0.8" />
-			</ExperimentalAcrylicBorder.Material>
-		</ExperimentalAcrylicBorder>
 
 		<!--MainApplicationIcon-->
 		<Panel
@@ -28,67 +19,74 @@
 		
 		
 		<StackPanel
-			Margin="30"
+			Margin="30, 40, 30, 30"
 			Width="400"
 			HorizontalAlignment="Right"
 			VerticalAlignment="Top"
-			Spacing="15">
-			<Grid
+			Spacing="15"
+			KeyDown="OnKeyDown">
+
+			<!--Register Header-->
+			<Panel
 				Width="300"
 				Height="40">
 				<Border
 					Width="300"
 					Height="40"
-					Background="#F5DEB3"
-					CornerRadius="20"/>
+					Background="#E6C8A0"
+					CornerRadius="20"
+					BoxShadow="0 2 8 0 #30000000"/>
 
 				<!--Return to the Home page Button-->
 				<Button
 					Name="HomeButton"
 					Width="40"
 					Height="30"
-					Margin="5 0 0 0"
-					CornerRadius="20,20,20,20"
+					Margin="6 0 0 0"
+					CornerRadius="20"
+					Background="#D4B38C"
 					Click="HomeClick">
+
+					<Button.Styles>
+						<Style Selector="Button:pointerover ContentPresenter">
+							<Setter Property="Background" Value="#B99978" />
+						</Style>
+					</Button.Styles>
+					
 					<Image
 						Height="30"
-						Source="avares://BlockSense/Assets/back3.png"/>
+						Source="avares://BlockSense/Assets/backArrow.png"/>
 				</Button>
 				
 				<TextBlock
 					HorizontalAlignment="Center"
 					VerticalAlignment="Center"
 					FontSize="18"
-					FontWeight="Bold"
-					Foreground="#6F4E37"
+					FontWeight="SemiBold"
+					Foreground="#6D4C41"
 					Text="Register"/>
-			</Grid>
-			
-			
+			</Panel>
+
+			<!--Separator-->
 			<Border
-				Width="300"
-				Height="1"
-				Background="#C2B280"
-				CornerRadius="100"
-				BoxShadow="5 5 10 0 Black"/>
+				Classes="DefaultSeparator"
+				Width="280"/>
 
 			<!--User register information entries-->
+		
 			<TextBox
 				Name="usernameRegister"
 				Width="320"
 				Height="20"
 				Watermark="username*"
-				VerticalContentAlignment="Center"
-				Margin="0,10,0,0"
-				CornerRadius="5"/>
-			
+				Margin="0,10,0,0">
+			</TextBox>
+
 			<TextBox
 				Name="emailRegister"
 				Width="320"
 				Height="20"
-				Watermark="email address*"
-				VerticalContentAlignment="Center"
-				CornerRadius="5"/>
+				Watermark="email address*"/>
 			
 			<TextBox
 				Name="passwordRegister"
@@ -96,56 +94,45 @@
 				Height="20"
 				Watermark="password*"
 				PasswordChar="•"
-				VerticalContentAlignment="Center"
-				CornerRadius="5"/>
+				FontFamily="{DynamicResource Roboto}"
+				FontWeight="Bold"/>
 			
 			<TextBox
 				Name="passwordConfirmRegister"
 				Width="320"
 				Height="20"
-				Watermark="confirm password*"
+				Watermark="re-enter password*"
 				PasswordChar="•"
-				VerticalContentAlignment="Center"
-				CornerRadius="5"/>
+				FontFamily="{DynamicResource Roboto}"
+				FontWeight="Bold"/>
 			
 			<TextBox
 				Name="invitationCodeRegister"
 				Width="320"
 				Height="20"
 				Watermark="invitation code*"
-				VerticalContentAlignment="Center"
-				CornerRadius="5"/>
+				FontWeight="Bold"/>
 			
 			<!--Main register Button-->
 			<Button
-				Name="registerButton"
-				Width="275"
-				Height="35"
-				Margin="0,0,0,0"
-				HorizontalAlignment="Center"
-				CornerRadius="10"
-				Background="#F5DEB3"
+				Classes="DefaultLightBrown"
+				Name="RegisterButton"
 				Click="RegisterClick">
 				<TextBlock
-					Name="registerButtonText"
 					Text="Register"
 					HorizontalAlignment="Center"
 					VerticalAlignment="Center"
-					FontWeight="SemiBold"
-					Foreground="#6F4E37"/>
-				<Button.Styles>
-					<Style Selector="Button:pointerover /template/ ContentPresenter">
-						<Setter Property="Background" Value="#D2B48C" />
-					</Style>
-				</Button.Styles>
+					FontWeight="Medium"
+					Foreground="#5D3F36"/>
 			</Button>
 
+			<!--System Output-->
 			<Border
 				Name="registerTextBorder"
 				Width="250"
 				Height="20"
 				Margin="0,-15,0,0"
-				Background="#D2B48C"
+				Background="#D4B38C"
 				CornerRadius="2,2,10,10"
 				IsVisible="False">
 				<TextBlock
@@ -154,7 +141,7 @@
 					HorizontalAlignment="Center"
 					VerticalAlignment="Center"
 					FontStyle="Italic"
-					FontWeight="Bold"
+					FontWeight="SemiBold"
 					FontSize="12"/>
 			</Border>
 			

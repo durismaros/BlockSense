@@ -5,12 +5,18 @@
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.Styles>
-        <FluentTheme />
-		<StyleInclude Source="/Assets/Styles.axaml"/>
-    </Application.Styles>
+		<FluentTheme />
+		<StyleInclude Source="/Assets/AppDefaultStyles.axaml"/>
+	</Application.Styles>
 	<Application.Resources>
 		<FontFamily x:Key="Montserrat">
-			avares://BlockSense/Assets/Fonts#Montserrat
+			avares://BlockSense/Assets/Fonts/Montserrat#Montserrat
+		</FontFamily>
+		<FontFamily x:Key="Roboto">
+			avares://BlockSense/Assets/Fonts/Roboto#Roboto
+		</FontFamily>
+		<FontFamily x:Key="Pacifico">
+			avares://BlockSense/Assets/Fonts/Pacifico#Pacifico
 		</FontFamily>
 	</Application.Resources>
 </Application>
