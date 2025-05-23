@@ -71,3 +71,4 @@ C:\Users\d3str\Desktop\School\BlockSense\BlockSenseAPI\BlockSenseAPI\bin\Debug\n
 C:\Users\d3str\Desktop\School\BlockSense\BlockSenseAPI\BlockSenseAPI\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
 C:\Users\d3str\Desktop\School\BlockSense\BlockSenseAPI\BlockSenseAPI\bin\Debug\net8.0\Otp.NET.dll
 C:\Users\d3str\Desktop\School\BlockSense\BlockSenseAPI\BlockSenseAPI\bin\Debug\net8.0\QRCoder.dll
+C:\Users\d3str\Desktop\School\BlockSense\BlockSenseAPI\BlockSenseAPI\bin\Debug\net8.0\zxcvbn-core.dll

@@ -1,12 +1,16 @@
 ﻿using BlockSense.Cryptography.Encryption;
+using BlockSense.Cryptography.Hashing;
 using BlockSenseAPI.Cryptography;
 using BlockSenseAPI.Models.TwoFactorAuth;
+using Org.BouncyCastle.Security;
 using OtpNet;
 using QRCoder;
 using System.Data;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using static Mysqlx.Expect.Open.Types.Condition.Types;
 
@@ -24,6 +28,8 @@ namespace BlockSenseAPI.Services.UserServices
         private readonly IConfiguration _configuration;
         private readonly DatabaseContext _dbContext;
         private const int _secretKeyLength = 20; // 160-bit secret for TOTP
+        private const int _backupCodeCount = 5;
+        private const int _backupCodeLength = 8;
         private readonly string _appName;
         private readonly string _masterKey;
 
@@ -37,13 +43,11 @@ namespace BlockSenseAPI.Services.UserServices
 
         public async Task<TwoFactorSetupResponseModel?> BeginSetup(int userId)
         {
-            string query = "select email from users where uid = @uid";
-            string secretKey = GenerateRandomSecretKey();
-            string otpAuthUri;
+            string query = "select email from users where user_id = @user_id";
 
             Dictionary<string, object> parameters = new()
             {
-                { "uid", userId },
+                { "@user_id", userId },
             };
 
             using (var reader = await _dbContext.ExecuteReaderAsync(query, parameters))
@@ -51,15 +55,17 @@ namespace BlockSenseAPI.Services.UserServices
                 if (!await reader.ReadAsync())
                     return null;
 
-                otpAuthUri = GenerateOtpAuthUri(secretKey, reader.GetString("email"), _appName);
-            }
-            var qrCodeData = GenerateQRCodeData(otpAuthUri);
+                string secretKey = GenerateRandomSecretKey();
+                string email = reader.GetString("email");
+                string otpAuthUri = GenerateOtpAuthUri(secretKey, email, _appName);
+                byte[] qrCodeData = GenerateQRCodeData(otpAuthUri);
 
-            return new TwoFactorSetupResponseModel
-            {
-                SetupKey = secretKey,
-                QRCodeData = qrCodeData
-            };
+                return new TwoFactorSetupResponseModel
+                {
+                    SetupKey = secretKey,
+                    QRCodeData = qrCodeData
+                };
+            }
         }
 
         public async Task<bool> CompleteSetup(int userId, TwoFactorSetupRequestModel request)
@@ -70,38 +76,51 @@ namespace BlockSenseAPI.Services.UserServices
             if (!VerifyCode(Base32Encoding.ToBytes(request.SecretKey), request.Code))
                 return false;
 
+            var backupCodes = GenerateBackupCodes();
+
             byte[] key = Convert.FromBase64String(_masterKey);
             byte[] nonce = Aes256Gcm.GenerateNonce();
-            byte[] cipherText = Aes256Gcm.Encrypt(Base32Encoding.ToBytes(request.SecretKey), key, nonce);
+            byte[] plaintext = Base32Encoding.ToBytes(request.SecretKey);
 
-            var storageFormat = new byte[nonce.Length + cipherText.Length];
-            Buffer.BlockCopy(nonce, 0, storageFormat, 0, nonce.Length);
-            Buffer.BlockCopy(cipherText, 0, storageFormat, nonce.Length, cipherText.Length);
+            byte[] ciphertext = Aes256Gcm.Encrypt(plaintext, key, nonce);
 
-            string query = "insert into user_2fa_auth values(@uid, @secret_key, default, default)";
+            // Combine nonce (12) + ciphertextWithTag (36) = 48 bytes
+            byte[] encryptedSecret = new byte[nonce.Length + ciphertext.Length];
+            Buffer.BlockCopy(nonce, 0, encryptedSecret, 0, nonce.Length);
+            Buffer.BlockCopy(ciphertext, 0, encryptedSecret, nonce.Length, ciphertext.Length);
+
+            string query = "insert into user_authentication values(@user_id, true, @encrypted_totp_secret, @backup_codes, default)";
 
             Dictionary<string, object> parameters = new()
             {
-                { "uid",  userId},
-                { "secret_key", storageFormat },
+                { "@user_id",  userId},
+                { "@encrypted_totp_secret", encryptedSecret },
+                { "@backup_codes", JsonSerializer.Serialize(backupCodes) }
             };
 
-            await _dbContext.ExecuteNonQueryAsync(query, parameters);
-            _dbContext.Dispose();
+            if (await _dbContext.ExecuteNonQueryAsync(query, parameters) != 1)
+                return false;
 
             return true;
         }
 
         public async Task<TwoFactorVerificationResponse?> VerifyOtp(int userId, string? code)
         {
-            if (code is null || code.Length != 6)
+            if (string.IsNullOrWhiteSpace(code) || code.Length != 6)
                 return null;
 
-            string query = "select secret_key from user_2fa_auth where user_id = @uid";
+            if (await VerifyBackupCode(userId, Encoding.UTF8.GetBytes(code)))
+                return new TwoFactorVerificationResponse
+                {
+                    Verification = true,
+                    Message = "Verified using backup code"
+                };
+
+            string query = "select encrypted_totp_secret from user_authetication where user_id = @user_id";
 
             Dictionary<string, object> parameters = new()
             {
-                {"uid", userId}
+                {"@user_id", userId}
             };
 
             using (var reader = await _dbContext.ExecuteReaderAsync(query, parameters))
@@ -110,24 +129,24 @@ namespace BlockSenseAPI.Services.UserServices
                     return new TwoFactorVerificationResponse
                     {
                         Verification = false,
-                        Message = "Couldn't find the specified user"
+                        Message = "2Fa not enabled for this user"
                     };
 
-
-
                 byte[] storedData = new byte[48];
-                reader.GetBytes("password", 0, storedData, 0, 32);
+                reader.GetBytes("encrypted_totp_secret", 0, storedData, 0, 32);
 
-                byte[] key = Convert.FromBase64String(_masterKey);
                 byte[] nonce = new byte[12];
+
+                // Extract nonce (12) + ciphertextWithTag (36)
                 byte[] ciphertext = new byte[storedData.Length - 12];
 
                 Buffer.BlockCopy(storedData, 0, nonce, 0, 12);
                 Buffer.BlockCopy(storedData, 12, ciphertext, 0, ciphertext.Length);
 
-                byte[] decryptedKey = Aes256Gcm.Decrypt(ciphertext, key, nonce);
+                byte[] key = Convert.FromBase64String(_masterKey);
+                byte[] decryptedSecret = Aes256Gcm.Decrypt(ciphertext, key, nonce);
 
-                if (VerifyCode(decryptedKey, code))
+                if (VerifyCode(decryptedSecret, code))
                     return new TwoFactorVerificationResponse
                     {
                         Verification = true,
@@ -137,7 +156,7 @@ namespace BlockSenseAPI.Services.UserServices
                 return new TwoFactorVerificationResponse
                 {
                     Verification = false,
-                    Message = "Otp verification unsuccessfull"
+                    Message = "Otp verification failed"
                 };
             }
         }
@@ -163,6 +182,46 @@ namespace BlockSenseAPI.Services.UserServices
             }
         }
 
+        private async Task<bool> VerifyBackupCode(int userId, byte[] code)
+        {
+            code = HashingFunctions.ComputeSha256(code);
+            string query = "select backup_codes from user_authentication where user_id = @user_id";
+            Dictionary<string, object> parameters = new()
+            {
+                { "@user_id", userId }
+            };
+
+            using (var reader = await _dbContext.ExecuteReaderAsync(query, parameters))
+            {
+                if (!await reader.ReadAsync())
+                    return false;
+
+                var backupCodes = JsonSerializer.Deserialize<List<string>>(reader.GetString("backup_codes"));
+
+                if (backupCodes is null)
+                    return false;
+
+                // Find and remove used backup code
+                foreach (string backupCode in backupCodes)
+                {
+                    if (!CryptographicOperations.FixedTimeEquals(code, Convert.FromBase64String(backupCode)))
+                        continue;
+
+                    backupCodes.Remove(backupCode);
+
+                    // Update database to remove used code
+                    query = "update user_authentication set backup_codes = @backup_codes where user_id = @user_id";
+
+                    parameters.Add("backup_codes", backupCodes);
+
+                    await _dbContext.ExecuteNonQueryAsync(query, parameters);
+                    return true;
+                }
+                
+                return false;
+            }
+        }
+
         private byte[] GenerateQRCodeData(string otpUri)
         {
             QRCodeGenerator qrGenerator = new QRCodeGenerator();
@@ -176,6 +235,29 @@ namespace BlockSenseAPI.Services.UserServices
             return $"otpauth://totp/{Uri.EscapeDataString(appName)}:{Uri.EscapeDataString(userEmail)}?" +
                    $"secret={secretKey}&issuer={Uri.EscapeDataString(appName)}" +
                    "&algorithm=SHA1&digits=6&period=30";
+        }
+
+        private List<string> GenerateBackupCodes()
+        {
+            var backupCodes = new List<string>();
+            const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // No confusing chars
+
+            for (int i = 0; i < _backupCodeCount; i++)
+            {
+                byte[] randomBytes = CryptographyUtils.SecureRandomGenerator(_backupCodeLength);
+                var code = new StringBuilder(_backupCodeLength);
+
+                for (int j = 0; j < _backupCodeLength; j++)
+                {
+                    code.Append(chars[randomBytes[j] % chars.Length]);
+                }
+
+                string codeStr = code.ToString();
+                byte[] hash = HashingFunctions.ComputeSha256(Encoding.UTF8.GetBytes(codeStr));
+
+                backupCodes.Add(Convert.ToBase64String(hash));
+            }
+            return backupCodes;
         }
     }
 }

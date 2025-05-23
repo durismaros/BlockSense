@@ -30,7 +30,7 @@ namespace BlockSense.Client_Side.Token_authentication
 
             if (token is null || token.Data is null || entropy is null)
             {
-                ConsoleHelper.Log("Either token or entropy is empty");
+                ConsoleLogger.Log("Either token or entropy is empty");
                 return;
             }
 
@@ -51,31 +51,27 @@ namespace BlockSense.Client_Side.Token_authentication
         {
             var existingToken = ReadDataFromFile();
 
-            byte[]? entropy = EntropyManager.RetrieveEntropy();
-
+            var entropy = EntropyManager.RetrieveEntropy();
 
             if (existingToken is null || existingToken.Data is null || existingToken.Hmac is null || entropy is null)
-            {
-                ConsoleHelper.Log("Either token or entropy is empty");
                 return null;
-            }
 
             // Verify HMAC
             byte[] computedHmac = HashingFunctions.ComputeHmacSha256(existingToken.GetBinaryData(), entropy);
             if (!CryptographicOperations.FixedTimeEquals(computedHmac, existingToken.Hmac))
             {
-                ConsoleHelper.Log("HMAC validation failed");
+                ConsoleLogger.Log("HMAC validation failed");
                 return null;
             }
 
             if (existingToken.ExpiresAt < DateTime.UtcNow)
             {
-                ConsoleHelper.Log("Token expired");
+                ConsoleLogger.Log("Token expired");
                 return null;
             }
 
             existingToken.Data = WinDataProtection.Decrypt(existingToken.Data, entropy);
-            ConsoleHelper.Log("Token retrieved successfully");
+            ConsoleLogger.Log("Token retrieved successfully");
             return existingToken;
         }
 
@@ -104,7 +100,7 @@ namespace BlockSense.Client_Side.Token_authentication
         {
             if (!File.Exists(TokenFilePath))
             {
-                ConsoleHelper.Log("Token file not found");
+                ConsoleLogger.Log("Token file not found");
                 return null;
             }
 

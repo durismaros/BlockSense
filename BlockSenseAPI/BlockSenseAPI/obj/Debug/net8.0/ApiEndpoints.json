@@ -124,6 +124,26 @@
     ]
   },
   {
+    "ContainingType": "BlockSenseAPI.Controllers.StatusController",
+    "Method": "CheckStatus",
+    "RelativePath": "api/status/check",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "BlockSenseAPI.Models.ServerStatusModel",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "BlockSenseAPI.Controllers.UserController",
     "Method": "GetUserInfoEndpoint",
     "RelativePath": "api/users/get",

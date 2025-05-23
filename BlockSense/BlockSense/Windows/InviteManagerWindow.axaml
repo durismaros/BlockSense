@@ -170,6 +170,12 @@
 			<Setter Property="Padding" Value="4 0 4 0"/>
 			<Setter Property="Margin" Value="0 10 10 10"/>
 		</Style>
+		<Style Selector="Border.UsedStatusBorder">
+			<Setter Property="Background" Value="#C4B282"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="Padding" Value="4 0 4 0"/>
+			<Setter Property="Margin" Value="0 10 10 10"/>
+		</Style>
 		<Style Selector="Border.ExpiredStatusBorder">
 			<Setter Property="Background" Value="#b88b75"/>
 			<Setter Property="CornerRadius" Value="8"/>

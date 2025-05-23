@@ -27,12 +27,12 @@ namespace BlockSense;
 public partial class LoginView : UserControl
 {
     private readonly UserService _userService;
-    private readonly MainView _mainView;
+    private readonly IViewSwitcher _viewSwitcher;
     
-    public LoginView(UserService userService, MainView mainView)
+    public LoginView(UserService userService, IViewSwitcher viewSwitcher)
     {
         _userService = userService;
-        _mainView = mainView;
+        _viewSwitcher = viewSwitcher;
         InitializeComponent();
     }
 
@@ -63,14 +63,14 @@ public partial class LoginView : UserControl
         }
         catch (Exception ex)
         {
-            ConsoleHelper.Log("Error: " + ex.Message);
+            ConsoleLogger.Log("Error: " + ex.Message);
         }
     }
 
 
     private async void HomeClick(object sender, RoutedEventArgs e)
     {
-        //await MainWindow.SwitchView(_mainView);
+        await _viewSwitcher.NavigateToAsync<MainView>();
     }
 
 
@@ -81,7 +81,6 @@ public partial class LoginView : UserControl
 
         async void ShowMessage(string message)
         {
-
             if (!loginTextBorder.IsVisible || loginText.Text != message)
             {
                 loginText.Text = message;
@@ -92,32 +91,32 @@ public partial class LoginView : UserControl
 
         try
         {
-            if (!InputHelper.Check(login, password))
-                ShowMessage("Looks like you missed a required field");
-
-
-            else
+            if (string.IsNullOrWhiteSpace(login) || string.IsNullOrWhiteSpace(password))
             {
-                var request = new LoginRequestModel(login, password);
-                var response = await _userService.Login(request);
+                ShowMessage("Looks like you missed a required field");
+                return;
+            }
 
-                if (response is null || string.IsNullOrEmpty(response.Message))
-                    return;
 
-                ShowMessage(response.Message);
+            var request = new LoginRequestModel(login, password);
+            var response = await _userService.Login(request);
 
-                if (response.Success)
-                {
-                    await Task.Delay(2000);
-                    //await MainWindow.SwitchView(new WelcomeView());
-                }
+            if (response is null || string.IsNullOrEmpty(response.Message))
+                return;
+
+            ShowMessage(response.Message);
+
+            if (response.Success)
+            {
+                await Task.Delay(2000);
+                await _viewSwitcher.NavigateToAsync<WelcomeView>();
             }
 
         }
 
         catch (Exception ex)
         {
-            ConsoleHelper.Log("Error: " + ex.Message);
+            ConsoleLogger.Log("Error: " + ex.Message);
         }
     }
 }

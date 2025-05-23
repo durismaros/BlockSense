@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace BlockSense.Utilities
 {
-    public static class ConsoleHelper
+    public static class ConsoleLogger
     {
         public static void Log(string input)
         {

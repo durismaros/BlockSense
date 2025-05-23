@@ -23,17 +23,17 @@ public partial class UserProfileView : UserControl
     private readonly AdditionalUserInfoModel _additionalUserInfo;
     private readonly TwoFactorAuthService _twoFactorAuthService;
     private readonly ProfilePictureHandler _profilePictureHandler;
-    private readonly MainView _mainView;
+    private readonly IViewSwitcher _viewSwitcher;
 
     private InviteManagerWindow? _inviteManagerWindow;
 
-    public UserProfileView(UserInfoModel userInfo, AdditionalUserInfoModel additionalUserInfo, TwoFactorAuthService twoFactorAuthService, ProfilePictureHandler profilePictureHandler, MainView mainView)
+    public UserProfileView(UserInfoModel userInfo, AdditionalUserInfoModel additionalUserInfo, TwoFactorAuthService twoFactorAuthService, ProfilePictureHandler profilePictureHandler, IViewSwitcher viewSwitcher)
     {
         _userInfo = userInfo;
         _additionalUserInfo = additionalUserInfo;
         _twoFactorAuthService = twoFactorAuthService;
         _profilePictureHandler = profilePictureHandler;
-        _mainView = mainView;
+        _viewSwitcher = viewSwitcher;
 
         var userBadge = new Border()
         {
@@ -56,7 +56,7 @@ public partial class UserProfileView : UserControl
         };
 
         InitializeComponent();
-        if (_userInfo.UserId != 0)
+        if (_userInfo.UserId != -1)
         {
             ProfilePictureImage.Source = _profilePictureHandler.GetExistingPicture();
 
@@ -66,11 +66,11 @@ public partial class UserProfileView : UserControl
 
             switch (_userInfo.Type)
             {
-                case UserType.User:
+                case UserType.Standard:
                     AccountBadgesPanel.Children.Add(userBadge);
                     break;
 
-                case UserType.Admin:
+                case UserType.Administrator:
                     AccountBadgesPanel.Children.Add(userBadge);
                     AccountBadgesPanel.Children.Add(adminBadge);
                     break;
@@ -80,10 +80,10 @@ public partial class UserProfileView : UserControl
 
             InvitationUserTextBlock.Text = _userInfo.InvitingUser;
 
-            LastUpdateTextBlock.Text = SystemUtils.DateTransform(_userInfo.UpdatedAt);
+            LastUpdateTextBlock.Text = $"Updated: {SystemUtils.DateTransform(_userInfo.UpdatedAt)}";
 
             int invitedUsers = _additionalUserInfo.InvitedUsers;
-            UsersInvitedTextBlock.Text = $"{invitedUsers.ToString()} {(invitedUsers > 1 ? "Users" : "User")}";
+            UsersInvitedTextBlock.Text = $"{invitedUsers.ToString()} {(invitedUsers != 1 ? "Users" : "User")}";
 
             int activeDevices = _additionalUserInfo.ActiveDevices;
             ActiveDevicesTextBlock.Text = $"{activeDevices.ToString()} {(activeDevices > 1 ? "Devices" : "Device")}";
@@ -91,16 +91,15 @@ public partial class UserProfileView : UserControl
             bool TwoFaStatus = _additionalUserInfo.TwoFaEnabled;
             TwoFactorAuthTextBlock.Text = TwoFaStatus ? "Enabled" : "Disabled";
         }
-
-        _mainView = mainView;
     }
 
     private async void InviteManagerClick(object sender, RoutedEventArgs e)
     {
         if (_inviteManagerWindow == null || _inviteManagerWindow.IsVisible == false)
         {
-            _inviteManagerWindow = App.Services.GetRequiredService<InviteManagerWindow>();
+            _inviteManagerWindow = App.Services!.GetRequiredService<InviteManagerWindow>();
             _inviteManagerWindow.Show();
+
             // Fade in animation on Window open
             await AnimationManager.FadeInAnimation.RunAsync(_inviteManagerWindow);
         }
@@ -119,7 +118,7 @@ public partial class UserProfileView : UserControl
 
     private async void ToggleTwoFaClick(object sender, RoutedEventArgs e)
     {
-        if (VerificationCodeInput.Text.Length != 6)
+        if (VerificationCodeInput.Text is null || VerificationCodeInput.Text.Length != 6)
             return;
 
         var verification = await _twoFactorAuthService.CompleteTwoFaSetup(new TwoFactorSetupRequestModel
@@ -133,7 +132,7 @@ public partial class UserProfileView : UserControl
 
     private async void VerifyTwoFaClick(object sender, RoutedEventArgs e)
     {
-        if (VerificationCodeInput.Text.Length != 6)
+        if (VerificationCodeInput.Text is null || VerificationCodeInput.Text.Length != 6)
             return;
 
         var verification = await _twoFactorAuthService.VerifyOtp(new TwoFactorVerificationRequest
@@ -159,7 +158,8 @@ public partial class UserProfileView : UserControl
             await AnimationManager.FadeOutAnimation.RunAsync(_inviteManagerWindow);
             _inviteManagerWindow = null; // Clear reference to avoid memory leaks
         }
-        //await MainWindow.SwitchView(new WelcomeView());
+
+        await _viewSwitcher.NavigateToAsync<WelcomeView>();
     }
 
     private async void PfpUploadClick(object sender, PointerPressedEventArgs e)
@@ -180,6 +180,6 @@ public partial class UserProfileView : UserControl
     private async void LogoutClick(object sender, RoutedEventArgs e)
     {
         //await UserService.Logout();
-        //await MainWindow.SwitchView(_mainView);
+        await _viewSwitcher.NavigateToAsync<MainView>();
     }
 }

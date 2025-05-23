@@ -235,6 +235,35 @@
         }
       }
     },
+    "/api/status/check": {
+      "get": {
+        "tags": [
+          "Status"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerStatusModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerStatusModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerStatusModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/get": {
       "get": {
         "tags": [
@@ -525,6 +554,24 @@
             "type": "boolean"
           },
           "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ServerStatusModel": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "dbStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "timeStamp": {
             "type": "string",
             "nullable": true
           }

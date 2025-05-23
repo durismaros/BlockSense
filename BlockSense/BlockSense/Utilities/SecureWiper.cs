@@ -31,7 +31,7 @@ namespace BlockSense.Utilities
             }
             catch (Exception ex)
             {
-                ConsoleHelper.Log("Error: " + ex.Message);
+                ConsoleLogger.Log("Error: " + ex.Message);
                 Array.Clear(data, 0, data.Length);
                 throw;
             }

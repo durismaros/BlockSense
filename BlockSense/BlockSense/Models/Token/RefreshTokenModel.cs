@@ -21,7 +21,7 @@ namespace BlockSense.Models.Token
         {
             if (Data is null)
             {
-                ConsoleHelper.Log("Token data is empty");
+                ConsoleLogger.Log("Token data is empty");
                 return Array.Empty<byte>();
             }
 

@@ -11,11 +11,14 @@ using System;
 using BlockSense.Views;
 using System.Collections.Generic;
 using BlockSense.Cryptography.Wallet.MnemonicManager;
+using BlockSense.Utilities;
 
 namespace BlockSense;
 
 public partial class PinEntryView : UserControl
 {
+    private readonly IViewSwitcher _viewSwitcher;
+
     private const int PIN_LENGTH = 6;
     private string _currentPin = string.Empty;
     private string _confirmPin = string.Empty;
@@ -36,19 +39,19 @@ public partial class PinEntryView : UserControl
 
     public bool SetupMode { get; set; }
 
-    public PinEntryView()
+    public PinEntryView(IViewSwitcher viewSwitcher)
     {
-        InitializeComponent();
+        _viewSwitcher = viewSwitcher;
         SetMode(true); // set initial mode Here
+
+        // Setup of initial and confirmation PIN dots
+        SetupDots(DotsPanel, _currentDots);
+        SetupDots(ConfirmDotsPanel, _confirmDots);
 
         // Initialize sliding panel position
         SlidePanel.RenderTransform = new TranslateTransform(0, -450);
 
-        SetupDots(DotsPanel, _currentDots);
-        SetupDots(ConfirmDotsPanel, _confirmDots);
-
-
-        // Event subscribing
+        // Event subscribtion
 
         // Back from Confirming PIN
         BackButton.Click += (s, e) =>
@@ -86,6 +89,8 @@ public partial class PinEntryView : UserControl
         this.Focusable = true;
         this.KeyDown += OnKeyDown;
         this.Loaded += (s, e) => this.Focus();
+
+        InitializeComponent();
     }
 
     private void DragWindow(object sender, PointerPressedEventArgs e)
@@ -169,14 +174,14 @@ public partial class PinEntryView : UserControl
         // Handle Escape key
         else if (e.Key.Equals(Key.Escape) && !_isPanelVisible)
         {
-            //await MainWindow.SwitchView(new WelcomeView());
+            await _viewSwitcher.NavigateToAsync<WelcomeView>();
             ResetPin();
         }
     }
 
     private void ValidateAndCompleteEntry()
     {
-        //List<string> retrievedMnemonic = MnemonicManager.RetrieveMnemonic(_currentPin);
+        List<string> retrievedMnemonic = MnemonicManager.RetrieveMnemonic(_currentPin);
     }
 
     private async void ValidateAndCompleteSetup()
@@ -187,7 +192,7 @@ public partial class PinEntryView : UserControl
             SetupMode = false;
             AnimatePanel(false);
             ResetPin();
-            //await MainWindow.SwitchView(new SecretPhraseView());
+            await _viewSwitcher.NavigateToAsync<SecretPhraseView>();
             // Wallet generation logic here
         }
         else
@@ -287,7 +292,9 @@ public partial class PinEntryView : UserControl
         ConfirmDotsPanel.RenderTransform = new TranslateTransform(0, 0);
     }
 
-    // Public method to reset the PIN entry (for use by parent controls)
+    /// <summary>
+    /// Reset the PIN entry (used by parent controls)
+    /// </summary>
     public void ResetPin()
     {
         _currentPin = string.Empty;
@@ -305,7 +312,11 @@ public partial class PinEntryView : UserControl
         this.Focus();
     }
 
-    // Method to switch between setup mode and verification mode
+
+    /// <summary>
+    /// Method to set up the initial mode (Mnemonic Generation/Retrieval)
+    /// </summary>
+    /// <param name="setupMode"></param>
     public void SetMode(bool setupMode)
     {
         SetupMode = setupMode;

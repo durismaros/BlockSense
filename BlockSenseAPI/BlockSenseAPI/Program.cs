@@ -4,6 +4,7 @@ using BlockSenseAPI.Services.TokenServices;
 using BlockSenseAPI.Services.UserServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using MySql.Data.MySqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,8 +13,12 @@ builder.Services.AddTransient<ValidatorService>();
 builder.Services.AddTransient<SystemIdentifierModel>();
 builder.Services.AddTransient<GeoLookupService>();
 
-// once per HTTP request
+
+builder.Services.AddScoped<MySqlConnection>(_ =>
+    new MySqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddScoped<DatabaseContext>();
+
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();

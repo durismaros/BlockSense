@@ -52,7 +52,7 @@ namespace BlockSense.Utilities
             };
 
 
-            ConsoleHelper.Log("Animations initialized");
+            ConsoleLogger.Log("Animations initialized");
         }
     }
 }

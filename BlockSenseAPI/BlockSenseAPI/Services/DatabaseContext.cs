@@ -6,27 +6,36 @@ namespace BlockSenseAPI.Services
 {
     public class DatabaseContext : IDisposable
     {
-        private readonly string _connectionString;
-        private MySqlConnection? _connection;
+        private readonly MySqlConnection _connection;
 
-        public DatabaseContext(IConfiguration configuration)
+        // Connection is now injected instead of created internally
+        public DatabaseContext(MySqlConnection connection)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
-        }
-
-        private async Task<MySqlConnection> GetConnectionAsync()
-        {
-            _connection = new MySqlConnection(_connectionString);
-            await _connection.OpenAsync();
-
-            return _connection;
+            _connection = connection;
         }
 
         public async Task<DbDataReader> ExecuteReaderAsync(string query, Dictionary<string, object>? parameters = null)
         {
-            var connection = await GetConnectionAsync();
-            var command = new MySqlCommand(query, connection);
-            if (parameters != null)
+            await EnsureConnectionOpenAsync();
+
+            var command = CreateCommand(query, parameters);
+            return await command.ExecuteReaderAsync();
+        }
+
+        public async Task<int> ExecuteNonQueryAsync(string query, Dictionary<string, object>? parameters = null)
+        {
+            await EnsureConnectionOpenAsync();
+
+            using (var command = CreateCommand(query, parameters))
+            {
+                return await command.ExecuteNonQueryAsync();
+            }
+        }
+
+        private MySqlCommand CreateCommand(string query, Dictionary<string, object>? parameters)
+        {
+            var command = new MySqlCommand(query, _connection);
+            if (parameters is not null)
             {
                 foreach (var param in parameters)
                 {
@@ -34,33 +43,24 @@ namespace BlockSenseAPI.Services
                 }
             }
 
-            return await command.ExecuteReaderAsync();
+            return command;
         }
 
-        public async Task<int> ExecuteNonQueryAsync(string query, Dictionary<string, object>? parameters = null)
+        private async Task EnsureConnectionOpenAsync()
         {
-            using (var connection = await GetConnectionAsync())
+            if (_connection.State != ConnectionState.Open)
             {
-                var command = new MySqlCommand(query, connection);
-                if (parameters != null)
-                {
-                    foreach (var param in parameters)
-                    {
-                        command.Parameters.AddWithValue(param.Key, param.Value);
-                    }
-                }
-
-                return await command.ExecuteNonQueryAsync();
+                await _connection.OpenAsync();
             }
         }
 
         public void Dispose()
         {
-            if (_connection != null && _connection.State == ConnectionState.Open)
+            if (_connection.State == ConnectionState.Open)
             {
                 _connection.Close();
-                _connection.Dispose();
             }
+            _connection.Dispose();
         }
     }
 }

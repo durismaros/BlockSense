@@ -9,28 +9,20 @@ namespace InvitationCodeGenerator
     public class InvitationCodeGenerator
     {
         
-        private static string connectionString = "Server=localhost;Database=BlockSense;User=root;Password=Pa$$w0rd;";
-        private static int login;
+        private readonly static string _connectionString = "Server=localhost;Database=BlockSense;User=root;Password=Pa$$w0rd;";
+        private readonly static MySqlConnection _connection;
 
-        public static int Login
+        static InvitationCodeGenerator()
         {
-            get { return login; }
-            set { login = value; }
-        }
-
-        public static MySqlConnection GetConnection()
-        {
-            var connection = new MySqlConnection(connectionString);
+            _connection = new MySqlConnection(_connectionString);
             try
             {
-                connection.Open();
+                _connection.Open();
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error: " + ex.Message);
             }
-
-            return connection;
         }
 
         /// <summary>
@@ -63,6 +55,8 @@ namespace InvitationCodeGenerator
                 InsertInvitationCode(invitationCode);
                 Thread.Sleep(500);
             }
+
+            _connection.Close();
         }
 
         /// <summary>
@@ -77,16 +71,10 @@ namespace InvitationCodeGenerator
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
             char[] stringChars = new char[length];
 
-            string query = "SELECT COUNT(*) FROM InvitationCodes WHERE code = @code";
-            using (var command = new MySqlCommand(query, GetConnection()))
-            {
-                for (int i = 0; i < length; i++)
-                {
-                    stringChars[i] = chars[random.Next(chars.Length)];
-                }
+            for (int i = 0; i < length; i++)
+                stringChars[i] = chars[random.Next(chars.Length)];
 
-                return new string(stringChars);
-            }
+            return new string(stringChars);
         }
 
         /// <summary>
@@ -95,22 +83,20 @@ namespace InvitationCodeGenerator
         /// <param name="code"></param>
         public static void InsertInvitationCode(string code)
         {
-            using (var connection = GetConnection())
+            try
             {
-                try
-                {
-                    string query = "INSERT INTO InvitationCodes (invitation_code, expires_at) values (@code, @expires_at)";
-                    var command = new MySqlCommand(query, connection);
-                    command.Parameters.AddWithValue("@code", code);
-                    command.Parameters.AddWithValue("@expires_at", DateTime.UtcNow.AddMonths(1));
-                    command.ExecuteNonQuery();
+                string query = "insert into invitation_codes values (default, @code, default, default, @created_at, @expires_at, default)";
+                var command = new MySqlCommand(query, _connection);
+                command.Parameters.AddWithValue("@code", code);
+                command.Parameters.AddWithValue("@created_at", DateTime.UtcNow);
+                command.Parameters.AddWithValue("@expires_at", DateTime.UtcNow.AddMonths(1));
+                command.ExecuteNonQuery();
 
-                    Console.WriteLine($"Invitation code {code} added successfully.");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error inserting code into the database: " + ex.Message);
-                }
+                Console.WriteLine($"Invitation code {code} added successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error inserting code into the database: " + ex.Message);
             }
         }
     }

@@ -42,12 +42,12 @@ namespace BlockSenseAPI.Services.UserServices
         {
             // Similar to your existing LoadUserInfo but returns a DTO
             // Implementation would query database and return UserInfo object
-            string query = "select users.uid, users.username, users.email, users.type, users.password, users.salt, users.created_at, users.updated_at, users1.username as generated_by from users " +
-                           "join invitationcodes ON users.invitation_code = invitationcodes.invitation_id left join users AS users1 ON invitationcodes.generated_by = users1.uid where users.uid = @uid";
+            string query = "select users.user_id, users.username, users.email, users.user_type, users.password_hash, users.password_salt, users.created_at, users.updated_at, invitation_user.username as generated_by from users " +
+                "join invitation_codes on users.invitation_code_id = invitation_codes.invitation_code_id left join users as invitation_user on invitation_codes.generated_by = invitation_user.user_id where users.user_id = @user_id";
 
             Dictionary<string, object> parameters = new()
             {
-                {"@uid", userId}
+                {"@user_id", userId}
             };
 
             using (var reader = await _dbContext.ExecuteReaderAsync(query, parameters))
@@ -55,7 +55,7 @@ namespace BlockSenseAPI.Services.UserServices
                 if (!await reader.ReadAsync())
                     return null;
 
-                Enum.TryParse(reader.GetString("type"), true, out UserType type);
+                Enum.TryParse(reader.GetString("user_type"), true, out UserType type);
 
                 return new UserInfoModel
                 {
@@ -73,12 +73,12 @@ namespace BlockSenseAPI.Services.UserServices
         public async Task<AdditionalUserInfoModel?> FetchAddUserInfo(int userId)
         {
             string query = "select " +
-                "(select count(invitation_id) from invitationcodes where generated_by = @uid and is_used = 1 group by generated_by) as invitedusers, " +
-                "(select count(distinct hardware_identifier) from refreshtokens where user_id = @uid and revoked = 0 and expires_at > now()) as active_devices, " +
-                "(select 2fa_enabled from users where uid = @uid) as 2fa_enabled";
+                "(select count(invitation_code_id) from invitation_codes where generated_by = @user_id and is_used = true group by generated_by) as invited_users, " +
+                "(select count(distinct hardware_fingerprint) from refresh_tokens where user_id = @user_id and is_revoked = false and expires_at > now()) as active_devices, " +
+                "(select is_2fa_enabled from user_authentication where user_id = @user_id) as 2fa_enabled";
             Dictionary<string, object> parameters = new()
             {
-                {"@uid", userId}
+                {"@user_id", userId}
             };
 
             using (var reader = await _dbContext.ExecuteReaderAsync(query, parameters))
@@ -88,9 +88,10 @@ namespace BlockSenseAPI.Services.UserServices
 
                 return new AdditionalUserInfoModel
                 {
-                    InvitedUsers = reader.GetInt32("invitedusers"),
+                    InvitedUsers = reader.IsDBNull(reader.GetOrdinal("invited_users")) ? 0 : reader.GetInt32("invited_users"),
                     ActiveDevices = reader.GetInt32("active_devices"),
-                    TwoFaEnabled = reader.GetBoolean("2fa_enabled")
+                    TwoFaEnabled = reader.IsDBNull(reader.GetOrdinal("2fa_enabled"))
+                    ? false : reader.GetBoolean("2fa_enabled")
                 };
             }
 
@@ -101,7 +102,7 @@ namespace BlockSenseAPI.Services.UserServices
             if (string.IsNullOrEmpty(request.Login) || string.IsNullOrEmpty(request.Password) || request.Identifiers is null)
                 return null;
 
-            string query = "select uid, username, email, password, salt from users where (username = @login or email = @login) and type != 'banned'";
+            string query = "select user_id, password_hash, password_salt from users where (username = @login or email = @login) and user_type != 'banned'";
             Dictionary<string, object> parameters = new()
             {
                 {"@login", request.Login}
@@ -110,21 +111,17 @@ namespace BlockSenseAPI.Services.UserServices
             using (var reader = await _dbContext.ExecuteReaderAsync(query, parameters))
             {
                 if (!await reader.ReadAsync())
-                {
                     return new LoginResponseModel
                     {
                         Success = false,
-                        Message = "Hmm, we couldn’t find your account",
-                        RefreshToken = null,
-                        AccessToken = null
+                        Message = "Hmm, we couldn’t find your account"
                     };
-                }
 
                 byte[] hashedPassword = new byte[32];
-                reader.GetBytes("password", 0, hashedPassword, 0, 32);
+                reader.GetBytes("password_hash", 0, hashedPassword, 0, 32);
 
                 byte[] salt = new byte[16];
-                reader.GetBytes("salt", 0, salt, 0, 16);
+                reader.GetBytes("password_salt", 0, salt, 0, 16);
 
                 byte[] passwordBytes = Encoding.UTF8.GetBytes(request.Password);
 
@@ -132,9 +129,11 @@ namespace BlockSenseAPI.Services.UserServices
 
                 if (CryptographicOperations.FixedTimeEquals(hashedPassword, hashedPasswordRequest))
                 {
-                    int userId = reader.GetInt32("uid");
+                    int userId = reader.GetInt32("user_id");
                     var refreshToken = _refreshTokenService.GenerateRefreshToken(userId);
                     var accessToken = _accessTokenService.GenerateAccessToken(userId);
+
+                    await reader.DisposeAsync();
 
                     await _refreshTokenService.StoreRefreshToken(new TokenRefreshRequestModel
                     {
@@ -154,9 +153,7 @@ namespace BlockSenseAPI.Services.UserServices
                 return new LoginResponseModel
                 {
                     Success = false,
-                    Message = "Oops! Wrong password entered",
-                    RefreshToken = null,
-                    AccessToken = null
+                    Message = "Oops! Wrong password entered"
                 };
             }
         }
@@ -174,25 +171,31 @@ namespace BlockSenseAPI.Services.UserServices
                     Message = "Invitation code doesn’t seem right"
                 };
 
+            if (Zxcvbn.Core.EvaluatePassword(request.Password).Score < 3)
+                return new RegisterResponseModel
+                {
+                    Success = false,
+                    Message = "Too weak! Try a stronger password"
+                };
+
             // Generate salt and hash the password
             byte[] salt = CryptographyUtils.SecureRandomGenerator();
             byte[] passwordBytes = Encoding.UTF8.GetBytes(request.Password);
             byte[] hashedPassword = HashingFunctions.ComputeSha256(passwordBytes, salt);
 
-            string query = "insert into users (username, email, password, salt, invitation_code) values (@username, @email, @password, @salt, (select invitation_id from invitationcodes where invitation_code = @invitation_code))";
+            string query = "insert into users (username, email, password_hash, password_salt, invitation_code_id) values (@username, @email, @password_hash, @password_salt, (select invitation_code_id from invitation_codes where code = @code))";
             Dictionary<string, object> parameters = new()
             {
                 {"@username", request.Username},
                 {"@email", request.Email},
-                {"@password", hashedPassword},
-                {"@salt", salt},
-                {"@invitation_code", request.InvitationCode}
+                {"@password_hash", hashedPassword},
+                {"@password_salt", salt},
+                {"@code", request.InvitationCode}
             };
 
             if (await _dbContext.ExecuteNonQueryAsync(query, parameters) != 1 || // Insert user into the database
-                await _dbContext.ExecuteNonQueryAsync("update InvitationCodes set is_used = TRUE where invitation_code = @invitation_code", parameters) != 1) // Set the invitation code as used
+                await _dbContext.ExecuteNonQueryAsync("update invitation_codes set is_used = true where code = @code", parameters) != 1) // Set the invitation code as used
                 return null; // Request not handled correctly
-
 
             return new RegisterResponseModel
             {
@@ -209,10 +212,10 @@ namespace BlockSenseAPI.Services.UserServices
 
         private async Task<bool> InvitationCheck(string invitationCode)
         {
-            string query = "select is_used from invitationcodes where invitation_code = @invitation_code and is_used = false and revoked = false and expires_at > now()";
+            string query = "select is_used from invitation_codes where (code = @code and is_used = false and is_revoked = false and expires_at > now())";
             Dictionary<string, object> parameters = new()
             {
-                {"@invitation_code", invitationCode}
+                {"@code", invitationCode}
             };
 
             using (var reader = await _dbContext.ExecuteReaderAsync(query, parameters))

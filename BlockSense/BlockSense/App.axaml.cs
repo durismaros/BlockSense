@@ -24,7 +24,7 @@ namespace BlockSense;
 
 public partial class App : Application
 {
-    public static IServiceProvider Services { get; private set; }
+    public static IServiceProvider? Services { get; private set; }
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -48,7 +48,7 @@ public partial class App : Application
 
         services.AddHttpClient<ApiClient>(client =>
         {
-            client.BaseAddress = new Uri("https://unicorn-casual");
+            client.BaseAddress = new Uri("https://localhost:7058/");
         }).AddHttpMessageHandler<AuthHeaderHandler>();
 
         services.AddTransient<UserService>();
@@ -61,11 +61,16 @@ public partial class App : Application
         services.AddTransient<RegisterView>();
         services.AddTransient<WelcomeView>();
         services.AddTransient<UserProfileView>();
+        services.AddTransient<PinEntryView>();
+        services.AddTransient<BackupView>();
+        services.AddTransient<SecretPhraseView>();
+        services.AddTransient<MainWalletView>();
+
         services.AddTransient<InviteManagerWindow>();
 
         Services = services.BuildServiceProvider();
         if (SystemUtils.AllocConsole())
-            ConsoleHelper.Log("Console has been allocated");
+            ConsoleLogger.Log("Console has been allocated");
 
         //ActivityLogger.InitializeApplicationLogger();
     }
@@ -73,16 +78,22 @@ public partial class App : Application
     public async override void OnFrameworkInitializationCompleted()
     {
         base.OnFrameworkInitializationCompleted();
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            desktop.MainWindow = Services.GetRequiredService<MainWindow>();
 
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && Services is not null)
+        {
             var systemUtils = Services.GetRequiredService<SystemUtils>();
 
-            bool isSessionActive = await systemUtils.IsSessionActive();
+            // Check server status
+            if (!await systemUtils.CheckServerStatus())
+                return;
 
-            //UserControl initView = isSessionActive ? new WelcomeView() : new MainView();
-            await Services.GetRequiredService<IViewSwitcher>().NavigateToAsync<WelcomeView>();
+            desktop.MainWindow = Services.GetRequiredService<MainWindow>();
+            desktop.MainWindow.Show();
+
+            // Continue with session check and navigation
+            bool isSessionActive = await systemUtils.IsSessionActive();
+            await (isSessionActive ? Services.GetRequiredService<IViewSwitcher>().NavigateToAsync<WelcomeView>()
+                : Services.GetRequiredService<IViewSwitcher>().NavigateToAsync<MainView>());
         }
     }
 }

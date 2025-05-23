@@ -6,6 +6,7 @@ using BlockSense.Models.Responses;
 using BlockSense.Models.Token;
 using BlockSense.Models.User;
 using BlockSenseAPI.Models.TwoFactorAuth;
+using Google.Protobuf.WellKnownTypes;
 using NBitcoin.RPC;
 using System;
 using System.Collections.Generic;
@@ -32,7 +33,24 @@ namespace BlockSense.Api
             _accessTokenManager = accessTokenManager;
         }
 
-        public async Task<LoginResponseModel> Login(LoginRequestModel loginRequest)
+        public async Task<ServerStatusModel?> CheckStatus()
+        {
+            var response = await _httpClient.GetAsync($"api/status/check");
+
+            if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                return await response.Content.ReadFromJsonAsync<ServerStatusModel>();
+            }
+
+            return new ServerStatusModel
+            {
+                Status = "not accessible",
+                DbStatus = "unknown",
+                TimeStamp = DateTime.UtcNow.ToString("o")
+            };
+        }
+
+        public async Task<LoginResponseModel?> Login(LoginRequestModel loginRequest)
         {
             var response = await _httpClient.PostAsJsonAsync("api/auth/login", loginRequest);
 
@@ -44,7 +62,7 @@ namespace BlockSense.Api
             throw new ApiException(await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<RegisterResponseModel> Register(RegisterRequestModel registerRequest)
+        public async Task<RegisterResponseModel?> Register(RegisterRequestModel registerRequest)
         {
             var response = await _httpClient.PostAsJsonAsync("/api/auth/register", registerRequest);
 
@@ -56,7 +74,7 @@ namespace BlockSense.Api
             throw new ApiException(await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<TokenRefreshResponseModel> TokenRefresh(TokenRefreshRequestModel comparisonRequest)
+        public async Task<TokenRefreshResponseModel?> TokenRefresh(TokenRefreshRequestModel comparisonRequest)
         {
             var response = await _httpClient.PostAsJsonAsync("api/auth/token-refresh", comparisonRequest);
 
@@ -68,9 +86,9 @@ namespace BlockSense.Api
             throw new ApiException(await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<UserInfoModel> GetUserInfo()
+        public async Task<UserInfoModel?> GetUserInfo()
         {
-            var response = await _httpClient.GetAsync($"api/users/get");
+            var response = await _httpClient.GetAsync("api/users/get");
 
             if (response.IsSuccessStatusCode)
             {
@@ -80,7 +98,7 @@ namespace BlockSense.Api
             throw new ApiException(await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<AdditionalUserInfoModel> GetAddUserInfo()
+        public async Task<AdditionalUserInfoModel?> GetAddUserInfo()
         {
             var response = await _httpClient.GetAsync("api/users/get-additional");
 
@@ -92,7 +110,7 @@ namespace BlockSense.Api
             throw new ApiException(await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<List<InviteInfoModel>> FetchInviteInfo()
+        public async Task<List<InviteInfoModel>?> FetchInviteInfo()
         {
             var response = await _httpClient.GetAsync("api/invites/fetch-all");
 
@@ -104,9 +122,9 @@ namespace BlockSense.Api
             throw new ApiException(await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<TwoFactorSetupResponseModel> OtpSetup()
+        public async Task<TwoFactorSetupResponseModel?> OtpSetup()
         {
-            var response = await _httpClient.GetAsync($"api/users/otp-setup");
+            var response = await _httpClient.GetAsync("api/users/otp-setup");
 
             if (response.IsSuccessStatusCode)
             {
@@ -116,7 +134,7 @@ namespace BlockSense.Api
             throw new ApiException(await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<TwoFactorVerificationResponse> CompleteOtpSetup(TwoFactorSetupRequestModel request)
+        public async Task<TwoFactorVerificationResponse?> CompleteOtpSetup(TwoFactorSetupRequestModel request)
         {
             var response = await _httpClient.PostAsJsonAsync("api/auth/otp-enable", request);
 
@@ -128,7 +146,7 @@ namespace BlockSense.Api
             throw new ApiException(await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<TwoFactorVerificationResponse> VerifyOtp(TwoFactorVerificationRequest request)
+        public async Task<TwoFactorVerificationResponse?> VerifyOtp(TwoFactorVerificationRequest request)
         {
             var response = await _httpClient.PostAsJsonAsync("api/auth/otp-verify", request);
 

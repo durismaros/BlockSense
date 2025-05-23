@@ -3,10 +3,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="BlockSense.UserProfileView">
-
+             x:Class="BlockSense.TestView">
+	
 	<UserControl.Styles>
-
+		
 		<Style Selector="Border.card">
 			<Setter Property="Background" Value="#FBF7F1"/>
 			<Setter Property="CornerRadius" Value="14"/>
@@ -35,7 +35,6 @@
 			<Setter Property="CornerRadius" Value="12"/>
 			<Setter Property="Padding" Value="10 5"/>
 			<Setter Property="HorizontalAlignment" Value="Left"/>
-			<Setter Property="Margin" Value="0 2 0 12"/>
 		</Style>
 
 		<Style Selector="TextBlock.badgeText">
@@ -72,7 +71,7 @@
 			<Setter Property="CornerRadius" Value="100"/>
 			<Setter Property="Margin" Value="0 12"/>
 		</Style>
-
+		
 	</UserControl.Styles>
 
 	<Panel>
@@ -84,8 +83,7 @@
 				<Button
 					Classes="DefaultWhite"
 					Width="40"
-					Opacity="0.8"
-					Click="HomeClick">
+					Opacity="0.8">
 					<Image
 						Height="30"
 						Source="avares://BlockSense/Assets/backArrow.png"/>
@@ -115,7 +113,6 @@
                                         Width="80"
                                         Height="80"
                                         CornerRadius="40"
-										PointerPressed="PfpUploadClick"
                                         Cursor="Hand"
                                         ClipToBounds="True">
 									<Border.Clip>
@@ -124,8 +121,7 @@
 
 									<Border.ContextMenu>
 										<ContextMenu>
-											<MenuItem Header="Set Default"
-													  Click="SetDefaultClick"/>
+											<MenuItem Header="Set Default"/>
 										</ContextMenu>
 									</Border.ContextMenu>
 
@@ -165,8 +161,7 @@
 								Height="38"
 								Margin="0 18 0 18"
 								Padding="15 10"
-								CornerRadius="12"
-								Click="InviteManagerClick">
+								CornerRadius="12">
 								<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
 									<Viewbox Width="16" Height="16" Margin="0 0 8 0" VerticalAlignment="Center">
 										<Path Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
@@ -227,8 +222,7 @@
 								Height="40"
 								Margin="0 14 0 0"
 								Padding="15 10"
-								CornerRadius="12"
-								Click="OpenSecurityManagerClick">
+								CornerRadius="12">
 								<TextBlock
 									Text="Manage Security Settings"
 									HorizontalAlignment="Center"
@@ -236,7 +230,7 @@
 									FontWeight="Medium"
 									Foreground="#E6C8A0"/>
 							</Button>
-
+							
 						</StackPanel>
 					</Border>
 
@@ -244,7 +238,7 @@
 					<Border Classes="card" Name="SecurityManager" Grid.Column="1" Grid.Row="0"
 							IsVisible="True" ZIndex="10">
 						<StackPanel>
-
+							
 							<!-- Header -->
 							<Panel>
 								<TextBlock
@@ -258,8 +252,7 @@
 									Width="28"
 									Height="28"
 									Background="Transparent"
-									HorizontalAlignment="Right"
-									Click="CloseSecurityManagerClick">
+									HorizontalAlignment="Right">
 									<Viewbox Width="24" Height="24" Stretch="Uniform">
 										<Canvas Width="24" Height="24">
 											<Path
@@ -344,7 +337,7 @@
 											HorizontalAlignment="Center">
 											<TextBlock
 												Name="SetupKeyText"
-												FontSize="12"
+												FontSize="11"
 												Foreground="#6D4C41"
 												HorizontalAlignment="Center"/>
 										</Border>
@@ -376,8 +369,7 @@
 											Classes="DefaultDarkBrown"
 											Width="140"
 											Height="36"
-											CornerRadius="8"
-											Click="ToggleTwoFaClick">
+											CornerRadius="8">
 											<TextBlock
 												Name="ToggleTwoFAText"
 												Text="Enable 2FA"
@@ -392,8 +384,7 @@
 											Classes="DefaultLightBrown"
 											Width="80"
 											Height="36"
-											CornerRadius="8"
-											Click="VerifyTwoFaClick">
+											CornerRadius="8">
 											<TextBlock
 												Text="Verify"
 												FontWeight="Medium"

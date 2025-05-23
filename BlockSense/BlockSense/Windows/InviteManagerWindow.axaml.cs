@@ -120,8 +120,8 @@ public partial class InviteManagerWindow : Window
             // Create invited user text block with appropriate styling
             TextBlock userTextBlock = new TextBlock
             {
-                Text = InputHelper.Check(invite.InvitedUser) ? invite.InvitedUser : "(not used)",
-                Classes = { InputHelper.Check(invite.InvitedUser) ? "InvitedUser" : "NotInvitedUser" }
+                Text = string.IsNullOrWhiteSpace(invite.InvitedUser) ? "(not used)" : invite.InvitedUser,
+                Classes = { string.IsNullOrWhiteSpace(invite.InvitedUser) ? "NotInvitedUser" : "InvitedUser" }
             };
             Grid.SetRow(userTextBlock, iRow);
             Grid.SetColumn(userTextBlock, 3);
@@ -133,6 +133,9 @@ public partial class InviteManagerWindow : Window
             {
                 case "active":
                     statusBorder.Classes.Add("ActiveStatusBorder");
+                    break;
+                case "used":
+                    statusBorder.Classes.Add("UsedStatusBorder");
                     break;
                 case "expired":
                     statusBorder.Classes.Add("ExpiredStatusBorder");
@@ -168,7 +171,7 @@ public partial class InviteManagerWindow : Window
         string searchText = SearchBox.Text?.Trim().ToLower() ?? string.Empty;
         List<InviteInfoModel> filteredInviteCodes = new();
 
-        if (!InputHelper.Check(searchText))
+        if (string.IsNullOrWhiteSpace(searchText))
         {
             // Show all invites if search is empty
             DisplayInvites(_invites);

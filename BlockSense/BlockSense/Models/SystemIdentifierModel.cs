@@ -24,7 +24,7 @@ namespace BlockSense.Models
             IpAddress = GetIpAddress();
             HardwareId = GetHardwareId();
             MacAddress = GetMacAddress();
-            ConsoleHelper.Log("Hardware and Network identifiers acquired");
+            ConsoleLogger.Log("Hardware and Network identifiers acquired");
         }
 
         public static string? GetIpAddress()
@@ -38,7 +38,7 @@ namespace BlockSense.Models
             }
             catch (Exception ex)
             {
-                ConsoleHelper.Log($"Error: {ex.Message}");
+                ConsoleLogger.Log($"Error: {ex.Message}");
                 return null;
             }
         }
@@ -71,7 +71,7 @@ namespace BlockSense.Models
             }
             catch (Exception ex)
             {
-                ConsoleHelper.Log($"Error: {ex.Message}");
+                ConsoleLogger.Log($"Error: {ex.Message}");
                 return null;
             }
         }
@@ -93,7 +93,7 @@ namespace BlockSense.Models
             }
             catch (Exception ex)
             {
-                ConsoleHelper.Log("Error: " + ex.Message);
+                ConsoleLogger.Log("Error: " + ex.Message);
                 return null;
             }
         }
@@ -115,7 +115,7 @@ namespace BlockSense.Models
             }
             catch (Exception ex)
             {
-                ConsoleHelper.Log("Error: " + ex.Message);
+                ConsoleLogger.Log("Error: " + ex.Message);
                 return null;
             }
         }
@@ -137,7 +137,7 @@ namespace BlockSense.Models
             }
             catch (Exception ex)
             {
-                ConsoleHelper.Log("Error: " + ex.Message);
+                ConsoleLogger.Log("Error: " + ex.Message);
                 return null;
             }
         }

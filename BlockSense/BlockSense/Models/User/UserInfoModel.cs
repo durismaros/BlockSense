@@ -15,8 +15,8 @@ namespace BlockSense.Models.User
 
     public enum UserType
     {
-        User,
-        Admin,
+        Standard,
+        Administrator,
         Banned
     }
 }

@@ -31,7 +31,7 @@ namespace BlockSense.Utilities
 
             Directory.CreateDirectory(LogsPath);
 
-            ConsoleHelper.Log("Storage structure initialized");
+            ConsoleLogger.Log("Storage structure initialized");
         }
     }
 }

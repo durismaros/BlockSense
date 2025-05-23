@@ -24,7 +24,7 @@ namespace BlockSense.auth.DataProtection
             }
             catch (Exception ex)
             {
-                ConsoleHelper.Log("Error: " + ex.Message);
+                ConsoleLogger.Log("Error: " + ex.Message);
                 return null;
             }
         }
@@ -43,7 +43,7 @@ namespace BlockSense.auth.DataProtection
             }
             catch (Exception ex)
             {
-                ConsoleHelper.Log("Error: " + ex.Message);
+                ConsoleLogger.Log("Error: " + ex.Message);
                 return null;
             }
         }

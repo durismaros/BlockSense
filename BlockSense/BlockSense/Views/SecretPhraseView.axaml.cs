@@ -10,6 +10,7 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using BlockSense.Client;
 using BlockSense.Cryptography.Wallet.MnemonicManager;
+using BlockSense.Utilities;
 using BlockSense.Views;
 using DynamicData;
 using System;
@@ -21,23 +22,26 @@ namespace BlockSense;
 
 public partial class SecretPhraseView : UserControl
 {
+    private readonly IViewSwitcher _viewSwitcher;
     private bool _isPanelVisible = false;
 
-    public SecretPhraseView()
+    public SecretPhraseView(IViewSwitcher viewSwitcher)
     {
-        InitializeComponent();
+        _viewSwitcher = viewSwitcher;
         CreateBorders();
 
         SlidePanel.RenderTransform = new TranslateTransform(0, SlidePanel.Height);
 
-        // Hook up event handler
+        // Event subscribtion
         ContinueButton.Click += (s, e) => AnimateSlidePanel(true);
         MainPanel.PointerReleased += (s, e) => AnimateSlidePanel(false);
+        
+        InitializeComponent();
     }
 
     private async void FinishClick(object sender, RoutedEventArgs e)
     {
-        //await MainWindow.SwitchView(new MainWalletView());
+        await _viewSwitcher.NavigateToAsync<MainWalletView>();
     }
 
     private void OnCheckboxChanged(object? sender, RoutedEventArgs e)

@@ -12,31 +12,30 @@ using Org.BouncyCastle.Asn1.BC;
 using BlockSense.Client;
 using BlockSense.Views;
 using Microsoft.Extensions.DependencyInjection;
+using BlockSense.Utilities;
 
 namespace BlockSense;
 
 public partial class WelcomeView : UserControl
 {
+    private readonly IViewSwitcher _viewSwitcher;
 
-    public WelcomeView()
+    public WelcomeView(IViewSwitcher viewSwitcher)
     {
+        _viewSwitcher = viewSwitcher;
         InitializeComponent();
         FadeInText();
     }
 
     public async void UserProfileClick(object sender, RoutedEventArgs e)
     {
-        //await MainWindow.SwitchView(App.Services.GetRequiredService<UserProfileView>());
+        await _viewSwitcher.NavigateToAsync(new TestView());
     }
     public async void WalletClick(object sender, RoutedEventArgs e)
     {
-        //await MainWindow.SwitchView(new PinEntryView());
 
-        //DraggableOverlayWindow _overlayWindow;
-        //_overlayWindow = new DraggableOverlayWindow();
-
-        //// Show the overlay
-        //_overlayWindow.Show();
+        await _viewSwitcher.NavigateToAsync<UserProfileView>();
+        //await _viewSwitcher.NavigateToAsync<PinEntryView>();
     }
 
     private async void FadeInText()

@@ -19,10 +19,10 @@ namespace BlockSenseAPI.Services
 
         public async Task<List<InviteInfoModel>> FetchAllInvites(int userId)
         {
-            string query = "select invitationcodes.invitation_code, is_used, invitationcodes.created_at, expires_at, revoked, users.username as invited_user from invitationcodes left join users on invitation_id = users.invitation_code where generated_by = @uid";
+            string query = "select code, is_used, invitation_codes.created_at, expires_at, is_revoked, users.username from invitation_codes left join users on invitation_codes.invitation_code_id = users.invitation_code_id where generated_by = @user_id";
             Dictionary<string, object> parameters = new()
             {
-                {"@uid", userId}
+                {"@user_id", userId}
             };
             var invites = new List<InviteInfoModel>();
             using (var reader = await _dbContext.ExecuteReaderAsync(query, parameters))
@@ -30,16 +30,14 @@ namespace BlockSenseAPI.Services
                 while (await reader.ReadAsync())
                 {
                     // Extract data from db reader
-                    string invitationCode = (reader.GetString("invitation_code"));
+                    string invitationCode = reader.GetString("code");
                     string creationDate = reader.GetDateTime("created_at").ToString("MMM dd, yyyy", CultureInfo.GetCultureInfo("en-US"));
-                    string expirationDate = reader.GetDateTime("expires_at").ToString("MMM dd, yyyy", CultureInfo.GetCultureInfo("en-US"));
+                    string expirationDate = reader.GetDateTime("expires_at").ToString("MMM dd, yyyy", CultureInfo.InvariantCulture);
                     bool isUsed = reader.GetBoolean("is_used");
-                    string invitedUser = string.Empty;
-                    if (isUsed)
-                        invitedUser = reader.GetString("invited_user");
+                    string invitedUser = isUsed ? reader.GetString("username") : string.Empty;
 
-                    string status = "active";
-                    if (reader.GetBoolean("revoked"))
+                    string status = isUsed ? "used" : "active";
+                    if (reader.GetBoolean("is_revoked"))
                         status = "revoked";
                     else if (DateTime.UtcNow > reader.GetDateTime("expires_at"))
                         status = "expired";

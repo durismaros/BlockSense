@@ -25,7 +25,7 @@ namespace BlockSense.Client.Token_authentication
 
                 if (token is null || token.Data is null || entropy is null)
                 {
-                    ConsoleHelper.Log("Either token or entropy is empty");
+                    ConsoleLogger.Log("Either token or entropy is empty");
                     return;
                 }
 
@@ -55,7 +55,7 @@ namespace BlockSense.Client.Token_authentication
 
             if (tokenCache is null || tokenCache.Data is null || entropy is null)
             {
-                ConsoleHelper.Log("Either token or entropy is empty");
+                ConsoleLogger.Log("Either token or entropy is empty");
                 return null;
             }
 

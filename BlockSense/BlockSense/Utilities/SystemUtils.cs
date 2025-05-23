@@ -11,11 +11,13 @@ using BlockSense.Models.User;
 using BlockSense.Services;
 using K4os.Compression.LZ4.Encoders;
 using Org.BouncyCastle.Crypto.Prng;
+using Splat;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -61,6 +63,9 @@ namespace BlockSense.Utilities
                 var request = new TokenRefreshRequestModel(cachedToken, _systemIdents);
                 var response = await _apiClient.TokenRefresh(request);
 
+                if (response is null)
+                    return false;
+
                 if (!response.Success || response.AccessToken is null)
                     return false;
 
@@ -75,10 +80,28 @@ namespace BlockSense.Utilities
             }
             catch (Exception ex)
             {
-                ConsoleHelper.Log("Error: " + ex.Message);
+                ConsoleLogger.Log("Error: " + ex.Message);
                 return false;
             }
         }
+
+        public async Task<bool> CheckServerStatus()
+        {
+            var response = await _apiClient.CheckStatus();
+            if (response is null)
+                return false;
+
+            ConsoleLogger.Log($"Server status: " + response.Status);
+            ConsoleLogger.Log("Database status: " + response.DbStatus);
+            ConsoleLogger.Log("Timestamp: " + response.TimeStamp);
+
+            if (response.Status == "Online" && response.DbStatus == "Healthy")
+                return true;
+
+            return false;
+        }
+
+
 
         //public bool CheckTimeOut()
         //{

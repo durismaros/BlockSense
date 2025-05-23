@@ -33,7 +33,10 @@ namespace BlockSense.auth.DataProtection
                 byte[]? encryptedEntropy = WinDataProtection.Encrypt(base64Entropy);
 
                 if (encryptedEntropy is null)
+                {
+                    ConsoleLogger.Log("Entropy encryption failed");
                     return;
+                }
 
                 // Save to registry
                 Registry.SetValue(
@@ -45,7 +48,7 @@ namespace BlockSense.auth.DataProtection
             }
             catch (Exception ex)
             {
-                ConsoleHelper.Log("Error: " + ex.Message);
+                ConsoleLogger.Log("Error: " + ex.Message);
             }
         }
 
@@ -60,9 +63,9 @@ namespace BlockSense.auth.DataProtection
 
                 string encryptedBase64 = (string)Registry.GetValue(REGISTRY_PATH, ENTROPY_VALUE_NAME, null)!;
 
-                if (!InputHelper.Check(encryptedBase64))
+                if (string.IsNullOrWhiteSpace(encryptedBase64))
                 {
-                    ConsoleHelper.Log("No entropy found in registry");
+                    ConsoleLogger.Log("No entropy found in registry");
                     return null;
                 }
 
@@ -72,7 +75,7 @@ namespace BlockSense.auth.DataProtection
             }
             catch (Exception ex)
             {
-                ConsoleHelper.Log("Error: " + ex.Message);
+                ConsoleLogger.Log("Error: " + ex.Message);
                 return null;
             }
         }

@@ -22,11 +22,11 @@ namespace BlockSense;
 public partial class RegisterView : UserControl
 {
     private readonly UserService _userService;
-    private readonly MainView _mainView;
-    public RegisterView(UserService userService, MainView mainView)
+    private readonly IViewSwitcher _viewSwitcher;
+    public RegisterView(UserService userService, IViewSwitcher viewSwitcher)
     {
         _userService = userService;
-        _mainView = mainView;
+        _viewSwitcher = viewSwitcher;
         InitializeComponent();
     }
 
@@ -46,19 +46,20 @@ public partial class RegisterView : UserControl
     /// <param name="e"></param>
     private async void HomeClick(object sender, RoutedEventArgs e)
     {
-        //await MainWindow.SwitchView(_mainView);
+        await _viewSwitcher.NavigateToAsync<MainView>();
     }
 
     /// <summary>
     /// 
     /// </summary>
-    /// 
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
     private async void RegisterClick(object sender, RoutedEventArgs e)
     {
         string username = usernameRegister.Text?.Trim() ?? string.Empty;
         string email = emailRegister.Text?.Trim() ?? string.Empty;
         string password = passwordRegister.Text?.Trim() ?? string.Empty;
-        string passwordConfirm = passwordConfirmRegister.Text?.Trim() ?? string.Empty;
+        string passwordConfirmation = passwordConfirmRegister.Text?.Trim() ?? string.Empty;
         string invitationCode = invitationCodeRegister.Text?.Trim() ?? string.Empty;
 
         async void ShowMessage(string message)
@@ -73,32 +74,29 @@ public partial class RegisterView : UserControl
 
         try
         {
-            if (!InputHelper.Check(username, email, password, passwordConfirm, invitationCode))
-                ShowMessage("Looks like you missed a required field");
-
-            else if (password != passwordConfirm)
-                ShowMessage("Passwords do not match");
-
-            else if (Zxcvbn.Core.EvaluatePassword(password).Score < 3)
-                ShowMessage("Too weak! Try a stronger password");
-
-
-            else
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(passwordConfirmation) || string.IsNullOrWhiteSpace(invitationCode))
             {
-                var newRegisterRequest = new RegisterRequestModel(username, email, password, invitationCode);
-                var (success, message) = await _userService.Register(newRegisterRequest);
-                if (success)
-                    ShowMessage(message);
-
-                else
-                {
-                    ShowMessage(message);
-                }
+                ShowMessage("Looks like you missed a required field");
+                return;
             }
+
+            if (password != passwordConfirmation)
+            {
+                ShowMessage("Passwords do not match");
+                return;
+            }
+
+            var request = new RegisterRequestModel(username, email, password, invitationCode);
+            var response = await _userService.Register(request);
+
+            if (response is null || response.Message is null)
+                return;
+
+            ShowMessage(response.Message);
         }
         catch (Exception ex)
         {
-            ConsoleHelper.Log("Error: " + ex.Message);
+            ConsoleLogger.Log("Error: " + ex.Message);
         }
     }
 }

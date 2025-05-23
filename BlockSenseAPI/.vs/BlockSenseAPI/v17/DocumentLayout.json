@@ -1,7 +1,24 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\BlockSenseAPI\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{CE3347D4-8128-4635-B709-71D415B81D08}|BlockSenseAPI\\BlockSenseAPI.csproj|c:\\users\\d3str\\desktop\\school\\blocksense\\blocksenseapi\\blocksenseapi\\services\\userservices\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CE3347D4-8128-4635-B709-71D415B81D08}|BlockSenseAPI\\BlockSenseAPI.csproj|solutionrelative:blocksenseapi\\services\\userservices\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CE3347D4-8128-4635-B709-71D415B81D08}|BlockSenseAPI\\BlockSenseAPI.csproj|c:\\users\\d3str\\desktop\\school\\blocksense\\blocksenseapi\\blocksenseapi\\services\\invitecodeservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CE3347D4-8128-4635-B709-71D415B81D08}|BlockSenseAPI\\BlockSenseAPI.csproj|solutionrelative:blocksenseapi\\services\\invitecodeservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CE3347D4-8128-4635-B709-71D415B81D08}|BlockSenseAPI\\BlockSenseAPI.csproj|c:\\users\\d3str\\desktop\\school\\blocksense\\blocksenseapi\\blocksenseapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CE3347D4-8128-4635-B709-71D415B81D08}|BlockSenseAPI\\BlockSenseAPI.csproj|solutionrelative:blocksenseapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CE3347D4-8128-4635-B709-71D415B81D08}|BlockSenseAPI\\BlockSenseAPI.csproj|c:\\users\\d3str\\desktop\\school\\blocksense\\blocksenseapi\\blocksenseapi\\models\\requests\\loginrequestmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CE3347D4-8128-4635-B709-71D415B81D08}|BlockSenseAPI\\BlockSenseAPI.csproj|solutionrelative:blocksenseapi\\models\\requests\\loginrequestmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,11 +26,60 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "InviteCodeService.cs",
+              "DocumentMoniker": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\BlockSenseAPI\\BlockSenseAPI\\Services\\InviteCodeService.cs",
+              "RelativeDocumentMoniker": "BlockSenseAPI\\Services\\InviteCodeService.cs",
+              "ToolTip": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\BlockSenseAPI\\BlockSenseAPI\\Services\\InviteCodeService.cs",
+              "RelativeToolTip": "BlockSenseAPI\\Services\\InviteCodeService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-17T19:09:01.81Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "UserService.cs",
+              "DocumentMoniker": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\BlockSenseAPI\\BlockSenseAPI\\Services\\UserServices\\UserService.cs",
+              "RelativeDocumentMoniker": "BlockSenseAPI\\Services\\UserServices\\UserService.cs",
+              "ToolTip": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\BlockSenseAPI\\BlockSenseAPI\\Services\\UserServices\\UserService.cs",
+              "RelativeToolTip": "BlockSenseAPI\\Services\\UserServices\\UserService.cs",
+              "ViewState": "AgIAAD4AAAAAAAAAAAAEwEkAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-17T18:18:41.979Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "LoginRequestModel.cs",
+              "DocumentMoniker": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\BlockSenseAPI\\BlockSenseAPI\\Models\\Requests\\LoginRequestModel.cs",
+              "RelativeDocumentMoniker": "BlockSenseAPI\\Models\\Requests\\LoginRequestModel.cs",
+              "ToolTip": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\BlockSenseAPI\\BlockSenseAPI\\Models\\Requests\\LoginRequestModel.cs",
+              "RelativeToolTip": "BlockSenseAPI\\Models\\Requests\\LoginRequestModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAADwvwYAAAAwAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-17T17:59:40.503Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\BlockSenseAPI\\BlockSenseAPI\\Program.cs",
+              "RelativeDocumentMoniker": "BlockSenseAPI\\Program.cs",
+              "ToolTip": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\BlockSenseAPI\\BlockSenseAPI\\Program.cs",
+              "RelativeToolTip": "BlockSenseAPI\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAzAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-17T15:11:01.063Z"
             }
           ]
         }

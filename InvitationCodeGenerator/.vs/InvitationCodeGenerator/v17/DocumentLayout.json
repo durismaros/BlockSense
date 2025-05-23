@@ -1,12 +1,7 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\InvitationCodeGenerator\\",
-  "Documents": [
-    {
-      "AbsoluteMoniker": "D:0:0:{A3CF676B-D6E1-42AB-AB10-C671986C6AB8}|InvitationCodeGenerator\\InvitationCodeGenerator.csproj|c:\\users\\d3str\\desktop\\school\\blocksense\\invitationcodegenerator\\invitationcodegenerator\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A3CF676B-D6E1-42AB-AB10-C671986C6AB8}|InvitationCodeGenerator\\InvitationCodeGenerator.csproj|solutionrelative:invitationcodegenerator\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    }
-  ],
+  "Documents": [],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -14,24 +9,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": -1,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\InvitationCodeGenerator\\InvitationCodeGenerator\\Program.cs",
-              "RelativeDocumentMoniker": "InvitationCodeGenerator\\Program.cs",
-              "ToolTip": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\InvitationCodeGenerator\\InvitationCodeGenerator\\Program.cs",
-              "RelativeToolTip": "InvitationCodeGenerator\\Program.cs",
-              "ViewState": "AgIAABQAAAAAAAAAAAA6wGgAAABeAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-12-07T13:16:46.872Z",
-              "EditorCaption": ""
             }
           ]
         }

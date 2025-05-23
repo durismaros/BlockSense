@@ -13,7 +13,7 @@ namespace BlockSense.Models.Requests
         {
             this.Login = login;
             this.Password = password;
-            this.Identifiers = App.Services.GetRequiredService<SystemIdentifierModel>();
+            this.Identifiers = App.Services!.GetRequiredService<SystemIdentifierModel>();
         }
 
         public string Login { get; set; }

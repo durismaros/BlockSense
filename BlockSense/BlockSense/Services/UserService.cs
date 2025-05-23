@@ -88,7 +88,7 @@ namespace BlockSense.Services
         public async Task<bool> LoadUserInfo()
         {
             var userInfo = await _apiClient.GetUserInfo();
-            if (userInfo is null || userInfo.UserId == 0)
+            if (userInfo is null)
                 return false;
 
             _userInfo.UserId = userInfo.UserId;
@@ -99,7 +99,7 @@ namespace BlockSense.Services
             _userInfo.UpdatedAt = userInfo.UpdatedAt;
             _userInfo.InvitingUser = userInfo.InvitingUser;
 
-            ConsoleHelper.Log("User data fetched successfully");
+            ConsoleLogger.Log("User data fetched successfully");
             return true;
         }
 
@@ -113,7 +113,7 @@ namespace BlockSense.Services
             _additionalUserInfo.ActiveDevices = addUserInfo.ActiveDevices;
             _additionalUserInfo.TwoFaEnabled = addUserInfo.TwoFaEnabled;
 
-            ConsoleHelper.Log("Additional User data fetched successfully");
+            ConsoleLogger.Log("Additional User data fetched successfully");
             return true;
         }
 
@@ -123,16 +123,14 @@ namespace BlockSense.Services
             var loginResponse = await _apiClient.Login(loginRequest);
 
             if (loginResponse is null)
-                return null;
-
-            if (!loginResponse.Success || loginResponse.RefreshToken is null || loginResponse.AccessToken is null)
             {
-                loginResponse.RefreshToken = null;
-                return loginResponse;
+                ConsoleLogger.Log("Error occurred");
+                return null;
             }
 
+            if (!loginResponse.Success || loginResponse.RefreshToken is null || loginResponse.AccessToken is null)
+                return loginResponse;
 
-            ConsoleHelper.Log("User logged in successfully");
             EntropyManager.StoreEntropy();
 
             // Store the token securely
@@ -142,22 +140,27 @@ namespace BlockSense.Services
 
             // Load user info
             await LoadUserInfo();
-            
+
+            ConsoleLogger.Log("User logged in successfully");
             return loginResponse;
             // Update your UI with user info
         }
 
 
-        public async Task<(bool correctRegister, string registerMessage)> Register(RegisterRequestModel registerRequest)
+        public async Task<RegisterResponseModel?> Register(RegisterRequestModel registerRequest)
         {
             var registerResponse = await _apiClient.Register(registerRequest);
 
-            if (registerResponse.Success)
+            if (registerResponse is null)
             {
-                ConsoleHelper.Log("User registered in successfully");
+                ConsoleLogger.Log("Error occurred");
+                return null;
             }
 
-            return (registerResponse.Success, registerResponse.Message);
+            if (registerResponse.Success)
+                ConsoleLogger.Log("User registered in successfully");
+
+            return registerResponse;
         }
 
         //public static async Task Logout()
