@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockSenseAPI", "BlockSenseAPI\BlockSenseAPI.csproj", "{CE3347D4-8128-4635-B709-71D415B81D08}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CE3347D4-8128-4635-B709-71D415B81D08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE3347D4-8128-4635-B709-71D415B81D08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE3347D4-8128-4635-B709-71D415B81D08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE3347D4-8128-4635-B709-71D415B81D08}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8B09ED1D-63AD-44C5-8A87-84E600A43741}
+	EndGlobalSection
+EndGlobal
