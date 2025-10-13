@@ -1,0 +1,156 @@
+﻿using BlockSenseAPI.Models;
+using BlockSenseAPI.Models.Token.Configs;
+using BlockSenseAPI.Models.TwoFactorAuth;
+using BlockSenseAPI.Services;
+using BlockSenseAPI.Services.Invite;
+using BlockSenseAPI.Services.SystemValidation;
+using BlockSenseAPI.Services.Token;
+using BlockSenseAPI.Services.TwoFactorAuth;
+using BlockSenseAPI.Services.User;
+using BlockSenseAPI.Services.UserServices;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using MySql.Data.MySqlClient;
+
+var builder = WebApplication.CreateBuilder(args);
+
+//
+// ────────────────────────────────
+//   CONFIGURATION BINDING
+// ────────────────────────────────
+//
+// Load hard-coded configuration from `appsettings.json` into model classes.
+//
+
+builder.Services.Configure<AccessTokenConfig>(builder.Configuration.GetSection("JwtConfig"));
+builder.Services.Configure<RefreshTokenConfig>(builder.Configuration.GetSection("RefreshTokenConfig"));
+builder.Services.Configure<TwoFactorConfig>(builder.Configuration.GetSection("2FaConfig"));
+
+//
+// ────────────────────────────────
+//   CORE SERVICES REGISTRATION
+// ────────────────────────────────
+//
+// Services created each time they’re injected.
+//
+
+builder.Services.AddTransient<SystemValidationService>();
+builder.Services.AddTransient<SystemIdentifier>();
+
+
+//
+// ────────────────────────────────
+//   SCOPED SERVICES REGISTRATION
+// ────────────────────────────────
+//
+// Services created once per HTTP request.
+//
+
+builder.Services.AddScoped<MySqlConnection>(_ =>
+    new MySqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<DatabaseContext>();
+
+
+//
+// ────────────────────────────────
+//   APPLICATION SERVICE LAYER
+// ────────────────────────────────
+//
+// Interface-to-implementation mapping.
+//
+
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddScoped<IAccessTokenService, AccessTokenService>();
+builder.Services.AddScoped<IInviteCodeService, InviteCodeService>();
+builder.Services.AddScoped<ITwoFactorAuthService, TwoFactorAuthService>();
+
+//
+// ────────────────────────────────
+//   AUTHENTICATION & AUTHORIZATION
+// ────────────────────────────────
+//
+// Configuration of JWT Bearer authentication, validating access tokens using symmetric key signing.
+//
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.MapInboundClaims = false;
+    options.RequireHttpsMetadata = true;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["JwtConfig:Issuer"],
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["JwtConfig:Audience"],
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(builder.Configuration["JwtConfig:Secret"]!)),
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddAuthorization();
+
+//
+// ────────────────────────────────
+//   CONTROLLERS, SWAGGER & LOGGING
+// ────────────────────────────────
+//
+// Controllers for API endpoints and SwaggerUI integration.
+//
+
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddLogging();
+
+var app = builder.Build();
+
+//
+// ────────────────────────────────
+//   GLOBAL MIDDLEWARE CONFIGURATION
+// ────────────────────────────────
+//
+// Sssential HTTP security headers to all responses.
+//
+
+app.Use(async (context, next) =>
+{
+    // Add all security headers
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Append("Referrer-Policy", "no-referrer");
+    context.Response.Headers.Append("Cache-Control", "no-store, no-cache, must-revalidate");
+
+    await next();
+});
+
+//
+// ────────────────────────────────
+//   SWAGGER / OPENAPI
+// ────────────────────────────────
+//
+// Swagger UI only for development and testing purposes. 
+// Interactive API exploration and documentation.
+//
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
