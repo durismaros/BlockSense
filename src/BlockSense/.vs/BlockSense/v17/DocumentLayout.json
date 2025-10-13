@@ -1,0 +1,90 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\src\\BlockSense\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{BEF784E8-DF0D-472B-AEE4-6CA1D5CB9E91}|BlockSense\\BlockSense.csproj|c:\\users\\d3str\\desktop\\school\\blocksense\\src\\blocksense\\blocksense\\views\\twofactorslidingpanel.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BEF784E8-DF0D-472B-AEE4-6CA1D5CB9E91}|BlockSense\\BlockSense.csproj|solutionrelative:blocksense\\views\\twofactorslidingpanel.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BEF784E8-DF0D-472B-AEE4-6CA1D5CB9E91}|BlockSense\\BlockSense.csproj|c:\\users\\d3str\\desktop\\school\\blocksense\\src\\blocksense\\blocksense\\views\\userprofileview.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BEF784E8-DF0D-472B-AEE4-6CA1D5CB9E91}|BlockSense\\BlockSense.csproj|solutionrelative:blocksense\\views\\userprofileview.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BEF784E8-DF0D-472B-AEE4-6CA1D5CB9E91}|BlockSense\\BlockSense.csproj|c:\\users\\d3str\\desktop\\school\\blocksense\\src\\blocksense\\blocksense\\views\\userprofileview.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}",
+      "RelativeMoniker": "D:0:0:{BEF784E8-DF0D-472B-AEE4-6CA1D5CB9E91}|BlockSense\\BlockSense.csproj|solutionrelative:blocksense\\views\\userprofileview.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BEF784E8-DF0D-472B-AEE4-6CA1D5CB9E91}|BlockSense\\BlockSense.csproj|c:\\users\\d3str\\desktop\\school\\blocksense\\src\\blocksense\\blocksense\\views\\twofactorslidingpanel.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}",
+      "RelativeMoniker": "D:0:0:{BEF784E8-DF0D-472B-AEE4-6CA1D5CB9E91}|BlockSense\\BlockSense.csproj|solutionrelative:blocksense\\views\\twofactorslidingpanel.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "TwoFactorSlidingPanel.axaml",
+              "DocumentMoniker": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\src\\BlockSense\\BlockSense\\Views\\TwoFactorSlidingPanel.axaml",
+              "RelativeDocumentMoniker": "BlockSense\\Views\\TwoFactorSlidingPanel.axaml",
+              "ToolTip": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\src\\BlockSense\\BlockSense\\Views\\TwoFactorSlidingPanel.axaml",
+              "RelativeToolTip": "BlockSense\\Views\\TwoFactorSlidingPanel.axaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-09-02T17:17:45.29Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "TwoFactorSlidingPanel.axaml.cs",
+              "DocumentMoniker": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\src\\BlockSense\\BlockSense\\Views\\TwoFactorSlidingPanel.axaml.cs",
+              "RelativeDocumentMoniker": "BlockSense\\Views\\TwoFactorSlidingPanel.axaml.cs",
+              "ToolTip": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\src\\BlockSense\\BlockSense\\Views\\TwoFactorSlidingPanel.axaml.cs",
+              "RelativeToolTip": "BlockSense\\Views\\TwoFactorSlidingPanel.axaml.cs",
+              "ViewState": "AgIAAOIBAAAAAAAAAAAwwAkCAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-02T17:17:45.005Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "UserProfileView.axaml",
+              "DocumentMoniker": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\src\\BlockSense\\BlockSense\\Views\\UserProfileView.axaml",
+              "RelativeDocumentMoniker": "BlockSense\\Views\\UserProfileView.axaml",
+              "ToolTip": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\src\\BlockSense\\BlockSense\\Views\\UserProfileView.axaml",
+              "RelativeToolTip": "BlockSense\\Views\\UserProfileView.axaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-09-02T17:40:45.505Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "UserProfileView.axaml.cs",
+              "DocumentMoniker": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\src\\BlockSense\\BlockSense\\Views\\UserProfileView.axaml.cs",
+              "RelativeDocumentMoniker": "BlockSense\\Views\\UserProfileView.axaml.cs",
+              "ToolTip": "C:\\Users\\d3str\\Desktop\\School\\BlockSense\\src\\BlockSense\\BlockSense\\Views\\UserProfileView.axaml.cs",
+              "RelativeToolTip": "BlockSense\\Views\\UserProfileView.axaml.cs",
+              "ViewState": "AgIAAP8AAAAAAAAAAAAwwAUBAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-02T17:04:55.483Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
