@@ -1,0 +1,225 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="BlockSense.TwoFactorSlidingPanel">
+
+	<UserControl.Styles>
+		
+		<Style Selector="TextBlock.separator">
+			<Setter Property="FontSize" Value="20"/>
+			<Setter Property="FontWeight" Value="Medium"/>
+			<Setter Property="Foreground" Value="#8B6B4A"/>
+			<Setter Property="VerticalAlignment" Value="Center"/>
+			<Setter Property="Margin" Value="6 0"/>
+		</Style>
+
+		<Style Selector="Button.backupCodeToggle">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+			<Setter Property="Padding" Value="8 4"/>
+			<Setter Property="CornerRadius" Value="6"/>
+		</Style>
+
+		<Style Selector="Button.backupCodeToggle:pointerover">
+			<Setter Property="Background" Value="#F0E6D6"/>
+		</Style>
+		
+	</UserControl.Styles>
+
+	<!-- Sliding Panel -->
+	<Panel Name="SlidePanel"
+		   Background="#FBF7F1">
+
+		<!-- Top Window Panel -->
+		<Border
+			Name="DragBorder"
+			Height="30"
+			Background="Transparent"
+			VerticalAlignment="Top"
+			PointerPressed="DragWindow"/>
+
+		<StackPanel Spacing="30" Margin="40">
+
+			<!-- Header Section -->
+			<StackPanel HorizontalAlignment="Center" Spacing="15">
+
+				<!-- Icon and Title -->
+				<StackPanel HorizontalAlignment="Center" Spacing="12">
+					<Border Background="#F5E8D3"
+							Width="80" Height="80"
+							CornerRadius="40"
+							HorizontalAlignment="Center"
+							Margin="0 0 0 20">
+						<Viewbox Width="40" Height="40" Stretch="Uniform">
+							<Path Data="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"
+								  Fill="#8B6B4A" Stretch="Uniform"/>
+						</Viewbox>
+					</Border>
+
+					<!-- Title and Instructions Container with Overlay -->
+					<Panel HorizontalAlignment="Center" Height="60">
+
+						<!-- Normal Instructions (Default State) -->
+						<StackPanel Name="InstructionsPanel"
+									Width="500"
+									HorizontalAlignment="Center"
+									Spacing="6"
+									Opacity="1.0">
+							<TextBlock Name="TitleText"
+									   Text="Enter Verification Code"
+									   FontSize="26"
+									   FontWeight="SemiBold"
+									   Foreground="#4A4238"
+									   HorizontalAlignment="Center"/>
+							<TextBlock Name="SubtitleText"
+									   Text="Please enter the 6-digit code from your authenticator app"
+									   FontSize="14"
+									   Foreground="#6D4C41"
+									   Opacity="0.8"
+									   HorizontalAlignment="Center"
+									   TextAlignment="Center"
+									   TextWrapping="Wrap"/>
+						</StackPanel>
+
+						<!-- Success State (Initially Hidden) -->
+						<StackPanel Name="VerifiedStatePanel"
+									Width="500"
+									HorizontalAlignment="Center"
+									Spacing="6"
+									Opacity="0.0"
+									IsVisible="False">
+							<TextBlock Text="Successfully verified."
+									   FontSize="26"
+									   FontWeight="SemiBold"
+									   Foreground="#7BBA5D"
+									   HorizontalAlignment="Center"/>
+							<TextBlock Text="Don't forget to download backup codes in Security section"
+									   FontSize="14"
+									   Foreground="#7BBA5D"
+									   Opacity="0.9"
+									   HorizontalAlignment="Center"
+									   TextAlignment="Center"
+									   TextWrapping="Wrap"/>
+						</StackPanel>
+
+						<!-- Error State (Initially Hidden) -->
+						<StackPanel Name="ErrorStatePanel"
+									Width="500"
+									HorizontalAlignment="Center"
+									Spacing="6"
+									Opacity="0.0"
+									IsVisible="False">
+							<TextBlock Text="Invalid Code"
+									   FontSize="26"
+									   FontWeight="SemiBold"
+									   Foreground="#CC2D4D"
+									   HorizontalAlignment="Center"/>
+							<TextBlock Text="The code you entered is incorrect. Please try again."
+									   FontSize="14"
+									   Foreground="#CC2D4D"
+									   Opacity="0.9"
+									   HorizontalAlignment="Center"
+									   TextAlignment="Center"
+									   TextWrapping="Wrap"/>
+						</StackPanel>
+
+					</Panel>
+				</StackPanel>
+			</StackPanel>
+
+			<!-- Code Input Section -->
+			<StackPanel HorizontalAlignment="Center" Spacing="20">
+				<!-- Code Digits Container -->
+				<StackPanel Name="CodeInputContainer"
+							HorizontalAlignment="Center">
+
+					<!-- Regular 6-digit code input -->
+					<StackPanel Name="RegularCodePanel"
+								Orientation="Horizontal"
+								HorizontalAlignment="Center"
+								Spacing="12">
+						<!-- Digits will be added programmatically -->
+					</StackPanel>
+
+					<!-- Backup code input (initially hidden) -->
+					<StackPanel Name="BackupCodePanel"
+								Orientation="Horizontal"
+								HorizontalAlignment="Center"
+								Spacing="8"
+								IsVisible="False">
+						<!-- Backup code format: XXXX-XXX -->
+						<StackPanel Orientation="Horizontal" Spacing="2">
+							<!-- First 4 characters -->
+						</StackPanel>
+						<TextBlock Classes="separator" Text="-"/>
+						<StackPanel Orientation="Horizontal" Spacing="2">
+							<!-- Last 3 characters -->
+						</StackPanel>
+					</StackPanel>
+
+				</StackPanel>
+				
+			</StackPanel>
+
+			<!-- Action Buttons -->
+			<StackPanel Orientation="Horizontal"
+						HorizontalAlignment="Center"
+						Spacing="20">
+
+				<Button
+					Name="CancelCodeButton"
+					Classes="DefaultWhite"
+					Background="#E5E4E2"
+					Width="120"
+					Height="40"
+					HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					Click="CancelClick">
+					<TextBlock
+						Text="Cancel"
+						HorizontalAlignment="Center"
+						VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="#5D3F36"/>
+				</Button>
+
+				<Button
+					Name="VerifyCodeButton"
+					Classes="DefaultDarkBrown"
+					Width="120"
+					Height="40"
+					HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					IsEnabled="False"
+					Opacity="0.5"
+					Click="VerifyClick">
+					<TextBlock
+						Text="Verify"
+						HorizontalAlignment="Center"
+						VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="#E6C8A0"/>
+				</Button>
+			</StackPanel>
+
+		</StackPanel>
+
+		<!-- Toggle Button for Backup Code -->
+		<Button Name="BackupCodeToggle"
+				Classes="backupCodeToggle"
+				HorizontalAlignment="Left"
+				VerticalAlignment="Bottom"
+				Margin="8"
+				Click="ToggleBackupCodeModeClick">
+			<TextBlock Name="BackupCodeToggleText"
+					   Text="verify using backup code"
+					   FontSize="12"
+					   FontWeight="Medium"
+					   Foreground="#8B6B4A"
+					   Opacity="0.7"/>
+		</Button>
+	</Panel>
+	
+</UserControl>
