@@ -2,6 +2,6 @@
 {
     public class UserInvites
     {
-        public List<InviteInfo> Invites { get; set; } = new();
+        public List<InvitationDto> Invites { get; set; } = new();
     }
 }

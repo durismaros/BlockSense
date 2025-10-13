@@ -1,5 +1,4 @@
 ﻿using BlockSense.Cryptography.Encryption;
-using BlockSense.Cryptography.Hashing;
 using BlockSenseAPI.Cryptography;
 using BlockSenseAPI.Models.TwoFactorAuth;
 using BlockSenseAPI.Models.TwoFactorAuth.BackupCode;
@@ -11,6 +10,7 @@ using OtpNet;
 using QRCoder;
 using System.Data;
 using System.Reflection.PortableExecutable;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -25,7 +25,7 @@ namespace BlockSenseAPI.Services.UserServices
         private const int SecretKeyLength = 20; // 160-bit secret for TOTP
 
         private const int BackupCodeCount = 5;
-        private const int BackupCodeLength = 7;
+        private const int BackupCodeLength = 8;
 
         public TwoFactorAuthService(IOptions<TwoFactorConfig> twoFactorConfig, DatabaseContext dbContext)
         {
@@ -61,7 +61,7 @@ namespace BlockSenseAPI.Services.UserServices
 
         public async Task<TwoFactorVerificationResponse?> CompleteSetup(int userId, TwoFactorSetupRequest request)
         {
-            if (request is null || request.SecretKey is null || request.Code is null || request.Code.Length != 6)
+            if (request is null || string.IsNullOrEmpty(request.SecretKey) || string.IsNullOrEmpty(request.Code) || request.Code.Length != 6)
                 return null;
 
             if (!VerifyCode(Base32Encoding.ToBytes(request.SecretKey), request.Code))
@@ -77,7 +77,7 @@ namespace BlockSenseAPI.Services.UserServices
 
             byte[] ciphertext = AesGcm256.Encrypt(plaintext, key, nonce);
 
-            // Combine nonce (12) + ciphertextWithTag (36) = 48 bytes
+            // Combine nonce (12) + cipherTextWithTag (36) = 48 bytes
             byte[] encryptedSecret = new byte[nonce.Length + ciphertext.Length];
             Buffer.BlockCopy(nonce, 0, encryptedSecret, 0, nonce.Length);
             Buffer.BlockCopy(ciphertext, 0, encryptedSecret, nonce.Length, ciphertext.Length);
@@ -107,10 +107,12 @@ namespace BlockSenseAPI.Services.UserServices
 
         public async Task<TwoFactorVerificationResponse?> VerifyOtp(int userId, string? code)
         {
-            if (string.IsNullOrWhiteSpace(code) || code.Length != 6)
+            if (string.IsNullOrEmpty(code) || (code.Length != 6 && code.Length != 8))
                 return null;
 
-            if (await VerifyBackupCode(userId, Encoding.UTF8.GetBytes(code)))
+            code = code.ToUpper();
+
+            if (await VerifyBackupCode(userId, Encoding.UTF8.GetBytes(code.ToUpper())))
                 return new TwoFactorVerificationResponse
                 {
                     Verification = true,
@@ -158,12 +160,15 @@ namespace BlockSenseAPI.Services.UserServices
 
         public async Task<TwoFactorVerificationResponse?> DisableTwoFa(int userId, string? code)
         {
-            if (string.IsNullOrWhiteSpace(code) || code.Length != 6)
+            if (string.IsNullOrEmpty(code) || (code.Length != 6 && code.Length != 8))
                 return null;
 
+            code = code.ToUpper();
+            
             var result = await VerifyOtp(userId, code);
+            var resultBackup = await VerifyBackupCode(userId, Encoding.UTF8.GetBytes(code));
 
-            if (result is null || !result.Verification)
+            if ((result is null || !result.Verification) && !resultBackup)
                 return new TwoFactorVerificationResponse
                 {
                     Verification = false,
@@ -203,7 +208,7 @@ namespace BlockSenseAPI.Services.UserServices
                 byte[] randomBytes = CryptographyUtilities.SecureRandomGenerator(BackupCodeLength);
                 var code = new StringBuilder(BackupCodeLength);
 
-                for (int j = 0; j < BackupCodeLength; j++)
+                for (int j = 0; j < BackupCodeLength-1; j++)
                 {
                     if (j == 4)
                         code.Append('-');
@@ -275,6 +280,7 @@ namespace BlockSenseAPI.Services.UserServices
                 return false;
 
             var backupCodes = JsonSerializer.Deserialize<List<string>>(reader.GetString("backup_codes"));
+            await reader.DisposeAsync();
 
             if (backupCodes is null)
                 return false;
@@ -282,15 +288,14 @@ namespace BlockSenseAPI.Services.UserServices
             // Find and remove used backup code
             foreach (string backupCode in backupCodes)
             {
-                if (!CryptographicOperations.FixedTimeEquals(code, Convert.FromBase64String(backupCode)))
+                if (!CryptographicOperations.FixedTimeEquals(hash, Convert.FromBase64String(backupCode)))
                     continue;
 
                 backupCodes.Remove(backupCode);
 
                 // Update database to remove used code
                 query = "update two_factor_auth set backup_codes = @backup_codes where user_id = @user_id";
-
-                parameters.Add("backup_codes", backupCodes);
+                parameters.Add("backup_codes", JsonSerializer.Serialize(backupCodes));
 
                 await _dbContext.ExecuteNonQueryAsync(query, parameters);
                 return true;

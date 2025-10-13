@@ -1,4 +1,4 @@
-using BlockSenseAPI.Models;
+﻿using BlockSenseAPI.Models;
 using BlockSenseAPI.Models.Token.Configs;
 using BlockSenseAPI.Models.TwoFactorAuth;
 using BlockSenseAPI.Services;
@@ -14,27 +14,64 @@ using MySql.Data.MySqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// map jwtconfig from 'appsettings.json' to JwtConfig model
+//
+// ────────────────────────────────
+//   CONFIGURATION BINDING
+// ────────────────────────────────
+//
+// Load hard-coded configuration from `appsettings.json` into model classes.
+//
+
 builder.Services.Configure<AccessTokenConfig>(builder.Configuration.GetSection("JwtConfig"));
 builder.Services.Configure<RefreshTokenConfig>(builder.Configuration.GetSection("RefreshTokenConfig"));
 builder.Services.Configure<TwoFactorConfig>(builder.Configuration.GetSection("2FaConfig"));
 
-// multiple instances
+//
+// ────────────────────────────────
+//   CORE SERVICES REGISTRATION
+// ────────────────────────────────
+//
+// Services created each time they’re injected.
+//
+
 builder.Services.AddTransient<SystemValidationService>();
 builder.Services.AddTransient<SystemIdentifier>();
 
 
+//
+// ────────────────────────────────
+//   SCOPED SERVICES REGISTRATION
+// ────────────────────────────────
+//
+// Services created once per HTTP request.
+//
+
 builder.Services.AddScoped<MySqlConnection>(_ =>
     new MySqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
-
 builder.Services.AddScoped<DatabaseContext>();
 
+
+//
+// ────────────────────────────────
+//   APPLICATION SERVICE LAYER
+// ────────────────────────────────
+//
+// Interface-to-implementation mapping.
+//
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<IAccessTokenService, AccessTokenService>();
 builder.Services.AddScoped<IInviteCodeService, InviteCodeService>();
 builder.Services.AddScoped<ITwoFactorAuthService, TwoFactorAuthService>();
+
+//
+// ────────────────────────────────
+//   AUTHENTICATION & AUTHORIZATION
+// ────────────────────────────────
+//
+// Configuration of JWT Bearer authentication, validating access tokens using symmetric key signing.
+//
 
 builder.Services.AddAuthentication(options =>
 {
@@ -61,12 +98,29 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+//
+// ────────────────────────────────
+//   CONTROLLERS, SWAGGER & LOGGING
+// ────────────────────────────────
+//
+// Controllers for API endpoints and SwaggerUI integration.
+//
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddLogging();
 
 var app = builder.Build();
+
+//
+// ────────────────────────────────
+//   GLOBAL MIDDLEWARE CONFIGURATION
+// ────────────────────────────────
+//
+// Sssential HTTP security headers to all responses.
+//
 
 app.Use(async (context, next) =>
 {
@@ -79,6 +133,15 @@ app.Use(async (context, next) =>
 
     await next();
 });
+
+//
+// ────────────────────────────────
+//   SWAGGER / OPENAPI
+// ────────────────────────────────
+//
+// Swagger UI only for development and testing purposes. 
+// Interactive API exploration and documentation.
+//
 
 app.UseSwagger();
 app.UseSwaggerUI();

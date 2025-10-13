@@ -5,5 +5,6 @@
         public string? Login { get; set; }
         public string? Password { get; set; }
         public SystemIdentifier? Identifiers { get; set; }
+        public string? TwoFaCode { get; set; }
     }
 }

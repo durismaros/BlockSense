@@ -13,5 +13,6 @@ namespace BlockSenseAPI.Models.Login
         public string? Message { get; set; }
         public RefreshToken? RefreshToken { get; set; }
         public AccessToken? AccessToken { get; set; }
+        public bool TwoFactorRequired {  get; set; }
     }
 }

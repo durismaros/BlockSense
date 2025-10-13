@@ -1,6 +1,5 @@
 ﻿using BlockSenseAPI.Models.Invite;
 using System.Data;
-using System.Globalization;
 
 namespace BlockSenseAPI.Services.Invite
 {
@@ -28,19 +27,19 @@ namespace BlockSenseAPI.Services.Invite
             while (await reader.ReadAsync())
             {
                 // Extract data from db reader
-                string invitationCode = reader.GetString("code");
-                string creationDate = reader.GetDateTime("created_at").ToString("MMM dd, yyyy", CultureInfo.GetCultureInfo("en-US"));
-                string expirationDate = reader.GetDateTime("expires_at").ToString("MMM dd, yyyy", CultureInfo.InvariantCulture);
-                bool isUsed = reader.GetBoolean("is_used");
-                string invitedUser = isUsed ? reader.GetString("username") : string.Empty;
+                var invitationCode = reader.GetString("code");
+                var creationDate = reader.GetDateTime("created_at");
+                var expirationDate = reader.GetDateTime("expires_at");
+                var isUsed = reader.GetBoolean("is_used");
+                var invitedUser = isUsed ? reader.GetString("username") : string.Empty;
 
-                string status = isUsed ? "used" : "active";
+                var status = isUsed ? InvitationStatus.Used : InvitationStatus.Active;
                 if (reader.GetBoolean("is_revoked"))
-                    status = "revoked";
+                    status = InvitationStatus.Revoked;
                 else if (DateTime.UtcNow > reader.GetDateTime("expires_at"))
-                    status = "expired";
+                    status = InvitationStatus.Expired;
 
-                invites.Invites.Add(new InviteInfo
+                invites.Invites.Add(new InvitationDto
                 {
                     InvitationCode = invitationCode,
                     CreationDate = creationDate,

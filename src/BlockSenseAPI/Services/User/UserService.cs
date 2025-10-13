@@ -1,11 +1,11 @@
-﻿using BlockSense.Cryptography.Hashing;
-using BlockSenseAPI.Cryptography;
+﻿using BlockSenseAPI.Cryptography;
+using BlockSenseAPI.Cryptography.Hashing;
 using BlockSenseAPI.Models.Login;
 using BlockSenseAPI.Models.Register;
-using BlockSenseAPI.Models.Requests;
 using BlockSenseAPI.Models.Token.DTOs;
 using BlockSenseAPI.Models.User;
 using BlockSenseAPI.Services.Token;
+using BlockSenseAPI.Services.TwoFactorAuth;
 using BlockSenseAPI.Services.User;
 using System.Data;
 using System.Security.Cryptography;
@@ -18,12 +18,14 @@ namespace BlockSenseAPI.Services.UserServices
         private readonly DatabaseContext _dbContext;
         private readonly IRefreshTokenService _refreshTokenService;
         private readonly IAccessTokenService _accessTokenService;
+        private readonly ITwoFactorAuthService _twoFactorAuthService;
 
-        public UserService(DatabaseContext dbContext, IRefreshTokenService refreshTokenService, IAccessTokenService accessTokenService)
+        public UserService(DatabaseContext dbContext, IRefreshTokenService refreshTokenService, IAccessTokenService accessTokenService, ITwoFactorAuthService twoFactorAuthService)
         {
             _dbContext = dbContext;
             _refreshTokenService = refreshTokenService;
             _accessTokenService = accessTokenService;
+            _twoFactorAuthService = twoFactorAuthService;
         }
 
         public async Task<UserInfo?> FetchUserInfo(int userId)
@@ -78,8 +80,7 @@ namespace BlockSenseAPI.Services.UserServices
                 {
                     InvitedUsers = reader.IsDBNull(reader.GetOrdinal("invited_users")) ? 0 : reader.GetInt32("invited_users"),
                     ActiveDevices = reader.GetInt32("active_devices"),
-                    TwoFaEnabled = reader.IsDBNull(reader.GetOrdinal("2fa_enabled"))
-                    ? false : reader.GetBoolean("2fa_enabled")
+                    TwoFaEnabled = reader.IsDBNull(reader.GetOrdinal("2fa_enabled")) ? false : reader.GetBoolean("2fa_enabled")
                 };
             }
 
@@ -90,63 +91,83 @@ namespace BlockSenseAPI.Services.UserServices
             if (string.IsNullOrEmpty(request.Login) || string.IsNullOrEmpty(request.Password) || request.Identifiers is null)
                 return null;
 
-            string query = "select user_id, password_hash, password_salt from users where (username = @login or email = @login) and user_type != 'banned'";
+            string query = "select u.user_id, password_hash, password_salt, is_2fa_enabled from users u left join two_factor_auth tfa on u.user_id = tfa.user_id where (username = @login or email = @login) and user_type != 'banned'";
             Dictionary<string, object> parameters = new()
             {
                 {"@login", request.Login}
             };
 
-            using (var reader = await _dbContext.ExecuteReaderAsync(query, parameters))
-            {
-                if (!await reader.ReadAsync())
-                    return new LoginResponse
-                    {
-                        Success = false,
-                        Message = "Hmm, we couldn’t find your account"
-                    };
+            using var reader = await _dbContext.ExecuteReaderAsync(query, parameters);
 
-                byte[] hashedPassword = new byte[32];
-                reader.GetBytes("password_hash", 0, hashedPassword, 0, 32);
-
-                byte[] salt = new byte[16];
-                reader.GetBytes("password_salt", 0, salt, 0, 16);
-
-                byte[] passwordBytes = Encoding.UTF8.GetBytes(request.Password);
-
-                byte[] hashedPasswordRequest = HashingUtilities.ComputeSha256(passwordBytes, salt);
-
-                if (CryptographicOperations.FixedTimeEquals(hashedPassword, hashedPasswordRequest))
+            if (!await reader.ReadAsync())
+                return new LoginResponse
                 {
-                    int userId = reader.GetInt32("user_id");
-                    var refreshToken = _refreshTokenService.GenerateRefreshToken(userId);
-                    var accessToken = _accessTokenService.GenerateAccessToken(userId);
+                    Success = false,
+                    Message = "Hmm, we couldn’t find your account"
+                };
 
-                    await reader.DisposeAsync();
+            byte[] hashedPassword = new byte[32];
+            reader.GetBytes("password_hash", 0, hashedPassword, 0, 32);
 
-                    await _refreshTokenService.StoreRefreshToken(new TokenRefreshRequest
-                    {
-                        RefreshToken = refreshToken,
-                        Identifiers = request.Identifiers,
-                    });
+            byte[] salt = new byte[16];
+            reader.GetBytes("password_salt", 0, salt, 0, 16);
 
-                    return new LoginResponse
-                    {
-                        Success = true,
-                        Message = "Welcome back! You’re all set",
-                        RefreshToken = refreshToken,
-                        AccessToken = accessToken
-                    };
-                }
+            byte[] passwordBytes = Encoding.UTF8.GetBytes(request.Password);
 
+            byte[] hashedPasswordRequest = Sha256Hasher.ComputeByte(passwordBytes, salt);
+
+            if (!CryptographicOperations.FixedTimeEquals(hashedPassword, hashedPasswordRequest))
                 return new LoginResponse
                 {
                     Success = false,
                     Message = "Oops! Wrong password entered"
                 };
+
+            int userId = reader.GetInt32("user_id");
+            bool twoFaEnabled = reader.GetBoolean("is_2fa_enabled");
+            await reader.DisposeAsync();
+
+            string? code = request.TwoFaCode;
+
+            if (twoFaEnabled && (string.IsNullOrEmpty(code) || (code.Length != 6 && code.Length != 8)))
+                return new LoginResponse
+                {
+                    Success = false,
+                    Message = "Two factor authentication is required",
+                    TwoFactorRequired = true
+                };
+
+            if (twoFaEnabled)
+            {
+                var response = await _twoFactorAuthService.VerifyOtp(userId, code);
+                if (response is null || !response.Verification)
+                    return new LoginResponse
+                    {
+                        Success = false,
+                        Message = "OTP verification failed",
+                        TwoFactorRequired = true
+                    };
             }
+
+            var refreshToken = _refreshTokenService.GenerateRefreshToken(userId);
+            var accessToken = _accessTokenService.GenerateAccessToken(userId);
+
+            await _refreshTokenService.StoreRefreshToken(new TokenRefreshRequest
+            {
+                RefreshToken = refreshToken,
+                Identifiers = request.Identifiers,
+            });
+
+            return new LoginResponse
+            {
+                Success = true,
+                Message = "Welcome back! You’re all set",
+                RefreshToken = refreshToken,
+                AccessToken = accessToken
+            };
         }
 
-        public async Task<RegisterResponse?> Register(Models.Requests.RegisterRequest request)
+        public async Task<RegisterResponse?> RegisterAsync(Models.Requests.RegisterRequest request)
         {
             if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password) || string.IsNullOrEmpty(request.InvitationCode))
                 return null;
@@ -167,9 +188,9 @@ namespace BlockSenseAPI.Services.UserServices
                 };
 
             // Generate salt and hash the password
-            byte[] salt = CryptographyUtilities.SecureRandomGenerator();
+            byte[] salt = CryptographyUtilities.GenerateSecureRandomBytes();
             byte[] passwordBytes = Encoding.UTF8.GetBytes(request.Password);
-            byte[] hashedPassword = HashingUtilities.ComputeSha256(passwordBytes, salt);
+            byte[] hashedPassword = Sha256Hasher.ComputeByte(passwordBytes, salt);
 
             string query = "insert into users (username, email, password_hash, password_salt, invitation_code_id) values (@username, @email, @password_hash, @password_salt, (select invitation_code_id from invitation_codes where code = @code))";
             Dictionary<string, object> parameters = new()
@@ -188,7 +209,7 @@ namespace BlockSenseAPI.Services.UserServices
             return new RegisterResponse
             {
                 Success = true,
-                Message = "Registration complete! Welcome"
+                Message = "Registration complete! Welcome."
             };
         }
 
