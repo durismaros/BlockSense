@@ -16,6 +16,5 @@ class Program
         => AppBuilder.Configure<App>()
         .UsePlatformDetect()
         .WithInterFont()
-        .LogToTrace()
-        .With(new SkiaOptions() { MaxGpuResourceSizeBytes = 256000000 });
+        .LogToTrace();
 }

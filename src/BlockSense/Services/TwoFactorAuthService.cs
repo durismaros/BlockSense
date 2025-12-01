@@ -5,7 +5,6 @@ using BlockSense.Api;
 using BlockSense.Models.TwoFactorAuth.BackupCode;
 using BlockSense.Models.TwoFactorAuth.Setup;
 using BlockSense.Models.TwoFactorAuth.Verification;
-using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.IO;

@@ -1,20 +1,21 @@
 ﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using BlockSense.Views;
-using System;
-using Microsoft.Extensions.DependencyInjection;
-using BlockSense.Models.User;
 using BlockSense.Api;
-using BlockSense.Utilities;
-using BlockSense.Services;
-using System.Collections.Generic;
-using BlockSense.Utilities.Logging;
-using BlockSense.Utilities.UI;
-using BlockSense.Models.Invite;
 using BlockSense.Client.TokenAuthentication;
 using BlockSense.Client_Side.TokenAuthentication;
+using BlockSense.Models.Invite;
 using BlockSense.Models.TwoFactorAuth.BackupCode;
+using BlockSense.Models.User;
+using BlockSense.Services;
+using BlockSense.Utilities;
+using BlockSense.Utilities.Logging;
+using BlockSense.Utilities.UI;
+using BlockSense.ViewModels;
+using BlockSense.Views;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
 
 namespace BlockSense;
 
@@ -77,21 +78,27 @@ public partial class App : Application
     {
         base.OnFrameworkInitializationCompleted();
 
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && Services is not null)
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
+            Services is not null)
         {
             var systemUtils = Services.GetRequiredService<SystemUtils>();
+            var viewSwitcher = Services.GetRequiredService<IViewSwitcher>();
 
             // Check server status
-            if (!await systemUtils.CheckServerStatus())
-                return;
+            //if (!await systemUtils.CheckServerStatus())
+            //    return;
 
             desktop.MainWindow = Services.GetRequiredService<MainWindow>();
-            desktop.MainWindow.Show();
+            desktop.MainWindow.DataContext = Services.GetRequiredService<MainWindowViewModel>();
+            //desktop.MainWindow.Show();
 
             // Continue with session check and navigation
             bool isSessionActive = await systemUtils.IsSessionActive();
-            await (isSessionActive ? Services.GetRequiredService<IViewSwitcher>().NavigateToAsync<WelcomeView>()
-                : Services.GetRequiredService<IViewSwitcher>().NavigateToAsync<MainView>());
+
+            if (isSessionActive)
+                await viewSwitcher.NavigateToAsync<WelcomeViewModel>();
+            else
+                await viewSwitcher.NavigateToAsync<MainViewModel>();
         }
     }
 }

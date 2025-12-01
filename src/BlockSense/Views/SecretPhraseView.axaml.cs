@@ -12,7 +12,6 @@ using BlockSense.Client;
 using BlockSense.Cryptography.Wallet.MnemonicManager;
 using BlockSense.Utilities.UI;
 using BlockSense.Views;
-using DynamicData;
 using System;
 using System.Collections.Generic;
 using System.Linq;
