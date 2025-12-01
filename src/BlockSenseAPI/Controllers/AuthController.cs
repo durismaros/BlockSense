@@ -33,7 +33,7 @@ namespace BlockSenseAPI.Controllers
         {
             try
             {
-                var result = await _userService.Login(request);
+                var result = await _userService.LoginAsync(request);
 
                 if (result is null)
                     return BadRequest();
@@ -55,7 +55,7 @@ namespace BlockSenseAPI.Controllers
         {
             try
             {
-                var result = await _userService.Register(request);
+                var result = await _userService.RegisterAsync(request);
 
                 if (result is null)
                     return BadRequest();

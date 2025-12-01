@@ -30,7 +30,7 @@ namespace BlockSenseAPI.Controllers
                 if (!int.TryParse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out int userId))
                     return Unauthorized("User ID not found in token");
 
-                var userInfo = await _userService.FetchUserInfo(userId);
+                var userInfo = await _userService.FetchUserInfoAsync(userId);
 
                 if (userInfo is null)
                     return NotFound("User not found");
@@ -52,7 +52,7 @@ namespace BlockSenseAPI.Controllers
                 if (!int.TryParse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out int userId))
                     return Unauthorized("User ID not found in token");
 
-                var addUserInfo = await _userService.FetchAddUserInfo(userId);
+                var addUserInfo = await _userService.FetchAddUserInfoAsync(userId);
                 
                 if (addUserInfo is null)
                     return NotFound("User not found");
