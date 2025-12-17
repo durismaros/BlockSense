@@ -2,6 +2,7 @@
 using BlockSenseAPI.Cryptography.Hashing;
 using BlockSenseAPI.Models.Login;
 using BlockSenseAPI.Models.Register;
+using BlockSenseAPI.Models.Requests;
 using BlockSenseAPI.Models.Token.DTOs;
 using BlockSenseAPI.Models.User;
 using BlockSenseAPI.Services.Token;
@@ -28,7 +29,7 @@ namespace BlockSenseAPI.Services.UserServices
             _twoFactorAuthService = twoFactorAuthService;
         }
 
-        public async Task<UserInfo?> FetchUserInfo(int userId)
+        public async Task<UserInfo?> FetchUserInfoAsync(int userId)
         {
             // Similar to your existing LoadUserInfo but returns a DTO
             // Implementation would query database and return UserInfo object
@@ -60,7 +61,7 @@ namespace BlockSenseAPI.Services.UserServices
             }
         }
 
-        public async Task<AdditionalUserInfo?> FetchAddUserInfo(int userId)
+        public async Task<AdditionalUserInfo?> FetchAddUserInfoAsync(int userId)
         {
             string query = "select " +
                 "(select count(invitation_code_id) from invitation_codes where generated_by = @user_id and is_used = true group by generated_by) as invited_users, " +
@@ -86,7 +87,7 @@ namespace BlockSenseAPI.Services.UserServices
 
         }
 
-        public async Task<LoginResponse?> Login(LoginRequest request)
+        public async Task<LoginResponse?> LoginAsync(LoginRequest request)
         {
             if (string.IsNullOrEmpty(request.Login) || string.IsNullOrEmpty(request.Password) || request.Identifiers is null)
                 return null;
@@ -167,7 +168,7 @@ namespace BlockSenseAPI.Services.UserServices
             };
         }
 
-        public async Task<RegisterResponse?> RegisterAsync(Models.Requests.RegisterRequest request)
+        public async Task<RegisterResponse?> RegisterAsync(RegisterRequest request)
         {
             if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password) || string.IsNullOrEmpty(request.InvitationCode))
                 return null;
@@ -213,7 +214,7 @@ namespace BlockSenseAPI.Services.UserServices
             };
         }
 
-        public async Task Logout(Guid tokenId)
+        public async Task LogoutAsync(Guid tokenId)
         {
             await _refreshTokenService.RevokeRefreshToken(tokenId);
         }

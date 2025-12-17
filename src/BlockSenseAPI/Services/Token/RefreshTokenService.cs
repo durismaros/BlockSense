@@ -1,5 +1,5 @@
-﻿using BlockSense.Cryptography.Hashing;
-using BlockSenseAPI.Cryptography;
+﻿using BlockSenseAPI.Cryptography;
+using BlockSenseAPI.Cryptography.Hashing;
 using BlockSenseAPI.Models;
 using BlockSenseAPI.Models.Token;
 using BlockSenseAPI.Models.Token.Configs;
@@ -26,7 +26,7 @@ namespace BlockSenseAPI.Services.Token
 
         public RefreshToken GenerateRefreshToken(int userId)
         {
-            byte[] plainToken = CryptographyUtilities.SecureRandomGenerator(32);
+            byte[] plainToken = CryptographyUtilities.GenerateSecureRandomBytes(32);
             Guid tokenId = Guid.NewGuid();
             DateTime issuedAt = DateTime.UtcNow;
             DateTime expiresAt = issuedAt.AddDays(_config.RefreshTokenExpirationDays);
@@ -51,7 +51,7 @@ namespace BlockSenseAPI.Services.Token
             if (request is null || request.RefreshToken is null || request.Identifiers is null)
                 return;
 
-            string hashedToken = Convert.ToBase64String(HashingUtilities.ComputeSha256(request.RefreshToken.Data));
+            string hashedToken = Convert.ToBase64String(Sha256Hasher.ComputeByte(request.RefreshToken.Data));
 
             string query = "insert into refresh_tokens values (@token_id, @user_id, @token_hash, @hardware_fingerprint, @network_fingerprint, @ip_address, @device_identifier, @issued_at, @expires_at, default)" +
                 "on duplicate key update token_id = values(token_id), token_hash = values(token_hash),user_id = values(user_id),ip_address = values(ip_address),device_identifier = values(device_identifier), " +
@@ -152,7 +152,7 @@ namespace BlockSenseAPI.Services.Token
                 var validatorService = new SystemValidationService(request.Identifiers, validIdentifiers);
 
                 // Hash the decrypted token
-                byte[] hashedClientToken = HashingUtilities.ComputeSha256(request.RefreshToken.Data);
+                byte[] hashedClientToken = Sha256Hasher.ComputeByte(request.RefreshToken.Data);
 
                 if (!CryptographicOperations.FixedTimeEquals(hashedClientToken, validToken.Data))
                     return new TokenRefreshResponse

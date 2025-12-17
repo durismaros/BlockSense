@@ -1,5 +1,6 @@
-﻿using BlockSense.Cryptography.Encryption;
-using BlockSenseAPI.Cryptography;
+﻿using BlockSenseAPI.Cryptography;
+using BlockSenseAPI.Cryptography.Encryption;
+using BlockSenseAPI.Cryptography.Hashing;
 using BlockSenseAPI.Models.TwoFactorAuth;
 using BlockSenseAPI.Models.TwoFactorAuth.BackupCode;
 using BlockSenseAPI.Models.TwoFactorAuth.Setup;
@@ -71,16 +72,17 @@ namespace BlockSenseAPI.Services.UserServices
                     Message = "Invalid code"
                 };
 
+            var aes256GcmEncryptor = new Aes256GcmEncryptor();
             byte[] plaintext = Base32Encoding.ToBytes(request.SecretKey);
             byte[] key = Convert.FromBase64String(_config.MasterKey);
-            byte[] nonce = AesGcm256.GenerateNonce();
+            byte[] iv = CryptographyUtilities.GenerateSecureRandomBytes(12);
 
-            byte[] ciphertext = AesGcm256.Encrypt(plaintext, key, nonce);
+            byte[] ciphertext = aes256GcmEncryptor.Encrypt(key, iv, plaintext);
 
             // Combine nonce (12) + cipherTextWithTag (36) = 48 bytes
-            byte[] encryptedSecret = new byte[nonce.Length + ciphertext.Length];
-            Buffer.BlockCopy(nonce, 0, encryptedSecret, 0, nonce.Length);
-            Buffer.BlockCopy(ciphertext, 0, encryptedSecret, nonce.Length, ciphertext.Length);
+            byte[] encryptedSecret = new byte[iv.Length + ciphertext.Length];
+            Buffer.BlockCopy(iv, 0, encryptedSecret, 0, iv.Length);
+            Buffer.BlockCopy(ciphertext, 0, encryptedSecret, iv.Length, ciphertext.Length);
 
             string query = "insert into two_factor_auth values(@user_id, true, @encrypted_totp_secret, null, default) " +
                 "on duplicate key update is_2fa_enabled = if(is_2fa_enabled = false, true, false), encrypted_totp_secret = @encrypted_totp_secret";
@@ -138,16 +140,17 @@ namespace BlockSenseAPI.Services.UserServices
             byte[] storedData = new byte[48];
             reader.GetBytes("encrypted_totp_secret", 0, storedData, 0, 48);
 
-            byte[] nonce = new byte[12];
-
             // Extract nonce (12) + ciphertextWithTag (36)
+            byte[] iv = new byte[12];
             byte[] ciphertext = new byte[storedData.Length - 12];
 
-            Buffer.BlockCopy(storedData, 0, nonce, 0, 12);
+            Buffer.BlockCopy(storedData, 0, iv, 0, 12);
             Buffer.BlockCopy(storedData, 12, ciphertext, 0, ciphertext.Length);
 
+            var aes256GcmEncryptor = new Aes256GcmEncryptor();
+
             byte[] key = Convert.FromBase64String(_config.MasterKey);
-            byte[] decryptedSecret = AesGcm256.Decrypt(ciphertext, key, nonce);
+            byte[] decryptedSecret = aes256GcmEncryptor.Decrypt(key, iv, ciphertext);
 
             bool isValid = VerifyCode(decryptedSecret, code);
 
@@ -205,7 +208,7 @@ namespace BlockSenseAPI.Services.UserServices
 
             for (int i = 0; i < BackupCodeCount; i++)
             {
-                byte[] randomBytes = CryptographyUtilities.SecureRandomGenerator(BackupCodeLength);
+                byte[] randomBytes = CryptographyUtilities.GenerateSecureRandomBytes(BackupCodeLength);
                 var code = new StringBuilder(BackupCodeLength);
 
                 for (int j = 0; j < BackupCodeLength-1; j++)
@@ -218,7 +221,7 @@ namespace BlockSenseAPI.Services.UserServices
 
                 string codeStr = code.ToString();
 
-                byte[] hash = HashingUtilities.ComputeSha256(Encoding.UTF8.GetBytes(codeStr));
+                byte[] hash = Sha256Hasher.ComputeByte(Encoding.UTF8.GetBytes(codeStr));
 
                 backupCodes.Codes.Add(codeStr);
                 hashedBackupCodes.Add(Convert.ToBase64String(hash));
@@ -246,7 +249,7 @@ namespace BlockSenseAPI.Services.UserServices
 
         private string GenerateRandomSecretKey()
         {
-            byte[] keyBytes = CryptographyUtilities.SecureRandomGenerator(SecretKeyLength);
+            byte[] keyBytes = CryptographyUtilities.GenerateSecureRandomBytes(SecretKeyLength);
             return Base32Encoding.ToString(keyBytes);
         }
 
@@ -266,7 +269,7 @@ namespace BlockSenseAPI.Services.UserServices
 
         private async Task<bool> VerifyBackupCode(int userId, byte[] code)
         {
-            byte[] hash = HashingUtilities.ComputeSha256(code);
+            byte[] hash = Sha256Hasher.ComputeByte(code);
 
             string query = "select backup_codes from two_factor_auth where user_id = @user_id and is_2fa_enabled is true and backup_codes is not null";
             Dictionary<string, object> parameters = new()
