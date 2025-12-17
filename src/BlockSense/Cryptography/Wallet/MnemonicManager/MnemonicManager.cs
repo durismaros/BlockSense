@@ -5,7 +5,6 @@ using BlockSense.Cryptography.KeyDerivation;
 using BlockSense.Cryptography.Wallet;
 using BlockSense.Utilities.FileManagement;
 using BlockSense.Utilities.General;
-using NBitcoin.WalletPolicies;
 using System;
 using System.Collections.Generic;
 using System.IO;

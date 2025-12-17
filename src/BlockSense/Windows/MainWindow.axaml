@@ -23,7 +23,6 @@
 			</ExperimentalAcrylicBorder.Material>
 		</ExperimentalAcrylicBorder>
 
-		<!-- Bind to VM -->
-		<ContentControl Content="{Binding CurrentView}"/>
+		<ContentControl x:Name="ContentContainer"/>
 	</Panel>
 </Window>

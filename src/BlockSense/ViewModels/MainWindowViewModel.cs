@@ -1,24 +1,27 @@
-﻿using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace BlockSense.ViewModels
 {
-    public partial class MainWindowViewModel : ObservableObject
+    /// <summary>
+    /// Root ViewModel of the application. Exposes CurrentViewModel for display.
+    /// </summary>
+    public partial class MainWindowViewModel : ViewModelBase
     {
         [ObservableProperty]
-        private object? _currentView;
+        private ViewModelBase? _currentViewModel;
 
         public MainWindowViewModel()
         {
-            // Initial view
-            CurrentView = new PlainViewModel();
+            // Initial landing page
+            _currentViewModel = new PlainViewModel();
         }
 
-        // Example command to change views
-        [RelayCommand]
-        public void ShowPlainView()
+        /// <summary>
+        /// Switches the visible ViewModel.
+        /// </summary>
+        public void NavigateTo(ViewModelBase viewModel)
         {
-            CurrentView = new PlainViewModel();
+            CurrentViewModel = viewModel;
         }
     }
 }

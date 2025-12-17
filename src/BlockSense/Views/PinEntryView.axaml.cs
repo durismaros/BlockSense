@@ -17,8 +17,6 @@ namespace BlockSense;
 
 public partial class PinEntryView : UserControl
 {
-    private readonly IViewSwitcher _viewSwitcher;
-
     private const int PIN_LENGTH = 6;
     private string _currentPin = string.Empty;
     private string _confirmPin = string.Empty;
@@ -40,10 +38,8 @@ public partial class PinEntryView : UserControl
 
     public bool SetupMode { get; set; }
 
-    public PinEntryView(IViewSwitcher viewSwitcher)
+    public PinEntryView()
     {
-        _viewSwitcher = viewSwitcher;
-
         InitializeComponent();
 
         SetMode(true); // set initial mode Here
@@ -180,7 +176,7 @@ public partial class PinEntryView : UserControl
         // Handle Escape key
         else if (e.Key.Equals(Key.Escape) && !_isPanelVisible)
         {
-            await _viewSwitcher.NavigateToAsync<WelcomeView>();
+            //await _viewSwitcher.NavigateToAsync<WelcomeView>();
             ResetPin();
         }
     }
@@ -198,7 +194,7 @@ public partial class PinEntryView : UserControl
             SetupMode = false;
             AnimatePanel(false);
             ResetPin();
-            await _viewSwitcher.NavigateToAsync<SecretPhraseView>();
+            //await _viewSwitcher.NavigateToAsync<SecretPhraseView>();
             // Wallet generation logic here
         }
 

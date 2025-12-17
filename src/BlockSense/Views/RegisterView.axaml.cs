@@ -14,12 +14,10 @@ namespace BlockSense;
 public partial class RegisterView : UserControl
 {
     private readonly UserService _userService;
-    private readonly IViewSwitcher _viewSwitcher;
     private readonly AsyncDebouncer _debouncer;
-    public RegisterView(UserService userService, IViewSwitcher viewSwitcher)
+    public RegisterView(UserService userService)
     {
         _userService = userService;
-        _viewSwitcher = viewSwitcher;
 
         _debouncer = new AsyncDebouncer();
 
@@ -42,7 +40,7 @@ public partial class RegisterView : UserControl
     /// <param name="e"></param>
     private async void HomeClick(object sender, RoutedEventArgs e)
     {
-        await _viewSwitcher.NavigateToAsync<MainView>();
+        //await _viewSwitcher.NavigateToAsync<MainView>();
     }
 
     private async void RegisterClick(object sender, RoutedEventArgs e)

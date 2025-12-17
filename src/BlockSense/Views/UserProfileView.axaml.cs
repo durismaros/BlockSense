@@ -29,21 +29,19 @@ public partial class UserProfileView : UserControl
 
     private readonly TwoFactorAuthService _twoFactorAuthService;
     private readonly ProfilePictureHandler _profilePictureHandler;
-    private readonly IViewSwitcher _viewSwitcher;
 
     private readonly TwoFactorSlidingPanel _twoFactorSlidingPanel;
     private InviteManagerWindow? _inviteManagerWindow;
 
     private readonly AsyncDebouncer _debouncer;
 
-    public UserProfileView(UserInfo userInfo, AdditionalUserInfo additionalUserInfo, TwoFactorBackupCodes twoFactorBackupCodes, TwoFactorAuthService twoFactorAuthService, ProfilePictureHandler profilePictureHandler, IViewSwitcher viewSwitcher, TwoFactorSlidingPanel twoFactorSlidingPanel)
+    public UserProfileView(UserInfo userInfo, AdditionalUserInfo additionalUserInfo, TwoFactorBackupCodes twoFactorBackupCodes, TwoFactorAuthService twoFactorAuthService, ProfilePictureHandler profilePictureHandler, TwoFactorSlidingPanel twoFactorSlidingPanel)
     {
         _userInfo = userInfo;
         _additionalUserInfo = additionalUserInfo;
         _twoFactorBackupCodes = twoFactorBackupCodes;
         _twoFactorAuthService = twoFactorAuthService;
         _profilePictureHandler = profilePictureHandler;
-        _viewSwitcher = viewSwitcher;
         _twoFactorSlidingPanel = twoFactorSlidingPanel;
 
         _debouncer = new AsyncDebouncer();
@@ -323,7 +321,7 @@ public partial class UserProfileView : UserControl
             _inviteManagerWindow = null; // Clear reference to avoid memory leaks
         }
 
-        await _viewSwitcher.NavigateToAsync<WelcomeView>();
+        //await _viewSwitcher.NavigateToAsync<WelcomeView>();
     }
 
     private async void PfpUploadClick(object sender, PointerPressedEventArgs e)
@@ -344,7 +342,7 @@ public partial class UserProfileView : UserControl
     private async void LogoutClick(object sender, RoutedEventArgs e)
     {
         //await UserService.Logout();
-        await _viewSwitcher.NavigateToAsync<MainView>();
+        //await _viewSwitcher.NavigateToAsync<MainView>();
     }
 
     private async void GenerateNewTwoFaSetup()

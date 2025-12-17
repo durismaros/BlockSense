@@ -21,12 +21,10 @@ namespace BlockSense;
 
 public partial class SecretPhraseView : UserControl
 {
-    private readonly IViewSwitcher _viewSwitcher;
     private bool _isPanelVisible = false;
 
-    public SecretPhraseView(IViewSwitcher viewSwitcher)
+    public SecretPhraseView()
     {
-        _viewSwitcher = viewSwitcher;
         CreateBorders();
 
         SlidePanel.RenderTransform = new TranslateTransform(0, SlidePanel.Height);
@@ -40,7 +38,7 @@ public partial class SecretPhraseView : UserControl
 
     private async void FinishClick(object sender, RoutedEventArgs e)
     {
-        await _viewSwitcher.NavigateToAsync<MainWalletView>();
+        //await _viewSwitcher.NavigateToAsync<MainWalletView>();
     }
 
     private void OnCheckboxChanged(object? sender, RoutedEventArgs e)

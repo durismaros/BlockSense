@@ -3,7 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using BlockSense.Client;
+using BlockSense.Services;
 using BlockSense.Utilities.UI;
+using BlockSense.ViewModels;
 using BlockSense.Views;
 using Org.BouncyCastle.Crypto.Agreement;
 
@@ -11,20 +13,20 @@ namespace BlockSense;
 
 public partial class BackupView : UserControl
 {
-    private readonly IViewSwitcher _viewSwitcher;
-    public BackupView(IViewSwitcher viewSwitcher)
+    private readonly NavigationService _navigationService;
+    public BackupView(NavigationService navigationService)
     {
-        _viewSwitcher = viewSwitcher;
+        _navigationService = navigationService;
         InitializeComponent();
     }
 
     private async void ManualBackupClick(object sender, RoutedEventArgs e)
     {
-        await _viewSwitcher.NavigateToAsync<SecretPhraseView>();
+        _navigationService.NavigateTo<SecretPhraseViewModel>();
     }
 
     private async void BackupLaterClick(object sender, RoutedEventArgs e)
     {
-        await _viewSwitcher.NavigateToAsync<MainWalletView>();
+        _navigationService.NavigateTo<MainWalletViewModel>();
     }
 }
