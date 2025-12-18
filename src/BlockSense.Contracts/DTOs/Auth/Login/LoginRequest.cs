@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BlockSense.Contracts.DTOs.Auth
+namespace BlockSense.Contracts.DTOs.Auth.Login
 {
     /// <summary>
     /// Represents a request to authenticate a user in the system.

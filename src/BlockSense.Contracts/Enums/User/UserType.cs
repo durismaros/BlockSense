@@ -1,4 +1,4 @@
-﻿namespace BlockSense.Contracts.Enums
+﻿namespace BlockSense.Contracts.Enums.User
 {
     /// <summary>
     /// Represents the classification and access level of a user account.

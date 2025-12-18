@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BlockSense.Contracts.DTOs.Auth
+namespace BlockSense.Contracts.DTOs.Auth.Register
 {
     /// <summary>
     /// Represents the information required to register a new user account.

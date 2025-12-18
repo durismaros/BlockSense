@@ -1,6 +1,6 @@
-﻿using BlockSense.Contracts.Enums;
+﻿using BlockSense.Contracts.Enums.Auth;
 
-namespace BlockSense.Contracts.DTOs.Auth
+namespace BlockSense.Contracts.DTOs.Auth.Register
 {
     /// <summary>
     /// Represents the response returned by the backend after a user registration attempt.
@@ -13,7 +13,7 @@ namespace BlockSense.Contracts.DTOs.Auth
         public RegistrationStatus Status { get; init; } = RegistrationStatus.Unknown;
 
         /// <summary>
-        /// Optional human-readable message providing additional information.
+        /// Optional human-readable message providing additional context.
         /// </summary>
         public string? Message { get; init; }
 

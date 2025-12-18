@@ -1,4 +1,4 @@
-﻿namespace BlockSense.Contracts.Enums
+﻿namespace BlockSense.Contracts.Enums.Auth
 {
     /// <summary>
     /// Represents the outcome of a user registration attempt.
