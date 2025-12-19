@@ -1,9 +1,20 @@
 using BlockSense.Backend.Data;
+using BlockSense.Backend.Data.Configurations;
 using MySql.Data.MySqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+//
+// --------------------------------
+//      CONFIGURATION BINDING
+// --------------------------------
+//
+// Load hard-coded configuration from `appsettings.json` into model classes.
+//
+
+builder.Services.Configure<JwtTokenConfig>(builder.Configuration.GetSection("JwtTokenConfig"));
+builder.Services.Configure<RefreshTokenConfig>(builder.Configuration.GetSection("RefreshTokenConfig"));
+builder.Services.Configure<TwoFactorAuthConfig>(builder.Configuration.GetSection("TwoFactorAuthConfig"));
 
 //
 // --------------------------------

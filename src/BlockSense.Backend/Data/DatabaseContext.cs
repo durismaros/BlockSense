@@ -10,6 +10,7 @@ namespace BlockSense.Backend.Data
     public class DatabaseContext : IAsyncDisposable
     {
         private readonly MySqlConnection _connection;
+        private MySqlTransaction? _currentTransaction;
 
         /// <summary>
         /// Gets the underlying MySQL connection.
@@ -27,14 +28,36 @@ namespace BlockSense.Backend.Data
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public MySqlTransaction? GetCurrentTransaction() => _currentTransaction;
+
+        /// <summary>
         /// Begins a new database transaction with the specified isolation level.
         /// </summary>
         /// <param name="isolationLevel">The transaction isolation level. Defaults to <see cref="IsolationLevel.ReadCommitted"/>.</param>
         /// <returns>A <see cref="MySqlTransaction"/> representing the new transaction.</returns>
-        public async Task<MySqlTransaction> BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
+        public async Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
         {
             await EnsureConnectionOpenAsync();
-            return _connection.BeginTransaction(isolationLevel);
+            _currentTransaction = _connection.BeginTransaction(isolationLevel);
+        }
+
+        public async Task CommitAsync()
+        {
+            if (_currentTransaction == null) throw new InvalidOperationException("No active transaction to commit.");
+            await _currentTransaction.CommitAsync();
+            await _currentTransaction.DisposeAsync();
+            _currentTransaction = null;
+        }
+
+        public async Task RollbackAsync()
+        {
+            if (_currentTransaction == null) return;
+            await _currentTransaction.RollbackAsync();
+            await _currentTransaction.DisposeAsync();
+            _currentTransaction = null;
         }
 
         /// <summary>
@@ -44,10 +67,10 @@ namespace BlockSense.Backend.Data
         /// <param name="transaction">Optional transaction to execute the command in.</param>
         /// <param name="parameters">Optional SQL parameters.</param>
         /// <returns>A <see cref="DbDataReader"/> for reading the query results.</returns>
-        public async Task<DbDataReader> ExecuteReaderAsync(string query, MySqlTransaction? transaction = null, params MySqlParameter[] parameters)
+        public async Task<DbDataReader> ExecuteReaderAsync(string query, params MySqlParameter[] parameters)
         {
             await EnsureConnectionOpenAsync();
-            var command = CreateCommand(query, transaction, parameters);
+            var command = CreateCommand(query, _currentTransaction, parameters);
             return await command.ExecuteReaderAsync(CommandBehavior.Default);
         }
 
@@ -58,10 +81,10 @@ namespace BlockSense.Backend.Data
         /// <param name="transaction">Optional transaction to execute the command in.</param>
         /// <param name="parameters">Optional SQL parameters.</param>
         /// <returns>The first column of the first row in the result set.</returns>
-        public async Task<object?> ExecuteScalarAsync(string query, MySqlTransaction? transaction = null, params MySqlParameter[] parameters)
+        public async Task<object?> ExecuteScalarAsync(string query, params MySqlParameter[] parameters)
         {
             await EnsureConnectionOpenAsync();
-            await using var command = CreateCommand(query, transaction, parameters);
+            await using var command = CreateCommand(query, _currentTransaction, parameters);
             return await command.ExecuteScalarAsync();
         }
 
@@ -72,10 +95,10 @@ namespace BlockSense.Backend.Data
         /// <param name="transaction">Optional transaction to execute the command in.</param>
         /// <param name="parameters">Optional SQL parameters.</param>
         /// <returns>The number of rows affected by the command.</returns>
-        public async Task<int> ExecuteNonQueryAsync(string query, MySqlTransaction? transaction = null, params MySqlParameter[] parameters)
+        public async Task<int> ExecuteNonQueryAsync(string query, params MySqlParameter[] parameters)
         {
             await EnsureConnectionOpenAsync();
-            await using var command = CreateCommand(query, transaction, parameters);
+            await using var command = CreateCommand(query, _currentTransaction, parameters);
             return await command.ExecuteNonQueryAsync();
         }
 
@@ -122,6 +145,12 @@ namespace BlockSense.Backend.Data
             if (_connection.State == ConnectionState.Open)
             {
                 await _connection.CloseAsync();
+            }
+
+            if (_currentTransaction != null)
+            {
+                await _currentTransaction.RollbackAsync();
+                await _currentTransaction.DisposeAsync();
             }
 
             await _connection.DisposeAsync();
