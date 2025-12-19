@@ -14,11 +14,6 @@ namespace BlockSense.Contracts.DTOs.User
         public string InvitationCode { get; init; } = string.Empty;
 
         /// <summary>
-        /// The username or identifier of the user who used this invitation.
-        /// </summary>
-        public string? InvitedUser { get; init; }
-
-        /// <summary>
         /// Current status of the invitation.
         /// </summary>
         public InvitationStatus Status { get; init; } = InvitationStatus.Unknown;
@@ -32,5 +27,15 @@ namespace BlockSense.Contracts.DTOs.User
         /// The UTC date and time when the invitation will expire.
         /// </summary>
         public DateTimeOffset ExpirationDate { get; init; }
+
+        /// <summary>
+        /// The username or identifier of the user who generated this invitation.
+        /// </summary>
+        public string GeneratedBy { get; init; } = string.Empty;
+
+        /// <summary>
+        /// The username or identifier of the user who used this invitation.
+        /// </summary>
+        public string? InvitedUser { get; init; }
     }
 }
