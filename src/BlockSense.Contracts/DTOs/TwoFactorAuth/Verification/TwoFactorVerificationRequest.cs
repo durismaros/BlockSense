@@ -8,11 +8,10 @@ namespace BlockSense.Contracts.DTOs.TwoFactorAuth.Verification
     public sealed record TwoFactorVerificationRequest
     {
         /// <summary>
-        /// The 6-digit 2FA code provided by the user.
+        /// The 6-digit authenticator code or an 8-character backup code (XXXX-XXX) provided by the user.
         /// </summary>
         [Required(ErrorMessage = "Two-factor authentication code is required.")]
-        [StringLength(6, MinimumLength = 6, ErrorMessage = "The 2FA code must be exactly 6 characters long.")]
-        [RegularExpression(@"^\d{6}$", ErrorMessage = "The 2FA code must consist of 6 digits.")]
-        public string Code { get; init; } = string.Empty;
+        [RegularExpression(@"^(\d{6}|[A-Z0-9]{4}-[A-Z0-9]{3})$", ErrorMessage = "The 2FA code must be either a 6-digit numeric code or an 8-character backup code in the format XXXX-XXX.")]
+        public string TwoFactorCode { get; init; } = string.Empty;
     }
 }

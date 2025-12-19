@@ -21,6 +21,6 @@ namespace BlockSense.Contracts.DTOs.TwoFactorAuth.Setup
         [Required(ErrorMessage = "Two-factor authentication code is required.")]
         [StringLength(6, MinimumLength = 6, ErrorMessage = "The 2FA code must be exactly 6 characters long.")]
         [RegularExpression(@"^\d{6}$", ErrorMessage = "The 2FA code must consist of 6 digits.")]
-        public string Code { get; init; } = string.Empty;
+        public string TwoFactorCode { get; init; } = string.Empty;
     }
 }

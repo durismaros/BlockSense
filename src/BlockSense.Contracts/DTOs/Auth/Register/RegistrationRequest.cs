@@ -14,6 +14,7 @@ namespace BlockSense.Contracts.DTOs.Auth.Register
         [Required(ErrorMessage = "Username is required.")]
         [MinLength(3, ErrorMessage = "Username must be at least 3 characters.")]
         [MaxLength(32, ErrorMessage = "Username cannot exceed 32 characters.")]
+        [RegularExpression(@"^[a-zA-Z0-9_\-\.]+$", ErrorMessage = "Username can only contain letters, numbers, underscores, dashes, or dots.")]
         public string Username { get; init; } = string.Empty;
 
         /// <summary>

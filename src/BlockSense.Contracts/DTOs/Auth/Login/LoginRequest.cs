@@ -27,8 +27,8 @@ namespace BlockSense.Contracts.DTOs.Auth.Login
         /// <summary>
         /// Optional two-factor authentication (2FA) code.
         /// </summary>
-        /// <remarks>Used for accounts with 2FA enabled. Maximum length is 16 characters.</remarks>
-        [MaxLength(16, ErrorMessage = "Two-factor code cannot exceed 16 characters.")]
+        /// <remarks>The 6-digit authenticator code or an 8-character backup code (XXXX-XXX) provided by the user.</remarks>
+        [RegularExpression(@"^(\d{6}|[A-Z0-9]{4}-[A-Z0-9]{3})$", ErrorMessage = "The 2FA code must be either a 6-digit numeric code or an 8-character backup code in the format XXXX-XXX.")]
         public string? TwoFactorCode { get; init; }
     }
 }
