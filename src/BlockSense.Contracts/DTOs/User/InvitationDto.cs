@@ -21,12 +21,12 @@ namespace BlockSense.Contracts.DTOs.User
         /// <summary>
         /// The UTC date and time when the invitation was created.
         /// </summary>
-        public DateTimeOffset CreationDate { get; init; }
+        public DateTime CreationDate { get; init; }
 
         /// <summary>
         /// The UTC date and time when the invitation will expire.
         /// </summary>
-        public DateTimeOffset ExpirationDate { get; init; }
+        public DateTime ExpirationDate { get; init; }
 
         /// <summary>
         /// The username or identifier of the user who generated this invitation.

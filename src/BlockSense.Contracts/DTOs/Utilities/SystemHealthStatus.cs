@@ -10,7 +10,7 @@ namespace BlockSense.Contracts.DTOs.Utilities
         /// <summary>
         /// The timestamp of the status report in Coordinated Universal Time (UTC).
         /// </summary>
-        public DateTimeOffset TimeStamp { get; init; } = DateTimeOffset.UtcNow;
+        public DateTime TimeStamp { get; init; } = DateTime.UtcNow;
 
         /// <summary>
         /// Current operational status of the server.

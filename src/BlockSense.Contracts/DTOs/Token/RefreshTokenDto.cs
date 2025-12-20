@@ -23,11 +23,11 @@
         /// <summary>
         /// The UTC date and time at which this token was issued.
         /// </summary>
-        public DateTimeOffset IssuedAt { get; init; }
+        public DateTime IssuedAt { get; init; }
 
         /// <summary>
         /// The UTC date and time at which this token expires.
         /// </summary>
-        public DateTimeOffset ExpiresAt { get; init; }
+        public DateTime ExpiresAt { get; init; }
     }
 }

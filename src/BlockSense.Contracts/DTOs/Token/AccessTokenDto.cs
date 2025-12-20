@@ -13,6 +13,6 @@
         /// <summary>
         /// The UTC time at which this token expires.
         /// </summary>
-        public DateTimeOffset ExpiresAt { get; init; }
+        public DateTime ExpiresAt { get; init; }
     }
 }
