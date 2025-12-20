@@ -13,7 +13,7 @@
         /// <summary>
         /// The unique alphanumeric invitation code.
         /// </summary>
-        public string Code { get; set; } = string.Empty;
+        public string InvitationCode { get; set; } = string.Empty;
 
         /// <summary>
         /// Indicates whether the code has already been used.

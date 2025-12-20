@@ -1,5 +1,7 @@
 using BlockSense.Backend.Data;
 using BlockSense.Backend.Data.Configurations;
+using BlockSense.Backend.Repositories.Implementations;
+using BlockSense.Backend.Repositories.Interfaces;
 using MySql.Data.MySqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +29,25 @@ builder.Services.Configure<TwoFactorAuthConfig>(builder.Configuration.GetSection
 builder.Services.AddScoped<MySqlConnection>(_ =>
     new MySqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<DatabaseContext>();
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IInvitationRepository, InvitationRepository>();
+
+//
+// --------------------------------
+//    APPLICATION SERVICE LAYER
+// --------------------------------
+//
+// Interface-to-implementation mapping.
+//
+
+//
+// --------------------------------
+//  CONTROLLERS, SWAGGER & LOGGING
+// --------------------------------
+//
+// Controllers for API endpoints and SwaggerUI integration.
+//
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
