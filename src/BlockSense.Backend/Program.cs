@@ -2,6 +2,8 @@ using BlockSense.Backend.Data;
 using BlockSense.Backend.Data.Configurations;
 using BlockSense.Backend.Repositories.Implementations;
 using BlockSense.Backend.Repositories.Interfaces;
+using BlockSense.Backend.Services.Implementations;
+using BlockSense.Backend.Services.Interfaces;
 using MySql.Data.MySqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +42,8 @@ builder.Services.AddScoped<IInvitationRepository, InvitationRepository>();
 //
 // Interface-to-implementation mapping.
 //
+
+builder.Services.AddScoped<IUserService, UserService>();
 
 //
 // --------------------------------

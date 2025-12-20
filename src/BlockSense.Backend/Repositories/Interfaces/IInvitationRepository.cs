@@ -12,6 +12,7 @@ namespace BlockSense.Backend.Repositories.Interfaces
         Task<bool> CodeExistsAsync(string invitationCode, CancellationToken cancellationToken = default);
         Task<bool> IsCodeActiveAsync(string invitationCode, CancellationToken cancellationToken = default);
 
+        Task<uint> GetByCodeForUpdateAsync(string invitationCode, CancellationToken cancellationToken = default);
         Task<uint> CreateAsync(InvitationCodeEntity invitation, CancellationToken cancellationToken = default);
 
         Task MarkAsUsedAsync(uint invitationCodeId, CancellationToken cancellationToken = default);

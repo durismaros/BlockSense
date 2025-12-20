@@ -147,7 +147,7 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("InvitationCode", MySqlDbType.String)
+                new MySqlParameter("@InvitationCode", MySqlDbType.String)
                 {
                     Value = invitationCode,
                 }
@@ -177,7 +177,7 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("InvitationCode", MySqlDbType.String)
+                new MySqlParameter("@InvitationCode", MySqlDbType.String)
                 {
                     Value = invitationCode,
                 }
@@ -186,6 +186,30 @@ namespace BlockSense.Backend.Repositories.Implementations
             var result = await _databaseContext.ExecuteScalarAsync<long>(sqlQuery, parameters, cancellationToken);
 
             return result > 0;
+        }
+
+        public async Task<uint> GetByCodeForUpdateAsync(string invitationCode, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                SELECT invitation_code_id  AS InvitationCodeId
+                FROM invitation_codes
+                WHERE invitation_code = @InvitationCode
+                    AND is_used = 0
+                    AND is_revoked = 0
+                    AND (expires_at IS NULL OR expires_at > UTC_TIMESTAMP(6))
+                LIMIT 1
+                FOR UPDATE;
+            """;
+
+            var parameters = new[]
+{
+                new MySqlParameter("@InvitationCode", MySqlDbType.String)
+                {
+                    Value = invitationCode,
+                }
+            };
+
+            return await _databaseContext.ExecuteScalarAsync<uint>(sqlQuery, parameters, cancellationToken);
         }
 
         /// <summary>
