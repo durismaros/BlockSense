@@ -1,8 +1,10 @@
-﻿using BlockSense.Backend.Services.Interfaces;
+﻿using BlockSense.Backend.Models;
+using BlockSense.Backend.Services.Interfaces;
+using BlockSense.Contracts.DTOs.Auth.Login;
 using BlockSense.Contracts.DTOs.Auth.Register;
+using BlockSense.Contracts.Enums.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MySqlX.XDevAPI.Common;
 
 namespace BlockSense.Backend.Controllers
 {
@@ -21,45 +23,60 @@ namespace BlockSense.Backend.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegistrationRequest request, CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new RegistrationResponse
-                {
-                    Status = Contracts.Enums.Auth.RegistrationStatus.Unknown,
-                    Message = "The registration request is invalid."
-                });
-            }
-
-            request = new RegistrationRequest
-            {
-                Username = request.Username.Trim(),
-                Email = request.Email.Trim().ToLowerInvariant(),
-                Password = request.Password,
-                InvitationCode = request.InvitationCode.Trim()
-            };
-
             var response = await _userService.RegisterAsync(request, cancellationToken);
 
             switch (response.Status)
             {
-                case Contracts.Enums.Auth.RegistrationStatus.Success:
-                    // Return 201 Created with the new userId in the route
+                // Return 201 Created with the new userId in the route
+                case RegistrationStatus.Success:
                     return CreatedAtAction(
                         nameof(Register),
                         routeValues: new { userId = response.UserId },
                         value: response);
 
-                case Contracts.Enums.Auth.RegistrationStatus.UsernameTaken:
-                case Contracts.Enums.Auth.RegistrationStatus.EmailTaken:
-                    // Return 409 Conflict for duplicate username/email
+                // Return 409 Conflict for duplicate username/email
+                case RegistrationStatus.UsernameTaken:
+                case RegistrationStatus.EmailTaken:
                     return Conflict(response);
 
-                case Contracts.Enums.Auth.RegistrationStatus.InvalidInvitationCode:
-                    // Return 400 Bad Request for invalid invitation
+                // Return 400 Bad Request for invalid invitation
+                case RegistrationStatus.InvalidInvitationCode:
                     return BadRequest(response);
 
+                // Unexpected status → internal server error
                 default:
-                    // Unexpected status → internal server error
+                    return StatusCode(500, response);
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
+        {
+            var deviceContext = new DeviceContext
+            {
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                DeviceIdentifier = Request.Headers["X-Device-Id"]!,
+                HardwareFingerprint = Request.Headers["X-Hardware-Fingerprint"]!,
+                NetworkFingerprint = Request.Headers["X-Network-Fingerprint"]!,
+                DeviceOs = Request.Headers["X-Device-OS"]!
+            };
+
+            var response = await _userService.LoginAsync(request, deviceContext, cancellationToken);
+
+            switch (response.Status)
+            {
+                case LoginStatus.Success:
+                    return Ok(response);
+
+                case LoginStatus.InvalidPassword:
+                case LoginStatus.TwoFactorRequired:
+                    return Unauthorized(response);
+
+                case LoginStatus.AccountLocked:
+                    return Forbid();
+
+                default:
                     return StatusCode(500, response);
             }
         }

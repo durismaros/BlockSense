@@ -34,6 +34,7 @@ builder.Services.AddScoped<DatabaseContext>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IInvitationRepository, InvitationRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
 //
 // --------------------------------
@@ -44,6 +45,7 @@ builder.Services.AddScoped<IInvitationRepository, InvitationRepository>();
 //
 
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 //
 // --------------------------------
@@ -59,6 +61,27 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+//
+// --------------------------------
+//  GLOBAL MIDDLEWARE CONFIGURATION
+// --------------------------------
+//
+// Sssential HTTP security headers to all responses.
+//
+
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+
+    headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["Referrer-Policy"] = "no-referrer";
+    headers["Cache-Control"] = "no-store";
+    headers["Pragma"] = "no-cache";
+
+    await next();
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -6,13 +6,13 @@ namespace BlockSense.Backend.Repositories.Interfaces
     {
         Task<InvitationCodeEntity?> GetByIdAsync(uint invitationCodeId, CancellationToken cancellationToken = default);
         Task<InvitationCodeEntity?> GetByCodeAsync(string invitationCode, CancellationToken cancellationToken = default);
+        Task<InvitationCodeEntity?> GetByCodeForUpdateAsync(string invitationCode, CancellationToken cancellationToken = default);
 
         Task<IEnumerable<InvitationCodeEntity>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default);
 
         Task<bool> CodeExistsAsync(string invitationCode, CancellationToken cancellationToken = default);
         Task<bool> IsCodeActiveAsync(string invitationCode, CancellationToken cancellationToken = default);
 
-        Task<uint> GetByCodeForUpdateAsync(string invitationCode, CancellationToken cancellationToken = default);
         Task<uint> CreateAsync(InvitationCodeEntity invitation, CancellationToken cancellationToken = default);
 
         Task MarkAsUsedAsync(uint invitationCodeId, CancellationToken cancellationToken = default);
