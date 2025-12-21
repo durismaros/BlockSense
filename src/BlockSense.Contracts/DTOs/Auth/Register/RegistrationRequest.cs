@@ -40,7 +40,7 @@ namespace BlockSense.Contracts.DTOs.Auth.Register
         /// </summary>
         /// <remarks>Must be exactly 32 characters. Used to control access to the registration process.</remarks>
         [Required(ErrorMessage = "Invitation code is required.")]
-        [StringLength(32, MinimumLength = 32, ErrorMessage = "Invitation code must be exactly 32 characters.")]
+        [StringLength(32, MinimumLength = 32, ErrorMessage = "Invalid invitation code.")]
         public string InvitationCode { get; init; } = string.Empty;
     }
 }
