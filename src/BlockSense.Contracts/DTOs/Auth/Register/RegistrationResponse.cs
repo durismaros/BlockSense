@@ -1,4 +1,5 @@
-﻿using BlockSense.Contracts.Enums.Auth;
+﻿using BlockSense.Contracts.Enums.User;
+using System.Text.Json.Serialization;
 
 namespace BlockSense.Contracts.DTOs.Auth.Register
 {
@@ -8,18 +9,29 @@ namespace BlockSense.Contracts.DTOs.Auth.Register
     public sealed record RegistrationResponse
     {
         /// <summary>
-        /// The status of the registration attempt.
+        /// 
         /// </summary>
-        public RegistrationStatus Status { get; init; } = RegistrationStatus.Unknown;
+        public required uint UserId { get; init; }
 
         /// <summary>
-        /// Optional human-readable message providing additional context.
+        /// 
         /// </summary>
-        public string? Message { get; init; }
+        public required string Email { get; init; }
 
         /// <summary>
-        /// Optional identifier of the newly created user.
+        /// 
         /// </summary>
-        public uint? UserId { get; init; }
+        public required string Username { get; init; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public required UserType UserType { get; init; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public required DateTime CreatedAt { get; init; }
     }
 }

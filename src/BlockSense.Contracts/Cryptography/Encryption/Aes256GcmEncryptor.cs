@@ -56,7 +56,7 @@ namespace BlockSense.Contracts.Cryptography.Encryption
         /// <param name="iv">The 12-byte initialization vector.</param>
         /// <param name="cipherText">The encrypted data including the authentication tag.</param>
         /// <returns>The decrypted data as a byte array.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="key"/>, <paramref name="iv"/> or <paramref name="plainText"/> is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="key"/>, <paramref name="iv"/> or <paramref name="cipherText"/> is null.</exception>
         /// <exception cref="ArgumentException">Thrown if <paramref name="key"/> or <paramref name="iv"/> lengths are invalid.</exception>
         public byte[] Decrypt(byte[] key, byte[] iv, byte[] cipherText)
         {
