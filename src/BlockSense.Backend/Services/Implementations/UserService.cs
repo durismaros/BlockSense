@@ -1,5 +1,6 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Entities;
+using BlockSense.Backend.Exceptions.Registration;
 using BlockSense.Backend.Models;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
@@ -35,11 +36,10 @@ namespace BlockSense.Backend.Services.Implementations
 
         public async Task<RegistrationResponse> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken = default)
         {
-            request = new RegistrationRequest
+            request = request with
             {
                 Username = request.Username.Trim(),
                 Email = request.Email.Trim().ToLowerInvariant(),
-                Password = request.Password,
                 InvitationCode = request.InvitationCode.Trim()
             };
 
@@ -47,16 +47,20 @@ namespace BlockSense.Backend.Services.Implementations
 
             try
             {
-                var invitation = await _invitationRepository.GetByCodeForUpdateAsync(request.InvitationCode, cancellationToken);
+                var invitation =
+                    await _invitationRepository.GetByCodeForUpdateAsync(
+                        request.InvitationCode,
+                        cancellationToken);
 
-                if (invitation == null || invitation.IsUsed || invitation.IsRevoked || (invitation.ExpiresAt.HasValue && invitation.ExpiresAt < DateTime.UtcNow))
+                if (invitation == null ||
+                    invitation.IsUsed ||
+                    invitation.IsRevoked ||
+                    invitation.ExpiresAt < DateTime.UtcNow)
                 {
-                    await _databaseContext.RollbackAsync(cancellationToken);
-                    return new RegistrationResponse { Status = RegistrationStatus.InvalidInvitationCode, Message = "Invalid invitation code." };
+                    throw new InvalidInvitationCodeException();
                 }
 
                 var argon2idHasher = new Argon2idHasher();
-                
                 var passwordHash = argon2idHasher.Derive(
                     Encoding.UTF8.GetBytes(request.Password),
                     out byte[] passwordSalt);
@@ -67,24 +71,30 @@ namespace BlockSense.Backend.Services.Implementations
                 {
                     Username = request.Username,
                     Email = request.Email,
-                    UserType = Contracts.Enums.User.UserType.Standard,
                     PasswordHash = passwordHash,
                     PasswordSalt = passwordSalt,
+                    UserType = UserType.Standard,
                     InvitationCodeId = invitation.InvitationCodeId,
                     CreatedAt = now,
                     UpdatedAt = now,
                 };
 
-                uint userId = await _userRepository.CreateAsync(userEntity, cancellationToken);
+                uint userId =
+                    await _userRepository.CreateAsync(userEntity, cancellationToken);
 
-                await _invitationRepository.MarkAsUsedAsync(invitation.InvitationCodeId, cancellationToken);
+                await _invitationRepository.MarkAsUsedAsync(
+                    invitation.InvitationCodeId,
+                    cancellationToken);
 
                 await _databaseContext.CommitAsync(cancellationToken);
+
                 return new RegistrationResponse
                 {
-                    Status = RegistrationStatus.Success,
                     UserId = userId,
-                    Message = "User registered successfully."
+                    Username = userEntity.Username,
+                    Email = userEntity.Email,
+                    UserType = userEntity.UserType,
+                    CreatedAt = userEntity.CreatedAt
                 };
             }
             catch (MySqlException ex) when (ex.Number == 1062)
@@ -93,28 +103,15 @@ namespace BlockSense.Backend.Services.Implementations
 
                 if (ex.Message.Contains("uq_users_username"))
                 {
-                    return new RegistrationResponse
-                    {
-                        Status = RegistrationStatus.UsernameTaken,
-                        Message = "Username already in use."
-                    };
+                    throw new UsernameTakenException();
                 }
 
                 if (ex.Message.Contains("uq_users_email"))
                 {
-                    return new RegistrationResponse
-                    {
-                        Status = RegistrationStatus.EmailTaken,
-                        Message = "Email already in use."
-                    };
+                    throw new EmailTakenException();
                 }
 
-                // Fallback for any other duplicate key
-                return new RegistrationResponse
-                {
-                    Status = RegistrationStatus.Unknown,
-                    Message = "Duplicate key violation."
-                };
+                throw;
             }
             catch
             {

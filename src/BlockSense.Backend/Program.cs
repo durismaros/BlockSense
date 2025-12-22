@@ -1,5 +1,6 @@
 using BlockSense.Backend.Data;
 using BlockSense.Backend.Data.Configurations;
+using BlockSense.Backend.Exceptions.Handlers;
 using BlockSense.Backend.Repositories.Implementations;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Implementations;
@@ -56,11 +57,20 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 //
 
 builder.Services.AddControllers();
+
+builder.Services.AddProblemDetails();
+
+builder.Services.AddExceptionHandler<InvalidInvitationExceptionHandler>();
+builder.Services.AddExceptionHandler<DuplicateUserExceptionHandler>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 //
 // --------------------------------

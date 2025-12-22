@@ -25,28 +25,10 @@ namespace BlockSense.Backend.Controllers
         {
             var response = await _userService.RegisterAsync(request, cancellationToken);
 
-            switch (response.Status)
-            {
-                // Return 201 Created with the new userId in the route
-                case RegistrationStatus.Success:
-                    return CreatedAtAction(
-                        nameof(Register),
-                        routeValues: new { userId = response.UserId },
-                        value: response);
-
-                // Return 409 Conflict for duplicate username/email
-                case RegistrationStatus.UsernameTaken:
-                case RegistrationStatus.EmailTaken:
-                    return Conflict(response);
-
-                // Return 400 Bad Request for invalid invitation
-                case RegistrationStatus.InvalidInvitationCode:
-                    return BadRequest(response);
-
-                // Unexpected status → internal server error
-                default:
-                    return StatusCode(500, response);
-            }
+            return CreatedAtAction(
+                nameof(Register),
+                new { response.UserId },
+                response);
         }
 
         [AllowAnonymous]
