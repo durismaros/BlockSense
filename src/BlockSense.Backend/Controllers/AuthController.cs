@@ -46,21 +46,7 @@ namespace BlockSense.Backend.Controllers
 
             var response = await _userService.LoginAsync(request, deviceContext, cancellationToken);
 
-            switch (response.Status)
-            {
-                case LoginStatus.Success:
-                    return Ok(response);
-
-                case LoginStatus.InvalidPassword:
-                case LoginStatus.TwoFactorRequired:
-                    return Unauthorized(response);
-
-                case LoginStatus.AccountLocked:
-                    return Forbid();
-
-                default:
-                    return StatusCode(500, response);
-            }
+            return Ok(response);
         }
     }
 }

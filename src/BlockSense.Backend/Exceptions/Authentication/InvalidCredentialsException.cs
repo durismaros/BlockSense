@@ -1,8 +1,8 @@
 ﻿using BlockSense.Contracts.Errors;
 
-namespace BlockSense.Backend.Exceptions.Registration
+namespace BlockSense.Backend.Exceptions.Authentication
 {
-    public sealed class InvalidInvitationCodeException : RegistationException
+    public sealed class InvalidCredentialsException : AuthenticationException
     {
         public override int Status
         {
@@ -16,7 +16,7 @@ namespace BlockSense.Backend.Exceptions.Registration
         {
             get
             {
-                return "Invalid invitation code";
+                return "Authentication failed";
             }
         }
 
@@ -24,11 +24,11 @@ namespace BlockSense.Backend.Exceptions.Registration
         {
             get
             {
-                return ErrorCodes.Registration.InvalidInvitation;
+                return ErrorCodes.Authentication.InvalidCredentials;
             }
         }
 
-        public InvalidInvitationCodeException()
-            : base("Invalid or expired invitation code.") { }
+        public InvalidCredentialsException()
+            : base("The provided username/email or password is invalid.") { }
     }
 }

@@ -1,8 +1,8 @@
 ﻿using BlockSense.Contracts.Errors;
 
-namespace BlockSense.Backend.Exceptions.Registration
+namespace BlockSense.Backend.Exceptions.Authentication
 {
-    public sealed class InvalidInvitationCodeException : RegistationException
+    public sealed class TwoFactorRequiredException : AuthenticationException
     {
         public override int Status
         {
@@ -16,7 +16,7 @@ namespace BlockSense.Backend.Exceptions.Registration
         {
             get
             {
-                return "Invalid invitation code";
+                return "Two-factor authentication required";
             }
         }
 
@@ -24,11 +24,11 @@ namespace BlockSense.Backend.Exceptions.Registration
         {
             get
             {
-                return ErrorCodes.Registration.InvalidInvitation;
+                return ErrorCodes.Authentication.TwoFactorRequired;
             }
         }
 
-        public InvalidInvitationCodeException()
-            : base("Invalid or expired invitation code.") { }
+        public TwoFactorRequiredException()
+            : base("Two-factor authentication is required or the provided code is invalid.") { }
     }
 }

@@ -1,7 +1,31 @@
-﻿namespace BlockSense.Backend.Exceptions.Registration
+﻿using BlockSense.Contracts.Errors;
+
+namespace BlockSense.Backend.Exceptions.Registration
 {
-    public sealed class EmailTakenException : AppException
+    public sealed class EmailTakenException : RegistationException
     {
+        public override int Status
+        {
+            get
+            {
+                return StatusCodes.Status409Conflict;
+            }
+        }
+        public override string Title
+        {
+            get
+            {
+                return "Duplicate resource";
+            }
+        }
+        public override string ErrorCode
+        {
+            get
+            {
+                return ErrorCodes.Registration.EmailTaken;
+            }
+        }
+
         public EmailTakenException()
             : base("Email already in use.") { }
     }

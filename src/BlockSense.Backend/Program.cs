@@ -60,8 +60,8 @@ builder.Services.AddControllers();
 
 builder.Services.AddProblemDetails();
 
-builder.Services.AddExceptionHandler<InvalidInvitationExceptionHandler>();
-builder.Services.AddExceptionHandler<DuplicateUserExceptionHandler>();
+builder.Services.AddExceptionHandler<RegistrationExceptionHandler>();
+builder.Services.AddExceptionHandler<AuthenticationExceptionHandler>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

@@ -1,7 +1,6 @@
 ﻿using BlockSense.Contracts.Errors;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using System;
 
 namespace BlockSense.Backend.Exceptions.Handlers
 {

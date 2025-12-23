@@ -1,5 +1,6 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Entities;
+using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Exceptions.Registration;
 using BlockSense.Backend.Models;
 using BlockSense.Backend.Repositories.Interfaces;
@@ -7,7 +8,6 @@ using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
 using BlockSense.Contracts.DTOs.Auth.Login;
 using BlockSense.Contracts.DTOs.Auth.Register;
-using BlockSense.Contracts.Enums.Auth;
 using BlockSense.Contracts.Enums.User;
 using MySql.Data.MySqlClient;
 using Org.BouncyCastle.Utilities;
@@ -61,9 +61,9 @@ namespace BlockSense.Backend.Services.Implementations
                 }
 
                 var argon2idHasher = new Argon2idHasher();
-                var passwordHash = argon2idHasher.Derive(
+                var computedHash = argon2idHasher.Derive(
                     Encoding.UTF8.GetBytes(request.Password),
-                    out byte[] passwordSalt);
+                    out byte[] computedSalt);
 
                 var now = DateTime.UtcNow;
 
@@ -71,8 +71,8 @@ namespace BlockSense.Backend.Services.Implementations
                 {
                     Username = request.Username,
                     Email = request.Email,
-                    PasswordHash = passwordHash,
-                    PasswordSalt = passwordSalt,
+                    PasswordHash = computedHash,
+                    PasswordSalt = computedSalt,
                     UserType = UserType.Standard,
                     InvitationCodeId = invitation.InvitationCodeId,
                     CreatedAt = now,
@@ -126,7 +126,7 @@ namespace BlockSense.Backend.Services.Implementations
 
         public async Task<LoginResponse> LoginAsync(LoginRequest request, DeviceContext deviceContext, CancellationToken cancellationToken = default)
         {
-            request = new LoginRequest
+            request = request with
             {
                 Login = request.Login.Trim(),
                 Password = request.Password.Trim()
@@ -140,51 +140,25 @@ namespace BlockSense.Backend.Services.Implementations
                     request.Login,
                     cancellationToken);
 
-                if (user == null)
+                if (user == null || user.DeletedAt.HasValue)
                 {
-                    await _databaseContext.RollbackAsync(cancellationToken);
-                    return new LoginResponse
-                    {
-                        Status = LoginStatus.UserNotFound,
-                        Message = "Invalid login credentials."
-                    };
-                }
-
-                if (user.DeletedAt.HasValue)
-                {
-                    await _databaseContext.RollbackAsync(cancellationToken);
-                    return new LoginResponse
-                    {
-                        Status = LoginStatus.AccountLocked,
-                        Message = "User account no longer exists."
-                    };
+                    throw new InvalidCredentialsException();
                 }
 
                 if (user.UserType == UserType.Banned)
                 {
-                    await _databaseContext.RollbackAsync(cancellationToken);
-                    return new LoginResponse
-                    {
-                        Status = LoginStatus.AccountLocked,
-                        Message = "User account is banned."
-                    };
+                    throw new AccountBannedException();
                 }
 
                 var argon2idHasher = new Argon2idHasher();
-
-                var validPasswordHash = argon2idHasher.Derive(
+                var computedHash = argon2idHasher.Derive(
                     Encoding.UTF8.GetBytes(request.Password),
                     out _,
                     user.PasswordSalt);
 
-                if (!Arrays.FixedTimeEquals(user.PasswordHash, validPasswordHash))
+                if (!Arrays.FixedTimeEquals(user.PasswordHash, computedHash))
                 {
-                    await _databaseContext.RollbackAsync(cancellationToken);
-                    return new LoginResponse
-                    {
-                        Status = LoginStatus.InvalidPassword,
-                        Message = "Invalid login credentials."
-                    };
+                    throw new InvalidCredentialsException();
                 }
 
                 var accessToken =
@@ -200,10 +174,8 @@ namespace BlockSense.Backend.Services.Implementations
 
                 return new LoginResponse
                 {
-                    Status = LoginStatus.Success,
-                    Message = "Login successful.",
                     AccessToken = accessToken,
-                    RefreshToken = refreshToken,
+                    RefreshToken = refreshToken
                 };
             }
             catch
