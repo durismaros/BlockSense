@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BlockSense.Contracts.Errors
+﻿namespace BlockSense.Contracts.Definitions
 {
     /// <summary>
     /// 
@@ -45,6 +39,16 @@ namespace BlockSense.Contracts.Errors
             /// <summary>
             /// 
             /// </summary>
+            public const string AccountBanned = "AUTH_ACCOUNT_BANNED";
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public const string TwoFactorRequired = "AUTH_2FA_REQUIRED";
+
+            /// <summary>
+            /// 
+            /// </summary>
             public const string TokenExpired = "AUTH_TOKEN_EXPIRED";
         }
 
@@ -56,12 +60,12 @@ namespace BlockSense.Contracts.Errors
             /// <summary>
             /// 
             /// </summary>
-            public const string InternalServerError = "GEN_INTERNAL_ERROR";
+            public const string BadRequest = "GEN_BAD_REQUEST";
 
             /// <summary>
             /// 
             /// </summary>
-            public const string BadRequest = "GEN_BAD_REQUEST";
+            public const string InternalServerError = "GEN_INTERNAL_ERROR";
         }
     }
 }
