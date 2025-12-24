@@ -1,4 +1,5 @@
-﻿using BlockSense.Backend.Models;
+﻿using BlockSense.Backend.Exceptions.Authentication;
+using BlockSense.Backend.Models;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.DTOs.Auth.Login;
 using BlockSense.Contracts.DTOs.Auth.Register;
@@ -35,14 +36,10 @@ namespace BlockSense.Backend.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
         {
-            var deviceContext = new DeviceContext
+            if (!HttpContext.Items.TryGetValue("DeviceContext", out var deviceObj) || deviceObj is not DeviceContext deviceContext)
             {
-                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                DeviceIdentifier = Request.Headers["X-Device-Id"]!,
-                HardwareFingerprint = Request.Headers["X-Hardware-Fingerprint"]!,
-                NetworkFingerprint = Request.Headers["X-Network-Fingerprint"]!,
-                DeviceOs = Request.Headers["X-Device-OS"]!
-            };
+                throw new BadHttpRequestException("Device context missing in HttpContext.");
+            }
 
             var response = await _userService.LoginAsync(request, deviceContext, cancellationToken);
 

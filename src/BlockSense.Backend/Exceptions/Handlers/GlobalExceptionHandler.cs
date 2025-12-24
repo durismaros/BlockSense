@@ -1,4 +1,4 @@
-﻿using BlockSense.Contracts.Errors;
+﻿using BlockSense.Contracts.Definitions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 

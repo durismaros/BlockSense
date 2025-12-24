@@ -56,7 +56,7 @@ namespace BlockSense.Backend.Data
         /// <exception cref="InvalidOperationException">Thrown if no transaction is active.</exception>
         public async Task CommitAsync(CancellationToken cancellationToken = default)
         {
-            if (_currentTransaction == null)
+            if (_currentTransaction is null)
                 throw new InvalidOperationException("No active transaction to commit.");
 
             await _currentTransaction.CommitAsync(cancellationToken);
@@ -109,7 +109,7 @@ namespace BlockSense.Backend.Data
             await using var command = CreateCommand(query, parameters);
             var result =  await command.ExecuteScalarAsync(cancellationToken);
 
-            return (result == null || result == DBNull.Value) ? default : (T)Convert.ChangeType(result, typeof(T));
+            return (result is null || result == DBNull.Value) ? default : (T)Convert.ChangeType(result, typeof(T));
         }
 
         /// <summary>
@@ -165,8 +165,8 @@ namespace BlockSense.Backend.Data
             {
                 foreach (var p in parameters)
                 {
-                    if (p == null)
-                        throw new ArgumentNullException(nameof(parameters), "Null parameter provided.");
+                    if (p is null)
+                        throw new ArgumentNullException(nameof(parameters));
 
                     if (command.Parameters.Contains(p.ParameterName))
                         throw new InvalidOperationException( $"Duplicate SQL parameter detected: {p.ParameterName}");

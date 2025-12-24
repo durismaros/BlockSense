@@ -1,11 +1,15 @@
 using BlockSense.Backend.Data;
 using BlockSense.Backend.Data.Configurations;
 using BlockSense.Backend.Exceptions.Handlers;
+using BlockSense.Backend.Middleware;
 using BlockSense.Backend.Repositories.Implementations;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Implementations;
 using BlockSense.Backend.Services.Interfaces;
+using BlockSense.Contracts.Definitions;
+using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +24,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<JwtTokenConfig>(builder.Configuration.GetSection("JwtTokenConfig"));
 builder.Services.Configure<RefreshTokenConfig>(builder.Configuration.GetSection("RefreshTokenConfig"));
 builder.Services.Configure<TwoFactorAuthConfig>(builder.Configuration.GetSection("TwoFactorAuthConfig"));
+
 
 //
 // --------------------------------
@@ -56,7 +61,39 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 // Controllers for API endpoints and SwaggerUI integration.
 //
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var validationErrors = context.ModelState
+            .Where(x => x.Value?.Errors.Count > 0)
+            .ToDictionary(
+                x => x.Key,
+                x => x.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
+                );
+
+            var httpContext = context.HttpContext;
+
+            httpContext.Response.ContentType = "application/json";
+            httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+
+            var problemDetails = new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Invalid request",
+                Detail = "One or more validation errors occurred.",
+                Instance = httpContext.Request.Path
+            };
+
+            problemDetails.Extensions["errorCode"] = ErrorCodes.Generic.BadRequest;
+            problemDetails.Extensions["errors"] = validationErrors;
+            problemDetails.Extensions["traceId"] = httpContext.TraceIdentifier;
+
+            return new BadRequestObjectResult(problemDetails);
+        };
+    });
 
 builder.Services.AddProblemDetails();
 
@@ -67,6 +104,47 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddRateLimiter(options =>
+{
+    // Global per-IP limiter
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetSlidingWindowLimiter(ip, _ => new SlidingWindowRateLimiterOptions
+        {
+            AutoReplenishment = true,
+            PermitLimit = 100,
+            Window = TimeSpan.FromMinutes(1),
+            SegmentsPerWindow = 1,
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            QueueLimit = 0
+        });
+    });
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        var httpContext = context.HttpContext;
+
+        httpContext.Response.ContentType = "application/json";
+
+        var problemDetails = new ProblemDetails
+        {
+            Status = StatusCodes.Status429TooManyRequests,
+            Title = "Rate limit exceeded",
+            Detail = "Too many requests. Please try again later.",
+            Instance = httpContext.Request.Path
+        };
+
+        problemDetails.Extensions["errorCode"] = "RATE_LIMIT_EXCEEDED";
+        problemDetails.Extensions["traceId"] = httpContext.TraceIdentifier;
+
+
+        await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+    };
+});
 
 var app = builder.Build();
 
@@ -101,6 +179,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseRateLimiter();
+
+app.UseMiddleware<RequireDeviceHeadersMiddleware>();
 
 app.UseAuthorization();
 

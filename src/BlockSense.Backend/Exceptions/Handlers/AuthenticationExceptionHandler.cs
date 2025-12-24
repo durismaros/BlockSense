@@ -1,5 +1,4 @@
 ﻿using BlockSense.Backend.Exceptions.Authentication;
-using BlockSense.Backend.Exceptions.Registration;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 

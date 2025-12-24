@@ -1,4 +1,4 @@
-﻿using BlockSense.Contracts.Errors;
+﻿using BlockSense.Contracts.Definitions;
 
 namespace BlockSense.Backend.Exceptions.Registration
 {

@@ -52,7 +52,7 @@ namespace BlockSense.Backend.Services.Implementations
                         request.InvitationCode,
                         cancellationToken);
 
-                if (invitation == null ||
+                if (invitation is null ||
                     invitation.IsUsed ||
                     invitation.IsRevoked ||
                     invitation.ExpiresAt < DateTime.UtcNow)
@@ -140,7 +140,7 @@ namespace BlockSense.Backend.Services.Implementations
                     request.Login,
                     cancellationToken);
 
-                if (user == null || user.DeletedAt.HasValue)
+                if (user is null || user.DeletedAt.HasValue)
                 {
                     throw new InvalidCredentialsException();
                 }

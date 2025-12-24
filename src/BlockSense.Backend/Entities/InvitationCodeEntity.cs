@@ -44,7 +44,7 @@
         /// <summary>
         /// Returns <c>true</c> if the invitation code is currently valid.
         /// </summary>
-        public bool IsActive => !IsUsed && !IsRevoked && (ExpiresAt == null || ExpiresAt > DateTime.UtcNow);
+        public bool IsActive => !IsUsed && !IsRevoked && (ExpiresAt is null || ExpiresAt > DateTime.UtcNow);
 
         /// <summary>
         /// Returns the remaining time until the code expires.

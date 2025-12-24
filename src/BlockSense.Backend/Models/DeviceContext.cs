@@ -1,4 +1,7 @@
-﻿namespace BlockSense.Backend.Models
+﻿using BlockSense.Backend.Exceptions.Authentication;
+using BlockSense.Contracts.Definitions;
+
+namespace BlockSense.Backend.Models
 {
     public sealed record DeviceContext
     {
@@ -26,5 +29,33 @@
         /// The operating system or platform of the client device.
         /// </summary>
         public required string DeviceOs { get; init; }
+
+        /// <summary>
+        /// Factory method to create a DeviceContext from HttpContext headers.
+        /// </summary>
+        public static DeviceContext FromHttpContext(HttpContext context)
+        {
+            if (context is null)
+                throw new ArgumentNullException(nameof(context));
+
+            return new DeviceContext
+            {
+                DeviceIdentifier = GetHeader(DeviceHeaders.DeviceId),
+                HardwareFingerprint = GetHeader(DeviceHeaders.HardwareFingerprint),
+                NetworkFingerprint = GetHeader(DeviceHeaders.NetworkFingerprint),
+                DeviceOs = GetHeader(DeviceHeaders.DeviceOs),
+                IpAddress = context.Connection.RemoteIpAddress?.ToString() ?? "unknown"
+            };
+
+            string GetHeader(string key)
+            {
+                if (!context.Request.Headers.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
+                {
+                    throw new InvalidDeviceContextException(key);
+                }
+
+                return value.ToString();
+            }
+        }
     }
 }
