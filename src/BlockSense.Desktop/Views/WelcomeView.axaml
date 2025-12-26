@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="BlockSense.Desktop.WelcomeView">
+
+    <Panel>
+		
+        <!-- Left Icon -->
+        <Panel Width="400"
+               HorizontalAlignment="Left">
+            <Image Width="250"
+                   Source="avares://BlockSense.Desktop/Assets/Icons/window-icon.png"/>
+        </Panel>
+
+        <!-- Right Content -->
+        <StackPanel Margin="30"
+                    Width="400"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Spacing="18">
+            
+            <!-- Application Header -->
+			<TextBlock HorizontalAlignment="Center"
+					   FontSize="40"
+					   FontWeight="Light"
+					   Foreground="#4A4238">
+                    Block
+                <Span Foreground="#2A2118">
+                    Sense
+                </Span>
+			</TextBlock>
+            
+            <Border Classes="DefaultSeparator"
+                    Width="120"
+                    Margin="0 0 0 10"/>
+
+            <TextBlock Width="280"
+                       Foreground="#2A2118"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       TextAlignment="Center"
+                       LineHeight="22"
+                       Opacity="0.9"
+                       TextWrapping="Wrap"
+                       Text="Manage your crypto assets easily and securely"/>
+            
+            
+            <!--Authenticate Button-->
+            <Button
+				Name="authenticateButton"
+				Classes="DefaultDarkBrown"
+				Margin="0,20,0,0"
+				Click="AuthenticateAsync">
+				
+				<TextBlock
+					Text="Authenticate"
+					HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					FontWeight="Medium"
+					Foreground="#E6C8A0"/>
+
+			</Button>
+
+            <!--Register Button-->
+			<Button
+				Name="registerButton"
+				Classes="DefaultLightBrown"
+				Click="RegisterAsync">
+				
+				<TextBlock
+					Text="Registration"
+					HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					FontWeight="Medium"
+					Foreground="#5D3F36"/>
+			</Button>
+			
+        </StackPanel>
+
+    </Panel>
+
+</UserControl>

@@ -1,25 +1,34 @@
 ﻿using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Styling;
-using BlockSense.Desktop.Utilities.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 
-namespace BlockSense.Desktop.Utilities.UserInterface
+namespace BlockSense.Desktop.Utilities.UIComponents
 {
     /// <summary>
     /// Provides reusable UI animations for common visual transitions.
     /// </summary>
-    public class Animations : Control
+    public sealed class Animations : Control
     {
         /// <summary>
         /// Gets a predefined Fade-Out animation that transitions a control's opacity from fully visible to fully transparent.
         /// </summary>
-        public static Animation FadeOutAnimation { get; }
+        public static Animation FadeOutAnimation
+        {
+            get;
+            private set;
+        }
 
         /// <summary>
         /// Gets a predefined Fade-In animation that transitions a control's opacity from fully transparent to fully visible.
         /// </summary>
-        public static Animation FadeInAnimation { get; }
+        public static Animation FadeInAnimation
+        {
+            get;
+            private set;
+        }
 
         /// <summary>
         /// Initializes static animation instances used throughout the application.
@@ -65,8 +74,6 @@ namespace BlockSense.Desktop.Utilities.UserInterface
                     }
                 }
             };
-
-            ConsoleLogger.Log("Animations initialized");
         }
     }
 }

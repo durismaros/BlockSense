@@ -1,47 +1,63 @@
-using System.Linq;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
-using BlockSense.Desktop.ViewModels;
-using BlockSense.Desktop.Views;
+using BlockSense.Desktop.Utilities.FileManagement;
+using BlockSense.Desktop.Utilities.UIComponents;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using System;
 
 namespace BlockSense.Desktop
 {
     public partial class App : Application
     {
+        public static IServiceProvider ServiceProvider
+        {
+            get;
+            private set;
+        } = null!;
+
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
+
+            ConfigureServices();
         }
 
         public override void OnFrameworkInitializationCompleted()
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
-                // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
-                DisableAvaloniaDataAnnotationValidation();
-                desktop.MainWindow = new MainWindow
-                {
-                    DataContext = new MainWindowViewModel(),
-                };
+                desktop.MainWindow = ServiceProvider.GetRequiredService<MainWindow>();
+
+                var _ = ServiceProvider.GetRequiredService<NavigationManager>().NavigateToAsync<WelcomeView>();
             }
 
             base.OnFrameworkInitializationCompleted();
         }
 
-        private void DisableAvaloniaDataAnnotationValidation()
+        private void ConfigureServices()
         {
-            // Get an array of plugins to remove
-            var dataValidationPluginsToRemove =
-                BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
+            var services = new ServiceCollection();
 
-            // remove each entry found
-            foreach (var plugin in dataValidationPluginsToRemove)
+            services.AddLogging(loggingBuilder =>
             {
-                BindingPlugins.DataValidators.Remove(plugin);
-            }
+                loggingBuilder.ClearProviders();
+                loggingBuilder.AddSerilog();
+            });
+
+            services.AddSingleton<DirectoryStructure>();
+
+            services.AddSingleton<NavigationManager>();
+
+            // --- Views ---
+            services.AddSingleton<WelcomeView>();
+
+            // --- Windows ---
+            services.AddSingleton<MainWindow>();
+
+            ServiceProvider = services.BuildServiceProvider();
         }
     }
 }

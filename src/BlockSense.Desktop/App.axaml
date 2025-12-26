@@ -1,30 +1,25 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="BlockSense.Desktop.App"
-             xmlns:local="using:BlockSense.Desktop"
              RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
-    <Application.DataTemplates>
-        <local:ViewLocator/>
-    </Application.DataTemplates>
-  
     <Application.Styles>
-        <FluentTheme />
-        <StyleInclude Source="avares://BlockSense/Assets/AppDefaultStyles.axaml"/>
+        <FluentTheme/>
+        <StyleInclude Source="avares://BlockSense.Desktop/Assets/AppDefaultStyles.axaml"/>
     </Application.Styles>
     
     <Application.Resources>
 		<FontFamily x:Key="Montserrat">
-            avares://BlockSense/Assets/Fonts/Montserrat#Montserrat
+            avares://BlockSense.Desktop/Assets/Fonts/Montserrat#Montserrat
 		</FontFamily>
 
 		<FontFamily x:Key="Roboto">
-            avares://BlockSense/Assets/Fonts/Roboto#Roboto
+            avares://BlockSense.Desktop/Assets/Fonts/Roboto#Roboto
 		</FontFamily>
 
 		<FontFamily x:Key="Pacifico">
-			avares://BlockSense/Assets/Fonts/Pacifico#Pacifico
+			avares://BlockSense.Desktop/Assets/Fonts/Pacifico#Pacifico
 		</FontFamily>
 	</Application.Resources>
+
 </Application>
