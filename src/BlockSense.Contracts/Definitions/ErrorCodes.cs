@@ -8,27 +8,6 @@
         /// <summary>
         /// 
         /// </summary>
-        public static class Registration
-        {
-            /// <summary>
-            /// 
-            /// </summary>
-            public const string InvalidInvitation = "REG_INVALID_INVITATION";
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public const string UsernameTaken = "REG_USERNAME_TAKEN";
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public const string EmailTaken = "REG_EMAIL_TAKEN";
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         public static class Authentication
         {
             /// <summary>
@@ -50,6 +29,27 @@
             /// 
             /// </summary>
             public const string TokenExpired = "AUTH_TOKEN_EXPIRED";
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static class Registration
+        {
+            /// <summary>
+            /// 
+            /// </summary>
+            public const string InvalidInvitation = "REG_INVALID_INVITATION";
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public const string UsernameTaken = "REG_USERNAME_TAKEN";
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public const string EmailTaken = "REG_EMAIL_TAKEN";
         }
 
         /// <summary>

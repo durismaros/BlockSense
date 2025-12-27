@@ -1,7 +1,7 @@
 ﻿using BlockSense.Contracts.Enums.User;
 using System.Text.Json.Serialization;
 
-namespace BlockSense.Contracts.DTOs.Auth.Register
+namespace BlockSense.Contracts.DTOs.Registration
 {
     /// <summary>
     /// Represents the response returned by the backend after a user registration attempt.
@@ -11,27 +11,47 @@ namespace BlockSense.Contracts.DTOs.Auth.Register
         /// <summary>
         /// 
         /// </summary>
-        public required uint UserId { get; init; }
+        public required uint UserId
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// 
         /// </summary>
-        public required string Email { get; init; }
+        public required string Email
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// 
         /// </summary>
-        public required string Username { get; init; }
+        public required string Username
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// 
         /// </summary>
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public required UserType UserType { get; init; }
+        public required UserType UserType
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// 
         /// </summary>
-        public required DateTime CreatedAt { get; init; }
+        public required DateTime CreatedAt
+        {
+            get;
+            init;
+        }
     }
 }
