@@ -2,7 +2,6 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using BlockSense.Desktop.Utilities.UIComponents;
 using System;
-using System.Threading.Tasks;
 
 namespace BlockSense.Desktop;
 
@@ -19,11 +18,11 @@ public partial class WelcomeView : UserControl
 
     private async void AuthenticateAsync(object? sender, RoutedEventArgs e)
     {
-
+        await _navigationManager.NavigateToAsync<AuthenticationView>();
     }
 
     private async void RegisterAsync(object? sender, RoutedEventArgs e)
     {
-
+        await _navigationManager.NavigateToAsync<RegistrationView>();
     }
 }

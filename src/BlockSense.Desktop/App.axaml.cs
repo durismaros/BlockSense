@@ -47,12 +47,15 @@ namespace BlockSense.Desktop
                 loggingBuilder.AddSerilog();
             });
 
+            // --- Services / Helpers ---
             services.AddSingleton<DirectoryStructure>();
 
             services.AddSingleton<NavigationManager>();
 
             // --- Views ---
             services.AddSingleton<WelcomeView>();
+            services.AddSingleton<RegistrationView>();
+            services.AddSingleton<AuthenticationView>();
 
             // --- Windows ---
             services.AddSingleton<MainWindow>();

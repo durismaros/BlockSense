@@ -67,11 +67,7 @@
 		<Setter Property="Background" Value="#6D4C41"/>
 	</Style>
 	
-	<Style Selector="Button.DefaultDarkBrown:pointerover ContentPresenter">
-		<Setter Property="Background" Value="#5D3F36"/>
-	</Style>
-	
-	<Style Selector="Button.DefaultDarkBrown:pressed ContentPresenter">
+	<Style Selector="Button.DefaultDarkBrown:pointerover ContentPresenter, Button.DefaultDarkBrown:pressed ContentPresenter">
 		<Setter Property="Background" Value="#5D3F36"/>
 	</Style>
 	
@@ -84,11 +80,7 @@
 		<Setter Property="Background" Value="#E6C8A0"/>
 	</Style>
 	
-	<Style Selector="Button.DefaultLightBrown:pointerover ContentPresenter">
-		<Setter Property="Background" Value="#D4B38C"/>
-	</Style>
-	
-	<Style Selector="Button.DefaultLightBrown:pressed ContentPresenter">
+	<Style Selector="Button.DefaultLightBrown:pointerover ContentPresenter, Button.DefaultLightBrown:pressed ContentPresenter">
 		<Setter Property="Background" Value="#D4B38C"/>
 	</Style>
 	
@@ -102,15 +94,11 @@
 		<Setter Property="HorizontalAlignment" Value="Center"/>
 	</Style>
 
-	<Style Selector="Button.DefaultWhite:pointerover ContentPresenter">
+	<Style Selector="Button.DefaultWhite:pointerover ContentPresenter, Button.DefaultWhite:pressed ContentPresenter">
 		<Setter Property="Background" Value="LightGray"/>
 		<Setter Property="Foreground" Value="#6E6E6E"/>
 	</Style>
-	
-	<Style Selector="Button.DefaultWhite:pressed ContentPresenter">
-		<Setter Property="Background" Value="LightGray"/>
-		<Setter Property="Foreground" Value="#6E6E6E"/>
-	</Style>
+
 
 	<Style Selector="Button.DefaultDisable">
 		<Setter Property="Background" Value="Transparent"/>
@@ -120,12 +108,7 @@
 		<Setter Property="HorizontalAlignment" Value="Center"/>
 	</Style>
 
-	<Style Selector="Button.DefaultDisable:pointerover ContentPresenter">
-		<Setter Property="BorderBrush" Value="#E57373"/>
-		<Setter Property="BorderThickness" Value="1"/>
-	</Style>
-	
-	<Style Selector="Button.DefaultDisable:pressed ContentPresenter">
+	<Style Selector="Button.DefaultDisable:pointerover ContentPresenter, Button.DefaultDisable:pressed ContentPresenter">
 		<Setter Property="BorderBrush" Value="#E57373"/>
 		<Setter Property="BorderThickness" Value="1"/>
 	</Style>
@@ -171,14 +154,17 @@
 
 	<!-- Default textbox used in Login/Register -->
 	<Style Selector="TextBox">
-		<Setter Property="FontFamily" Value="{DynamicResource Montserrat}"/>
-		<Setter Property="CornerRadius" Value="12"/>
+		<Setter Property="VerticalContentAlignment" Value="Center"/>
+		<Setter Property="LetterSpacing" Value="0.4"/>
 		<Setter Property="Background" Value="#B99978"/>
 		<Setter Property="Foreground" Value="#6F4E37"/>
+		<Setter Property="CornerRadius" Value="12"/>
 		<Setter Property="BorderBrush" Value="#D2B48C"/>
 		<Setter Property="BorderThickness" Value="2"/>
+		<Setter Property="SelectionBrush" Value="#6D4C41"/>
+		<Setter Property="SelectionForegroundBrush" Value="#D2B48C"/>
+		<Setter Property="FontFamily" Value="{DynamicResource Montserrat}"/>
 		<Setter Property="FontWeight" Value="SemiBold"/>
-		<Setter Property="VerticalContentAlignment" Value="Center"/>
 	</Style>
 	
 	<Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">

@@ -15,11 +15,11 @@
         </Panel>
 
         <!-- Right Content -->
-        <StackPanel Margin="30"
-                    Width="400"
+        <StackPanel Width="400"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
-                    Spacing="18">
+                    Spacing="18"
+                    Margin="30">
             
             <!-- Application Header -->
 			<TextBlock HorizontalAlignment="Center"
@@ -33,10 +33,10 @@
 			</TextBlock>
             
             <Border Classes="DefaultSeparator"
-                    Width="120"
-                    Margin="0 0 0 10"/>
+                    Width="120"/>
 
             <TextBlock Width="280"
+                       Margin="0 10 0 20"
                        Foreground="#2A2118"
                        FontSize="14"
                        FontWeight="SemiBold"
@@ -49,9 +49,8 @@
             
             <!--Authenticate Button-->
             <Button
-				Name="authenticateButton"
+				x:Name="authenticateButton"
 				Classes="DefaultDarkBrown"
-				Margin="0,20,0,0"
 				Click="AuthenticateAsync">
 				
 				<TextBlock
@@ -65,12 +64,12 @@
 
             <!--Register Button-->
 			<Button
-				Name="registerButton"
+				x:Name="registerButton"
 				Classes="DefaultLightBrown"
 				Click="RegisterAsync">
 				
 				<TextBlock
-					Text="Registration"
+					Text="Create an account"
 					HorizontalAlignment="Center"
 					VerticalAlignment="Center"
 					FontWeight="Medium"
