@@ -9,7 +9,6 @@ using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Definitions;
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
-using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +50,7 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 //
 
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 //
@@ -105,47 +105,6 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddRateLimiter(options =>
-{
-    // Global per-IP limiter
-    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-    {
-        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-
-        return RateLimitPartition.GetSlidingWindowLimiter(ip, _ => new SlidingWindowRateLimiterOptions
-        {
-            AutoReplenishment = true,
-            PermitLimit = 100,
-            Window = TimeSpan.FromMinutes(1),
-            SegmentsPerWindow = 1,
-            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-            QueueLimit = 0
-        });
-    });
-
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.OnRejected = async (context, cancellationToken) =>
-    {
-        var httpContext = context.HttpContext;
-
-        httpContext.Response.ContentType = "application/json";
-
-        var problemDetails = new ProblemDetails
-        {
-            Status = StatusCodes.Status429TooManyRequests,
-            Title = "Rate limit exceeded",
-            Detail = "Too many requests. Please try again later.",
-            Instance = httpContext.Request.Path
-        };
-
-        problemDetails.Extensions["errorCode"] = "RATE_LIMIT_EXCEEDED";
-        problemDetails.Extensions["traceId"] = httpContext.TraceIdentifier;
-
-
-        await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
-    };
-});
-
 var app = builder.Build();
 
 app.UseExceptionHandler();
@@ -179,8 +138,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseRateLimiter();
 
 app.UseMiddleware<RequireDeviceHeadersMiddleware>();
 

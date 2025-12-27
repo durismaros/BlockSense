@@ -1,8 +1,10 @@
 ﻿using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Models;
 using BlockSense.Backend.Services.Interfaces;
+using BlockSense.Contracts.DTOs.Auth;
 using BlockSense.Contracts.DTOs.Auth.Login;
 using BlockSense.Contracts.DTOs.Auth.Register;
+using BlockSense.Contracts.DTOs.Registration;
 using BlockSense.Contracts.Enums.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,35 +15,23 @@ namespace BlockSense.Backend.Controllers
     [ApiController]
     public sealed class AuthController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly IAuthService _authService;
 
-        public AuthController(IUserService userService)
+        public AuthController(IAuthService authService)
         {
-            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _authService = authService;
         }
 
         [AllowAnonymous]
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegistrationRequest request, CancellationToken cancellationToken)
-        {
-            var response = await _userService.RegisterAsync(request, cancellationToken);
-
-            return CreatedAtAction(
-                nameof(Register),
-                new { response.UserId },
-                response);
-        }
-
-        [AllowAnonymous]
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
+        [HttpPost]
+        public async Task<IActionResult> Authenticate([FromBody] AuthRequest request, CancellationToken cancellationToken)
         {
             if (!HttpContext.Items.TryGetValue("DeviceContext", out var deviceObj) || deviceObj is not DeviceContext deviceContext)
             {
                 throw new BadHttpRequestException("Device context missing in HttpContext.");
             }
 
-            var response = await _userService.LoginAsync(request, deviceContext, cancellationToken);
+            var response = await _authService.AuthAsync(request, deviceContext, cancellationToken);
 
             return Ok(response);
         }
