@@ -60,36 +60,42 @@
                     Width="280"/>
             
             <!-- Inputs -->
-            <TextBox Width="320"
+            <TextBox x:Name="UsernameTextBox"
+                     Width="320"
 					 Height="20"
 					 Watermark="username*"
 					 Margin="0 8 0 0"/>
 			
-			<TextBox Width="320"
+			<TextBox x:Name="EmailTextBox"
+                     Width="320"
 					 Height="20"
 					 Watermark="email address*"/>
             
-			<TextBox Width="320"
+			<TextBox x:Name="PasswordTextBox"
+                     Width="320"
 					 Height="20"
 					 Watermark="password*"
 					 PasswordChar="•"
 					 FontFamily="{DynamicResource Roboto}"
 					 FontWeight="Bold"/>
             
-            <TextBox Width="320"
+            <TextBox x:Name="ConfirmPasswordTextBox"
+                     Width="320"
 					 Height="20"
 					 Watermark="re-enter password*"
 					 PasswordChar="•"
 					 FontFamily="{DynamicResource Roboto}"
 					 FontWeight="Bold"/>
             
-            <TextBox Width="320"
+            <TextBox x:Name="InvitationCodeTextBox"
+                     Width="320"
 					 Height="20"
 					 Watermark="invitation code*"/>
             
             
             <!-- Registration Button -->
-			<Button Classes="DefaultLightBrown"
+			<Button x:Name="RegisterButton"
+                    Classes="DefaultLightBrown"
 					Margin="0 8 0 0">
 				
 				<TextBlock Text="Create an account"
@@ -101,20 +107,21 @@
 			</Button>
 
             <!--System Output-->
-			<Border Width="250"
+			<Border x:Name="OutputBorder"
+                    Width="250"
 					Height="20"
 					Background="#D4B38C"
 					CornerRadius="2 2 10 10"
 					Margin="0 -15 0 0"
 					IsVisible="False">
 
-				<TextBlock
-					HorizontalAlignment="Center"
-					VerticalAlignment="Center"
-					Foreground="Black"
-					FontSize="12"
-					FontWeight="SemiBold"
-					FontStyle="Italic"/>
+				<TextBlock x:Name="OutputTextBlock"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="Black"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           FontStyle="Italic"/>
 
 			</Border>
 

@@ -1,12 +1,15 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using BlockSense.Desktop.Services.Implementations;
+using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.FileManagement;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
+using System.Net.Http.Headers;
 
 namespace BlockSense.Desktop
 {
@@ -47,10 +50,21 @@ namespace BlockSense.Desktop
                 loggingBuilder.AddSerilog();
             });
 
+            services.AddSingleton<IApiClient, ApiClient>();
+
+            services.AddHttpClient<ApiClient>(client =>
+            {
+                client.BaseAddress = new Uri("https://localhost:7147/");
+                client.Timeout = TimeSpan.FromSeconds(30);
+                client.DefaultRequestHeaders.Accept.Add(
+                    new MediaTypeWithQualityHeaderValue("application/json"));
+            });
+
             // --- Services / Helpers ---
             services.AddSingleton<DirectoryStructure>();
-
             services.AddSingleton<NavigationManager>();
+
+            services.AddScoped<IUserService, UserService>();
 
             // --- Views ---
             services.AddSingleton<WelcomeView>();
