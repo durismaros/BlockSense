@@ -1,5 +1,6 @@
 ﻿using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Models;
+using BlockSense.Contracts.DTOs.Utilities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BlockSense.Backend.Middleware
@@ -18,7 +19,7 @@ namespace BlockSense.Backend.Middleware
             try
             {
                 // Apply only to login endpoints
-                if (httpContext.Request.Path.StartsWithSegments("/api/auth/login"))
+                if (httpContext.Request.Path.StartsWithSegments("/api/auth"))
                 {
                     var deviceContext = DeviceContext.FromHttpContext(httpContext);
                     httpContext.Items["DeviceContext"] = deviceContext;
@@ -26,21 +27,20 @@ namespace BlockSense.Backend.Middleware
 
                 await _next(httpContext);
             }
-            catch (InvalidDeviceContextException ex)
+            catch (InvalidDeviceContextException exception)
             {
                 httpContext.Response.ContentType = "application/json";
-                httpContext.Response.StatusCode = ex.Status;
+                httpContext.Response.StatusCode = exception.Status;
 
-                var problemDetails = new ProblemDetails
+                var problemDetails = new ApiProblemDetails
                 {
-                    Status = ex.Status,
-                    Title = ex.Title,
-                    Detail = ex.Message,
+                    Title = exception.Title,
+                    Status = exception.Status,
+                    Detail = exception.Message,
                     Instance = httpContext.Request.Path,
+                    ResultCode = exception.ResultCode,
+                    TraceId = httpContext.TraceIdentifier
                 };
-
-                problemDetails.Extensions["errorCode"] = ex.ErrorCode;
-                problemDetails.Extensions["traceId"] = httpContext.TraceIdentifier;
 
                 await httpContext.Response.WriteAsJsonAsync(problemDetails);
             }

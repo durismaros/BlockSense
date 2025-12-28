@@ -1,11 +1,6 @@
-﻿using BlockSense.Backend.Exceptions.Authentication;
-using BlockSense.Backend.Models;
+﻿using BlockSense.Backend.Models;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.DTOs.Auth;
-using BlockSense.Contracts.DTOs.Auth.Login;
-using BlockSense.Contracts.DTOs.Auth.Register;
-using BlockSense.Contracts.DTOs.Registration;
-using BlockSense.Contracts.Enums.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,7 +26,7 @@ namespace BlockSense.Backend.Controllers
                 throw new BadHttpRequestException("Device context missing in HttpContext.");
             }
 
-            var response = await _authService.AuthAsync(request, deviceContext, cancellationToken);
+            var response = await _authService.AuthenticateAsync(request, deviceContext, cancellationToken);
 
             return Ok(response);
         }

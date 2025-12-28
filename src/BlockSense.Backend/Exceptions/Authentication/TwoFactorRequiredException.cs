@@ -2,7 +2,7 @@
 
 namespace BlockSense.Backend.Exceptions.Authentication
 {
-    public sealed class TwoFactorRequiredException : AuthenticationException
+    public sealed class TwoFactorRequiredException : ApiException
     {
         public override int Status
         {
@@ -20,11 +20,11 @@ namespace BlockSense.Backend.Exceptions.Authentication
             }
         }
 
-        public override string ErrorCode
+        public override string ResultCode
         {
             get
             {
-                return ErrorCodes.Authentication.TwoFactorRequired;
+                return ResultCodes.Authentication.TwoFactorRequired;
             }
         }
 

@@ -1,16 +1,12 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Entities;
-using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Exceptions.Registration;
-using BlockSense.Backend.Models;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
-using BlockSense.Contracts.DTOs.Auth;
 using BlockSense.Contracts.DTOs.Registration;
 using BlockSense.Contracts.Enums.User;
 using MySql.Data.MySqlClient;
-using Org.BouncyCastle.Utilities;
 using System.Text;
 
 namespace BlockSense.Backend.Services.Implementations

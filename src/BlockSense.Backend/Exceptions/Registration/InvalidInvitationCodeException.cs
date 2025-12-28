@@ -2,7 +2,7 @@
 
 namespace BlockSense.Backend.Exceptions.Registration
 {
-    public sealed class InvalidInvitationCodeException : RegistationException
+    public sealed class InvalidInvitationCodeException : ApiException
     {
         public override int Status
         {
@@ -20,11 +20,11 @@ namespace BlockSense.Backend.Exceptions.Registration
             }
         }
 
-        public override string ErrorCode
+        public override string ResultCode
         {
             get
             {
-                return ErrorCodes.Registration.InvalidInvitation;
+                return ResultCodes.Registration.InvalidInvitation;
             }
         }
 

@@ -2,7 +2,7 @@
 
 namespace BlockSense.Backend.Exceptions.Authentication
 {
-    public sealed class InvalidDeviceContextException : AppException
+    public sealed class InvalidDeviceContextException : ApiException
     {
         public override int Status
         {
@@ -18,11 +18,11 @@ namespace BlockSense.Backend.Exceptions.Authentication
                 return "Invalid device context";
             }
         }
-        public override string ErrorCode
+        public override string ResultCode
         {
             get
             {
-                return ErrorCodes.Generic.BadRequest;
+                return ResultCodes.Generic.BadRequest;
             }
         }
 

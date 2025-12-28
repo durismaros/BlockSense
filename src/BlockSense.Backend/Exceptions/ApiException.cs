@@ -1,13 +1,16 @@
 ﻿namespace BlockSense.Backend.Exceptions
 {
-    public abstract class AppException : Exception
+    /// <summary>
+    /// 
+    /// </summary>
+    public abstract class ApiException : Exception
     {
         /// <summary>
         /// 
         /// </summary>
         public abstract int Status
         {
-            get; 
+            get;
         }
 
         /// <summary>
@@ -21,7 +24,7 @@
         /// <summary>
         /// 
         /// </summary>
-        public abstract string ErrorCode
+        public abstract string ResultCode
         {
             get;
         }
@@ -30,7 +33,7 @@
         /// 
         /// </summary>
         /// <param name="message"></param>
-        protected AppException(string message)
+        public ApiException(string message)
             : base(message) { }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace BlockSense.Backend.Exceptions.Authentication
 {
-    public sealed class AccountBannedException : AuthenticationException
+    public sealed class AccountBannedException : ApiException
     {
         public override int Status
         {
@@ -20,11 +20,11 @@ namespace BlockSense.Backend.Exceptions.Authentication
             }
         }
 
-        public override string ErrorCode
+        public override string ResultCode
         {
             get
             {
-                return ErrorCodes.Authentication.AccountBanned;
+                return ResultCodes.Authentication.AccountBanned;
             }
         }
 

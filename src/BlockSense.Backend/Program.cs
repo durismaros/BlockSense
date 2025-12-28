@@ -7,6 +7,7 @@ using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Implementations;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Definitions;
+using BlockSense.Contracts.DTOs.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
 
@@ -79,17 +80,16 @@ builder.Services
             httpContext.Response.ContentType = "application/json";
             httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
 
-            var problemDetails = new ProblemDetails
+            var problemDetails = new ApiProblemDetails
             {
-                Status = StatusCodes.Status400BadRequest,
                 Title = "Invalid request",
+                Status = StatusCodes.Status400BadRequest,
                 Detail = "One or more validation errors occurred.",
-                Instance = httpContext.Request.Path
+                Instance = httpContext.Request.Path,
+                ResultCode = ResultCodes.Generic.BadRequest,
+                ResultDetails = validationErrors,
+                TraceId = httpContext.TraceIdentifier,
             };
-
-            problemDetails.Extensions["errorCode"] = ErrorCodes.Generic.BadRequest;
-            problemDetails.Extensions["errors"] = validationErrors;
-            problemDetails.Extensions["traceId"] = httpContext.TraceIdentifier;
 
             return new BadRequestObjectResult(problemDetails);
         };
@@ -97,8 +97,7 @@ builder.Services
 
 builder.Services.AddProblemDetails();
 
-builder.Services.AddExceptionHandler<RegistrationExceptionHandler>();
-builder.Services.AddExceptionHandler<AuthenticationExceptionHandler>();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

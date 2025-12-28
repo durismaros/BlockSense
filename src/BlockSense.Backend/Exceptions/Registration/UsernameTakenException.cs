@@ -2,7 +2,7 @@
 
 namespace BlockSense.Backend.Exceptions.Registration
 {
-    public sealed class UsernameTakenException : RegistationException
+    public sealed class UsernameTakenException : ApiException
     {
         public override int Status
         {
@@ -18,11 +18,11 @@ namespace BlockSense.Backend.Exceptions.Registration
                 return "Duplicate resource";
             }
         }
-        public override string ErrorCode
+        public override string ResultCode
         {
             get
             {
-                return ErrorCodes.Registration.UsernameTaken;
+                return ResultCodes.Registration.UsernameTaken;
             }
         }
 
