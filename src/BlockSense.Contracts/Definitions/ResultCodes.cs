@@ -3,7 +3,7 @@
     /// <summary>
     /// 
     /// </summary>
-    public static class ErrorCodes
+    public static class ResultCodes
     {
         /// <summary>
         /// 
@@ -29,6 +29,11 @@
             /// 
             /// </summary>
             public const string TokenExpired = "AUTH_TOKEN_EXPIRED";
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public const string AuthenticationSuccess = "AUTH_SUCCESS";
         }
 
         /// <summary>
@@ -50,6 +55,11 @@
             /// 
             /// </summary>
             public const string EmailTaken = "REG_EMAIL_TAKEN";
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public const string RegistrationSuccess = "REG_SUCCESS";
         }
 
         /// <summary>
@@ -66,6 +76,32 @@
             /// 
             /// </summary>
             public const string InternalServerError = "GEN_INTERNAL_ERROR";
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static class Client
+        {
+            /// <summary>
+            /// 
+            /// </summary>
+            public const string Timeout = "CLIENT_TIMEOUT";
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public const string NetworkError = "CLIENT_NETWORK_ERROR";
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public const string RequestCancelled = "CLIENT_REQUEST_CANCELLED";
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public const string UnknownError = "CLIENT_UNKNOWN_ERROR";
         }
     }
 }

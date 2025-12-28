@@ -10,7 +10,7 @@ namespace BlockSense.Contracts.DTOs.Auth
         /// <summary>
         /// Access token issued for API authentication.
         /// </summary>
-        public AccessTokenDto? AccessToken
+        public required AccessTokenDto AccessToken
         {
             get;
             init;
@@ -19,7 +19,7 @@ namespace BlockSense.Contracts.DTOs.Auth
         /// <summary>
         /// Refresh token used to obtain new access tokens.
         /// </summary>
-        public RefreshTokenDto? RefreshToken
+        public required RefreshTokenDto RefreshToken
         {
             get;
             init;
