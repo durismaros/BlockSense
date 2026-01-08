@@ -3,7 +3,7 @@
     /// <summary>
     /// 
     /// </summary>
-    public static class ResultCodes
+    public static class ApiProblemTypes
     {
         /// <summary>
         /// 
