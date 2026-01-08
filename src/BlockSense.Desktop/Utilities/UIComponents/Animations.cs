@@ -1,8 +1,6 @@
 ﻿using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Styling;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using System;
 
 namespace BlockSense.Desktop.Utilities.UIComponents

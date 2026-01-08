@@ -75,7 +75,7 @@
                      Width="320"
 					 Height="20"
 					 Watermark="password*"
-					 PasswordChar="•"
+					 PasswordChar="*"
 					 FontFamily="{DynamicResource Roboto}"
 					 FontWeight="Bold"/>
             
@@ -83,8 +83,8 @@
                      Width="320"
 					 Height="20"
 					 Watermark="re-enter password*"
-					 PasswordChar="•"
-					 FontFamily="{DynamicResource Roboto}"
+					 PasswordChar="*"
+                     FontFamily="{DynamicResource Roboto}"
 					 FontWeight="Bold"/>
             
             <TextBox x:Name="InvitationCodeTextBox"

@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using BlockSense.Desktop.Utilities.UIComponents;
 using System.Threading.Tasks;
 
@@ -9,6 +11,13 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        // Pointer press handler
+        this.AddHandler(InputElement.PointerPressedEvent, (sender, e) =>
+        {
+            if (!InputThrottler.ShouldProcess())
+                e.Handled = true;
+        }, RoutingStrategies.Tunnel);
     }
 
     public async Task SwitchViewAsync(UserControl newView)

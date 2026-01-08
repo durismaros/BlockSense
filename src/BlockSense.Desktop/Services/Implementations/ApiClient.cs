@@ -1,5 +1,4 @@
 ﻿using BlockSense.Contracts.Definitions;
-using BlockSense.Contracts.DTOs.Utilities;
 using BlockSense.Desktop.Models.Api;
 using BlockSense.Desktop.Services.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -24,17 +23,17 @@ namespace BlockSense.Desktop.Services.Implementations
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<ApiResponse<TResponse>> PostAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
+        public async Task<ApiResult<TResponse>> PostAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
         {
             return await SendAsync<TRequest, TResponse>(HttpMethod.Post, requestUri, request, cancellationToken);
         }
 
-        public async Task<ApiResponse<TResponse>> GetAsync<TResponse>(string requestUri, CancellationToken cancellationToken)
+        public async Task<ApiResult<TResponse>> GetAsync<TResponse>(string requestUri, CancellationToken cancellationToken)
         {
             return await SendAsync<object, TResponse>(HttpMethod.Get, requestUri, null!, cancellationToken);
         }
 
-        private async Task<ApiResponse<TResponse>> SendAsync<TRequest, TResponse>(HttpMethod method, string requestUri, TRequest request, CancellationToken cancellationToken)
+        private async Task<ApiResult<TResponse>> SendAsync<TRequest, TResponse>(HttpMethod method, string requestUri, TRequest request, CancellationToken cancellationToken)
         {
             var httpRequest = new HttpRequestMessage(method, requestUri);
 
@@ -44,68 +43,51 @@ namespace BlockSense.Desktop.Services.Implementations
                 httpRequest.Content = new StringContent(json, Encoding.UTF8, "application/json");
             }
 
-            HttpResponseMessage response;
-
             try
             {
-                response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+                var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken);
+
+                    return ApiResult<TResponse>.Success(data);
+                }
+
+                var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+
+                return ApiResult<TResponse>.Failure(problemDetails);
             }
             catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
-                return new ApiResponse<TResponse>
+                var problemDetails = new ProblemDetails
                 {
-                    IsSuccess = false,
-                    ProblemDetails = new ApiProblemDetails
-                    {
-                        Title = "Request Timeout",
-                        Status = 408,
-                        Detail = "The request to the server timed out.",
-                        Instance = requestUri,
-                        ResultCode = ResultCodes.Client.Timeout,
-                        TraceId = string.Empty
-                    }
+                    Type = ApiProblemTypes.Client.Timeout,
+                    Title = "Request Timeout",
+                    Status = 408,
+                    Detail = "The request to the server timed out.",
+                    Instance = requestUri
                 };
+
+                return ApiResult<TResponse>.Failure(problemDetails);
 
                 //_logger.LogWarning("Request to {RequestUri} timed out.", requestUri);
             }
             catch (Exception)
             {
-                return new ApiResponse<TResponse>
+                var problemDetails = new ProblemDetails
                 {
-                    IsSuccess = false,
-                    ProblemDetails = new ApiProblemDetails
-                    {
-                        Title = "Network Error",
-                        Status = 503,
-                        Detail = "A network or connectivity error occurred while sending the request.",
-                        Instance = requestUri,
-                        ResultCode = ResultCodes.Client.NetworkError,
-                        TraceId = string.Empty
-                    }
+                    Type = ApiProblemTypes.Client.NetworkError,
+                    Title = "Network Error",
+                    Status = 503,
+                    Detail = "A network or connectivity error occurred while sending the request.",
+                    Instance = requestUri
                 };
+
+                return ApiResult<TResponse>.Failure(problemDetails);
 
                 //_logger.LogError(ex, "HTTP request to {RequestUri} failed.", requestUri);
             }
-
-
-            if (response.IsSuccessStatusCode)
-            {
-                var data = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken);
-
-                return new ApiResponse<TResponse>
-                {
-                    IsSuccess = true,
-                    Data = data
-                };
-            }
-
-            var problemDetails = await response.Content.ReadFromJsonAsync<ApiProblemDetails>();
-
-            return new ApiResponse<TResponse>
-            {
-                IsSuccess = false,
-                ProblemDetails = problemDetails
-            };
         }
     }
 }

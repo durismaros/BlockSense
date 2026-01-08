@@ -61,7 +61,6 @@ namespace BlockSense.Desktop
             });
 
             // --- Services / Helpers ---
-            services.AddSingleton<DirectoryStructure>();
             services.AddSingleton<NavigationManager>();
 
             services.AddScoped<IUserService, UserService>();
@@ -70,6 +69,7 @@ namespace BlockSense.Desktop
             services.AddSingleton<WelcomeView>();
             services.AddSingleton<RegistrationView>();
             services.AddSingleton<AuthenticationView>();
+            services.AddSingleton<TwoFactorSlidingPanel>();
 
             // --- Windows ---
             services.AddSingleton<MainWindow>();

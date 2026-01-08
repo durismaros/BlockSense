@@ -1,11 +1,11 @@
 ﻿using BlockSense.Contracts.Definitions;
 using BlockSense.Contracts.DTOs.Registration;
-using BlockSense.Desktop.Models.Api;
+using BlockSense.Desktop.Models;
 using BlockSense.Desktop.Services.Interfaces;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace BlockSense.Desktop.Services.Implementations
 {
@@ -20,9 +20,12 @@ namespace BlockSense.Desktop.Services.Implementations
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<string> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken)
+        public async Task<ServiceResponse> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken)
         {
-            if (request is null) throw new ArgumentNullException(nameof(request));
+            if (request is null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
 
             var response = await _apiClient.PostAsync<RegistrationRequest, RegistrationResponse>(
                 endpoint: "/api/user/register",
@@ -31,15 +34,27 @@ namespace BlockSense.Desktop.Services.Implementations
 
             if (response.IsSuccess && response.Data is not null)
             {
-                return ResultCodes.Registration.RegistrationSuccess;
+                return new ServiceResponse
+                {
+                    ProblemType = ApiProblemTypes.Registration.RegistrationSuccess,
+                    Message = "Registration Successful"
+                };
             }
 
-            else if (response.ProblemDetails is null || response.ProblemDetails.ResultCode is null)
+            else if (response.ProblemDetails is null || response.ProblemDetails.Type is null || response.ProblemDetails.Title is null)
             {
-                return ResultCodes.Client.UnknownError;
+                return new ServiceResponse
+                {
+                    ProblemType = ApiProblemTypes.Client.UnknownError,
+                    Message = "Unexpected Error"
+                };
             }
-            
-            return response.ProblemDetails.ResultCode;
+
+            return new ServiceResponse
+            {
+                ProblemType = response.ProblemDetails.Type,
+                Message = response.ProblemDetails.Title
+            };
         }
     }
 }
