@@ -4,6 +4,21 @@ namespace BlockSense.Backend.Exceptions.Registration
 {
     public sealed class EmailTakenException : ApiException
     {
+        public override string Type
+        {
+            get
+            {
+                return ApiProblemTypes.Registration.EmailTaken;
+            }
+        }
+        public override string Title
+        {
+            get
+            {
+                return "Email Already Registered";
+            }
+        }
+
         public override int Status
         {
             get
@@ -11,22 +26,8 @@ namespace BlockSense.Backend.Exceptions.Registration
                 return StatusCodes.Status409Conflict;
             }
         }
-        public override string Title
-        {
-            get
-            {
-                return "Duplicate resource";
-            }
-        }
-        public override string ResultCode
-        {
-            get
-            {
-                return ResultCodes.Registration.EmailTaken;
-            }
-        }
 
         public EmailTakenException()
-            : base("Email already in use.") { }
+            : base("The email address you entered is already associated with an existing account. Please use a different email or sign in if you already have an account.") { }
     }
 }

@@ -4,6 +4,22 @@ namespace BlockSense.Backend.Exceptions.Authentication
 {
     public sealed class AccountBannedException : ApiException
     {
+        public override string Type
+        {
+            get
+            {
+                return ApiProblemTypes.Authentication.AccountBanned;
+            }
+        }
+
+        public override string Title
+        {
+            get
+            {
+                return "Access Prohibited";
+            }
+        }
+
         public override int Status
         {
             get
@@ -12,23 +28,7 @@ namespace BlockSense.Backend.Exceptions.Authentication
             }
         }
 
-        public override string Title
-        {
-            get
-            {
-                return "Account banned";
-            }
-        }
-
-        public override string ResultCode
-        {
-            get
-            {
-                return ResultCodes.Authentication.AccountBanned;
-            }
-        }
-
         public AccountBannedException()
-            : base("Account prohibited from system access.") { }
+            : base("Your account is currently restricted and cannot access this service. If you believe this is a mistake or need assistance, please contact support.") { }
     }
 }

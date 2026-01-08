@@ -4,6 +4,22 @@ namespace BlockSense.Backend.Exceptions.Registration
 {
     public sealed class UsernameTakenException : ApiException
     {
+        public override string Type
+        {
+            get
+            {
+                return ApiProblemTypes.Registration.UsernameTaken;
+            }
+        }
+
+        public override string Title
+        {
+            get
+            {
+                return "Username Already Taken";
+            }
+        }
+
         public override int Status
         {
             get
@@ -11,22 +27,8 @@ namespace BlockSense.Backend.Exceptions.Registration
                 return StatusCodes.Status409Conflict;
             }
         }
-        public override string Title
-        {
-            get
-            {
-                return "Duplicate resource";
-            }
-        }
-        public override string ResultCode
-        {
-            get
-            {
-                return ResultCodes.Registration.UsernameTaken;
-            }
-        }
 
         public UsernameTakenException()
-            : base("Username already in use.") { }
+            : base("The username you selected is not available. Please choose a different username.") { }
     }
 }

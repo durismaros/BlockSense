@@ -1,5 +1,4 @@
 ﻿using BlockSense.Contracts.Definitions;
-using BlockSense.Contracts.DTOs.Utilities;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -29,14 +28,17 @@ namespace BlockSense.Backend.Exceptions.Handlers
             httpContext.Response.ContentType = "application/json";
             httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-            var problemDetails = new ApiProblemDetails
+            var problemDetails = new ProblemDetails
             {
+                Type = ApiProblemTypes.Generic.InternalServerError,
                 Title = "Internal Server Error",
                 Status = StatusCodes.Status500InternalServerError,
-                Detail = "An unexpected error occurred. Please contact support if the problem persists.",
+                Detail = "An unexpected server error occurred while processing your request. Please try again later or contact support with the trace ID.",
                 Instance = httpContext.Request.Path,
-                ResultCode = ResultCodes.Generic.InternalServerError,
-                TraceId = httpContext.TraceIdentifier
+                Extensions =
+                {
+                    ["traceId"] = httpContext.TraceIdentifier
+                }
             };
 
             await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);

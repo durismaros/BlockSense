@@ -8,7 +8,7 @@
         /// <summary>
         /// 
         /// </summary>
-        public abstract int Status
+        public abstract string Type
         {
             get;
         }
@@ -24,7 +24,7 @@
         /// <summary>
         /// 
         /// </summary>
-        public abstract string ResultCode
+        public abstract int Status
         {
             get;
         }

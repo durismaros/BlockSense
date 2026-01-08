@@ -1,6 +1,5 @@
 ﻿using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Models;
-using BlockSense.Contracts.DTOs.Utilities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BlockSense.Backend.Middleware
@@ -32,14 +31,17 @@ namespace BlockSense.Backend.Middleware
                 httpContext.Response.ContentType = "application/json";
                 httpContext.Response.StatusCode = exception.Status;
 
-                var problemDetails = new ApiProblemDetails
+                var problemDetails = new ProblemDetails
                 {
+                    Type = exception.Type,
                     Title = exception.Title,
                     Status = exception.Status,
                     Detail = exception.Message,
                     Instance = httpContext.Request.Path,
-                    ResultCode = exception.ResultCode,
-                    TraceId = httpContext.TraceIdentifier
+                    Extensions =
+                    {
+                        ["traceId"] = httpContext.TraceIdentifier
+                    }
                 };
 
                 await httpContext.Response.WriteAsJsonAsync(problemDetails);

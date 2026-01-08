@@ -1,5 +1,4 @@
-﻿using BlockSense.Contracts.DTOs.Utilities;
-using Microsoft.AspNetCore.Diagnostics;
+﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BlockSense.Backend.Exceptions.Handlers
@@ -19,14 +18,17 @@ namespace BlockSense.Backend.Exceptions.Handlers
             httpContext.Response.ContentType = "application/json";
             httpContext.Response.StatusCode = apiException.Status;
 
-            var problemDetails = new ApiProblemDetails
+            var problemDetails = new ProblemDetails
             {
+                Type = apiException.Type,
                 Title = apiException.Title,
                 Status = apiException.Status,
                 Detail = apiException.Message,
                 Instance = httpContext.Request.Path,
-                ResultCode = apiException.ResultCode,
-                TraceId = httpContext.TraceIdentifier
+                Extensions =
+                {
+                    ["traceId"] = httpContext.TraceIdentifier
+                }
             };
 
             await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);

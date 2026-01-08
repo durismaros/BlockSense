@@ -4,6 +4,22 @@ namespace BlockSense.Backend.Exceptions.Authentication
 {
     public sealed class InvalidCredentialsException : ApiException
     {
+        public override string Type
+        {
+            get
+            {
+                return ApiProblemTypes.Authentication.InvalidCredentials;
+            }
+        }
+
+        public override string Title
+        {
+            get
+            {
+                return "Invalid Credentials";
+            }
+        }
+
         public override int Status
         {
             get
@@ -12,23 +28,7 @@ namespace BlockSense.Backend.Exceptions.Authentication
             }
         }
 
-        public override string Title
-        {
-            get
-            {
-                return "Authentication failed";
-            }
-        }
-
-        public override string ResultCode
-        {
-            get
-            {
-                return ResultCodes.Authentication.InvalidCredentials;
-            }
-        }
-
         public InvalidCredentialsException()
-            : base("The provided username/email or password is invalid.") { }
+            : base("The email/username or password you entered is incorrect. Please check your credentials and try again.") { }
     }
 }

@@ -4,6 +4,22 @@ namespace BlockSense.Backend.Exceptions.Authentication
 {
     public sealed class TwoFactorRequiredException : ApiException
     {
+        public override string Type
+        {
+            get
+            {
+                return ApiProblemTypes.Authentication.TwoFactorRequired;
+            }
+        }
+
+        public override string Title
+        {
+            get
+            {
+                return "Two-Factor Authentication Required";
+            }
+        }
+
         public override int Status
         {
             get
@@ -12,23 +28,7 @@ namespace BlockSense.Backend.Exceptions.Authentication
             }
         }
 
-        public override string Title
-        {
-            get
-            {
-                return "Two-factor authentication required";
-            }
-        }
-
-        public override string ResultCode
-        {
-            get
-            {
-                return ResultCodes.Authentication.TwoFactorRequired;
-            }
-        }
-
         public TwoFactorRequiredException()
-            : base("Two-factor authentication is required or the provided code is invalid.") { }
+            : base("This account requires two-factor authentication (2FA) to proceed. Please complete the 2FA verification to continue.") { }
     }
 }

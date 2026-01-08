@@ -7,7 +7,6 @@ using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Implementations;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Definitions;
-using BlockSense.Contracts.DTOs.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
 
@@ -80,15 +79,18 @@ builder.Services
             httpContext.Response.ContentType = "application/json";
             httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
 
-            var problemDetails = new ApiProblemDetails
+            var problemDetails = new ProblemDetails
             {
+                Type = ApiProblemTypes.Generic.BadRequest,
                 Title = "Invalid request",
                 Status = StatusCodes.Status400BadRequest,
                 Detail = "One or more validation errors occurred.",
                 Instance = httpContext.Request.Path,
-                ResultCode = ResultCodes.Generic.BadRequest,
-                ResultDetails = validationErrors,
-                TraceId = httpContext.TraceIdentifier,
+                Extensions =
+                {
+                    ["errors"] = validationErrors,
+                    ["traceId"] = httpContext.TraceIdentifier,
+                }
             };
 
             return new BadRequestObjectResult(problemDetails);
