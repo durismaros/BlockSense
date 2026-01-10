@@ -29,12 +29,12 @@
                         CornerRadius="20"
                         BoxShadow="0 2 8 0 #30000000"/>
                 
-                <Button Width="40"
+                <Button x:Name="HomeButton"
+						Width="40"
 						Height="30"
                         Background="#5A3D34"
                         CornerRadius="20"
-                        Margin="6 0 0 0"
-                        Click="GoHomeAsync">
+                        Margin="6 0 0 0">
 					
 					<Button.Styles>
 						<Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
@@ -60,21 +60,24 @@
                     Width="280"/>
 
 			<!-- Inputs -->
-            <TextBox Width="320"
+            <TextBox x:Name="LoginTextBox"
+					 Width="320"
 					 Height="20"
 					 Watermark="username or email address*"
 					 Margin="0 8 0 0"/>
 			
-			<TextBox Width="320"
+			<TextBox x:Name="PasswordTextBox"
+                     Width="320"
 					 Height="20"
 					 Watermark="password*"
-					 PasswordChar="•"
+					 PasswordChar="*"
 					 FontFamily="{DynamicResource Roboto}"
 					 FontWeight="Bold"/>
 
 			
 			<!-- Authentication Button -->
-			<Button Classes="DefaultDarkBrown"
+			<Button x:Name="AuthenticateButton"
+					Classes="DefaultDarkBrown"
 					Margin="0 8 0 0">
 				
 				<TextBlock Text="Authenticate"
@@ -86,20 +89,21 @@
 			</Button>
 			
 			<!--System Output-->
-			<Border Width="250"
+			<Border x:Name="OutputBorder"
+					Width="250"
 					Height="20"
 					Background="#5D3F36"
 					CornerRadius="2 2 10 10"
 					Margin="0 -15 0 0"
 					IsVisible="False">
 
-				<TextBlock
-					HorizontalAlignment="Center"
-					VerticalAlignment="Center"
-					Foreground="Black"
-					FontSize="12"
-					FontWeight="SemiBold"
-					FontStyle="Italic"/>
+				<TextBlock x:Name="OutputTextBlock"
+						   HorizontalAlignment="Center"
+						   VerticalAlignment="Center"
+						   Foreground="Black"
+						   FontSize="12"
+						   FontWeight="SemiBold"
+						   FontStyle="Italic"/>
 
 			</Border>
 

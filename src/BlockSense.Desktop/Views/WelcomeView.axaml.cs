@@ -14,14 +14,17 @@ public partial class WelcomeView : UserControl
         _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
 
         InitializeComponent();
+
+        AuthenticateButton.Click += ToAuthViewClick;
+        RegisterButton.Click += ToAuthViewClick;
     }
 
-    private async void AuthenticateAsync(object? sender, RoutedEventArgs e)
+    private async void ToAuthViewClick(object? sender, RoutedEventArgs e)
     {
         await _navigationManager.NavigateToAsync<AuthenticationView>();
     }
 
-    private async void RegisterAsync(object? sender, RoutedEventArgs e)
+    private async void ToRegisterViewClick(object? sender, RoutedEventArgs e)
     {
         await _navigationManager.NavigateToAsync<RegistrationView>();
     }
