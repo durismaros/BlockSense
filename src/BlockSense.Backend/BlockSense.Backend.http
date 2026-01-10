@@ -1,0 +1,6 @@
+@BlockSense.Backend_HostAddress = http://localhost:5265
+
+GET {{BlockSense.Backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
