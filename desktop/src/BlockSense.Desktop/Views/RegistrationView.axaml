@@ -1,0 +1,131 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="BlockSense.Desktop.RegistrationView">
+
+    <Panel>
+        
+        <!-- Left Icon -->
+        <Panel Width="400"
+               HorizontalAlignment="Left">
+            <Image Width="250"
+                   Source="avares://BlockSense.Desktop/Assets/Icons/window-icon.png"/>
+		</Panel>
+
+        <!--Registration Content-->
+        <StackPanel Width="400"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Spacing="14"
+                    Margin="20 50 20 20">
+
+            <!--Registration Header-->
+            <Panel Width="300"
+                   Height="40">
+                <Border Height="40"
+                        Background="#E6C8A0"
+                        CornerRadius="20"
+                        BoxShadow="0 2 8 0 #30000000"/>
+                
+                <Button x:Name="HomeButton"
+                        Width="40"
+						Height="30"
+                        Background="#D4B38C"
+                        CornerRadius="20"
+                        Margin="6 0 0 0">
+
+					<Button.Styles>
+                        <Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
+							<Setter Property="Background" Value="#B99978" />
+						</Style>
+					</Button.Styles>
+                    
+                    <Image Height="30"
+                           Source="avares://BlockSense.Desktop/Assets/Icons/back-arrow-icon.png"/>
+				</Button>
+                
+                <TextBlock Text="Registration"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="#6D4C41"
+                           FontSize="18"
+                           FontWeight="SemiBold"/>
+				
+            </Panel>
+            
+            <!--Separator-->
+			<Border Classes="DefaultSeparator"
+                    Width="280"/>
+            
+            <!-- Inputs -->
+            <TextBox x:Name="UsernameTextBox"
+                     Width="320"
+					 Height="20"
+					 Watermark="username*"
+					 Margin="0 8 0 0"/>
+			
+			<TextBox x:Name="EmailTextBox"
+                     Width="320"
+					 Height="20"
+					 Watermark="email address*"/>
+            
+			<TextBox x:Name="PasswordTextBox"
+                     Width="320"
+					 Height="20"
+					 Watermark="password*"
+					 PasswordChar="*"
+					 FontFamily="{DynamicResource Roboto}"
+					 FontWeight="Bold"/>
+            
+            <TextBox x:Name="ConfirmPasswordTextBox"
+                     Width="320"
+					 Height="20"
+					 Watermark="re-enter password*"
+					 PasswordChar="*"
+                     FontFamily="{DynamicResource Roboto}"
+					 FontWeight="Bold"/>
+            
+            <TextBox x:Name="InvitationCodeTextBox"
+                     Width="320"
+					 Height="20"
+					 Watermark="invitation code*"/>
+            
+            
+            <!-- Registration Button -->
+			<Button x:Name="RegisterButton"
+                    Classes="DefaultLightBrown"
+					Margin="0 8 0 0">
+				
+				<TextBlock Text="Create an account"
+						   HorizontalAlignment="Center"
+						   VerticalAlignment="Center"
+						   Foreground="#5D3F36"
+						   FontWeight="Medium"/>
+				
+			</Button>
+
+            <!--System Output-->
+			<Border x:Name="OutputBorder"
+                    Width="250"
+					Height="20"
+					Background="#D4B38C"
+					CornerRadius="2 2 10 10"
+					Margin="0 -15 0 0"
+					IsVisible="False">
+
+				<TextBlock x:Name="OutputTextBlock"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="Black"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           FontStyle="Italic"/>
+
+			</Border>
+
+        </StackPanel>
+    </Panel>
+
+</UserControl>
