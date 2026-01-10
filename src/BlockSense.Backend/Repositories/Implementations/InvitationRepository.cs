@@ -1,0 +1,315 @@
+﻿using BlockSense.Backend.Data;
+using BlockSense.Backend.Entities;
+using BlockSense.Backend.Repositories.Interfaces;
+using Dapper;
+using MySql.Data.MySqlClient;
+
+namespace BlockSense.Backend.Repositories.Implementations
+{
+    /// <summary>
+    /// Provides data access methods for <see cref="InvitationCodeEntity"/> objects.
+    /// </summary>
+    public sealed class InvitationRepository : IInvitationRepository
+    {
+        private readonly DatabaseContext _databaseContext;
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="InvitationRepository"/> with the provided <see cref="DatabaseContext"/>.
+        /// </summary>
+        /// <param name="databaseContext">The database context used for executing queries.</param>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="databaseContext"/> is null.</exception>
+        public InvitationRepository(DatabaseContext databaseContext)
+        {
+            _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
+        }
+
+        /// <summary>
+        /// Retrieves an invitation code by its unique identifier.
+        /// </summary>
+        /// <param name="invitationCodeId">The unique identifier of the invitation code.</param>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns>The <see cref="InvitationCodeEntity"/> if found; otherwise, <c>null</c>.</returns>
+        public async Task<InvitationCodeEntity?> GetByIdAsync(uint invitationCodeId, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                SELECT
+                    invitation_code_id  AS InvitationCodeId,
+                    invitation_code     AS Code,
+                    is_used             AS IsUsed,
+                    generated_by        AS GeneratedBy,
+                    created_at          AS CreatedAt,
+                    expires_at          AS ExpiresAt,
+                    is_revoked          AS IsRevoked
+                FROM invitation_codes
+                WHERE invitation_code_id = @InvitationCodeId
+                LIMIT 1;
+            """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@InvitationCodeId", MySqlDbType.UInt32)
+                {
+                    Value = invitationCodeId,
+                }
+            };
+
+            await using MySqlDataReader dbReader =
+                await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
+
+            return SqlMapper.Parse<InvitationCodeEntity>(dbReader).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Retrieves an invitation code by its string code.
+        /// </summary>
+        /// <param name="invitationCode">The invitation code string.</param>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns>The <see cref="InvitationCodeEntity"/> if found; otherwise, <c>null</c>.</returns>
+        public async Task<InvitationCodeEntity?> GetByCodeAsync(string invitationCode, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                SELECT
+                    invitation_code_id  AS InvitationCodeId,
+                    invitation_code     AS Code,
+                    is_used             AS IsUsed,
+                    generated_by        AS GeneratedBy,
+                    created_at          AS CreatedAt,
+                    expires_at          AS ExpiresAt,
+                    is_revoked          AS IsRevoked
+                FROM invitation_codes
+                WHERE invitation_code = @InvitationCode
+                LIMIT 1;
+            """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@InvitationCode", MySqlDbType.String)
+                {
+                    Value = invitationCode,
+                }
+            };
+
+            await using MySqlDataReader dbReader =
+                await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
+
+            return SqlMapper.Parse<InvitationCodeEntity>(dbReader).FirstOrDefault();
+        }
+
+        public async Task<InvitationCodeEntity?> GetByCodeForUpdateAsync(string invitationCode, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                SELECT
+                    invitation_code_id  AS InvitationCodeId,
+                    invitation_code     AS Code,
+                    is_used             AS IsUsed,
+                    generated_by        AS GeneratedBy,
+                    created_at          AS CreatedAt,
+                    expires_at          AS ExpiresAt,
+                    is_revoked          AS IsRevoked
+                FROM invitation_codes
+                WHERE invitation_code = @InvitationCode
+                LIMIT 1
+                FOR UPDATE;
+            """;
+
+            var parameters = new[]
+{
+                new MySqlParameter("@InvitationCode", MySqlDbType.String)
+                {
+                    Value = invitationCode,
+                }
+            };
+
+            await using MySqlDataReader dbReader =
+                await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
+
+            return SqlMapper.Parse<InvitationCodeEntity>(dbReader).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Retrieves all invitation codes generated by a specific user.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns>A list of <see cref="InvitationCodeEntity"/> objects.</returns>
+        public async Task<IEnumerable<InvitationCodeEntity>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                SELECT
+                    invitation_code_id  AS InvitationCodeId,
+                    code                AS Code,
+                    is_used             AS IsUsed,
+                    generated_by        AS GeneratedBy,
+                    created_at          AS CreatedAt,
+                    expires_at          AS ExpiresAt,
+                    is_revoked          AS IsRevoked
+                FROM invitation_codes
+                WHERE generated_by = @UserId
+                ORDER BY is_used ASC;
+            """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@UserId", MySqlDbType.UInt32)
+                {
+                    Value = userId,
+                }
+            };
+
+            await using MySqlDataReader dbReader =
+                await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
+
+            return SqlMapper.Parse<InvitationCodeEntity>(dbReader).ToList();
+        }
+
+        /// <summary>
+        /// Checks if an invitation code exists in the database.
+        /// </summary>
+        /// <param name="invitationCode">The invitation code string to check.</param>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns><c>true</c> if the code exists; otherwise, <c>false</c>.</returns>
+        public async Task<bool> CodeExistsAsync(string invitationCode, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                SELECT COUNT(1)
+                FROM invitation_codes
+                WHERE invitation_code = @InvitationCode;
+            """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@InvitationCode", MySqlDbType.String)
+                {
+                    Value = invitationCode,
+                }
+            };
+
+            var result = await _databaseContext.ExecuteScalarAsync<long>(sqlQuery, parameters, cancellationToken);
+
+            return result > 0;
+        }
+
+        /// <summary>
+        /// Determines whether a given invitation code is active.
+        /// </summary>
+        /// <param name="invitationCode">The invitation code string to check.</param>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns><c>true</c> if the code is active; otherwise, <c>false</c>.</returns>
+        public async Task<bool> IsCodeActiveAsync(string invitationCode, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                SELECT COUNT(1)
+                FROM invitation_codes
+                WHERE invitation_code = @InvitationCode
+                    AND is_used = 0
+                    AND is_revoked = 0
+                    AND (expires_at IS NULL OR expires_at > UTC_TIMESTAMP(6));
+            """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@InvitationCode", MySqlDbType.String)
+                {
+                    Value = invitationCode,
+                }
+            };
+
+            var result = await _databaseContext.ExecuteScalarAsync<long>(sqlQuery, parameters, cancellationToken);
+
+            return result > 0;
+        }
+
+        /// <summary>
+        /// Creates a new invitation code in the database.
+        /// </summary>
+        /// <param name="invitation">The <see cref="InvitationCodeEntity"/> to create.</param>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns>The unique identifier (<c>InvitationCodeId</c>) of the newly created invitation code.</returns>
+        public async Task<uint> CreateAsync(InvitationCodeEntity invitation, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                INSERT INTO invitation_codes (
+                    invitation_code,
+                    is_used,
+                    generated_by,
+                    created_at,
+                    expires_at,
+                    is_revoked )
+                VALUES (
+                    @InvitationCode,
+                    @IsUsed,
+                    @GeneratedBy,
+                    @CreatedAt,
+                    @ExpiresAt,
+                    @IsRevoked );
+                SELECT LAST_INSERT_ID();
+            """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@InvitationCode", MySqlDbType.String) { Value = invitation.InvitationCode },
+                new MySqlParameter("@IsUsed", MySqlDbType.Bit) { Value = invitation.IsUsed },
+                new MySqlParameter("@GeneratedBy", MySqlDbType.UInt32) { Value = invitation.GeneratedBy },
+                new MySqlParameter("@CreatedAt", MySqlDbType.DateTime) { Value = invitation.CreatedAt },
+                new MySqlParameter("@ExpiresAt", MySqlDbType.DateTime) { Value = invitation.ExpiresAt.HasValue ? invitation.ExpiresAt.Value : DBNull.Value },
+                new MySqlParameter("@IsRevoked", MySqlDbType.Bit) { Value = invitation.IsRevoked }
+            };
+
+            var result = await _databaseContext.ExecuteScalarAsync<ulong>(sqlQuery, parameters, cancellationToken);
+
+            return Convert.ToUInt32(result);
+        }
+
+        /// <summary>
+        /// Marks an invitation code as used.
+        /// </summary>
+        /// <param name="invitationCodeId">The unique identifier of the invitation code to mark as used.</param>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public async Task MarkAsUsedAsync(uint invitationCodeId, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                UPDATE invitation_codes
+                SET is_used = 1
+                WHERE invitation_code_id = @InvitationCodeId
+                  AND is_used = 0;
+            """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@InvitationCodeId", MySqlDbType.String)
+                {
+                    Value = invitationCodeId
+                }
+            };
+
+            await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
+        }
+
+        /// <summary>
+        /// Revokes an invitation code, making it invalid for future use.
+        /// </summary>
+        /// <param name="invitationCodeId">The unique identifier of the invitation code to revoke.</param>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public async Task RevokeAsync(uint invitationCodeId, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                UPDATE invitation_codes
+                SET is_revoked = 1
+                WHERE invitation_code_id = @InvitationCodeId
+                  AND is_revoked = 0;
+            """;
+
+            var parameters = new[]
+{
+                new MySqlParameter("@InvitationCodeId", MySqlDbType.String)
+                {
+                    Value = invitationCodeId
+                }
+            };
+
+            await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
+        }
+    }
+}
