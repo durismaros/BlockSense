@@ -8,21 +8,37 @@
         /// <summary>
         /// The issuer of the JWT token (application).
         /// </summary>
-        public string Issuer { get; init; } = string.Empty;
+        public required string Issuer
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// The audience that the token is intended for (client URL).
         /// </summary>
-        public string Audience { get; init; } = string.Empty;
+        public required string Audience
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// The secret key used to sign the JWT token.
         /// </summary>
-        public string SigningKey { get; init; } = string.Empty;
+        public required string SigningKey
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// The duration for which the token remains valid.
         /// </summary>
-        public TimeSpan Expiration { get; init; }
+        public required TimeSpan Expiration
+        {
+            get;
+            init;
+        }
     }
 }

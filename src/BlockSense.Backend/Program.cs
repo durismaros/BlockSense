@@ -24,7 +24,6 @@ builder.Services.Configure<JwtTokenConfig>(builder.Configuration.GetSection("Jwt
 builder.Services.Configure<RefreshTokenConfig>(builder.Configuration.GetSection("RefreshTokenConfig"));
 builder.Services.Configure<TwoFactorAuthConfig>(builder.Configuration.GetSection("TwoFactorAuthConfig"));
 
-
 //
 // --------------------------------
 //   SCOPED SERVICES REGISTRATION

@@ -4,19 +4,29 @@ using BlockSense.Backend.Models;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
-using BlockSense.Contracts.DTOs.Auth;
+using BlockSense.Contracts.DTOs.Authentication;
 using BlockSense.Contracts.Enums.User;
 using Org.BouncyCastle.Utilities;
 using System.Text;
 
 namespace BlockSense.Backend.Services.Implementations
 {
+    /// <summary>
+    /// Provides authentication services, including credential validation, token issuance, and device-based session tracking.
+    /// </summary>
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
         private readonly ITokenService _tokenService;
         private readonly DatabaseContext _databaseContext;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="AuthService"/> with required dependencies.
+        /// </summary>
+        /// <param name="userRepository">The repository for user entity operations.</param>
+        /// <param name="tokenService">The service responsible for generating access and refresh tokens.</param>
+        /// <param name="databaseContext">The database context used to execute SQL queries.</param>
+        /// <exception cref="ArgumentNullException">Thrown if any dependency is <c>null</c>.</exception>
         public AuthService(
             IUserRepository userRepository,
             ITokenService tokenService,
@@ -27,6 +37,7 @@ namespace BlockSense.Backend.Services.Implementations
             _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
         }
 
+        /// <inheritdoc/>
         public async Task<AuthResponse> AuthenticateAsync(AuthRequest request, DeviceContext deviceContext, CancellationToken cancellationToken = default)
         {
             request = request with

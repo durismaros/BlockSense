@@ -9,7 +9,7 @@ namespace BlockSense.Contracts.DTOs.Registration
     public sealed record RegistrationResponse
     {
         /// <summary>
-        /// 
+        /// The unique identifier of the registered user.
         /// </summary>
         public required uint UserId
         {
@@ -18,7 +18,7 @@ namespace BlockSense.Contracts.DTOs.Registration
         }
 
         /// <summary>
-        /// 
+        /// The email address of the registered user.
         /// </summary>
         public required string Email
         {
@@ -27,7 +27,7 @@ namespace BlockSense.Contracts.DTOs.Registration
         }
 
         /// <summary>
-        /// 
+        /// The username of the registered user.
         /// </summary>
         public required string Username
         {
@@ -36,8 +36,11 @@ namespace BlockSense.Contracts.DTOs.Registration
         }
 
         /// <summary>
-        /// 
+        /// The type of the registered user.
         /// </summary>
+        /// <remarks>
+        /// Serialized as a string using JSON string enum converter.
+        /// </remarks>
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public required UserType UserType
         {
@@ -46,7 +49,7 @@ namespace BlockSense.Contracts.DTOs.Registration
         }
 
         /// <summary>
-        /// 
+        /// The UTC timestamp when the user was created.
         /// </summary>
         public required DateTime CreatedAt
         {

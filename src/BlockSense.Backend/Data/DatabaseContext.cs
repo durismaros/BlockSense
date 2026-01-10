@@ -41,7 +41,7 @@ namespace BlockSense.Backend.Data
         /// <exception cref="InvalidOperationException">Thrown if a transaction is already active.</exception>
         public async Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted, CancellationToken cancellationToken = default)
         {
-            if (_currentTransaction != null)
+            if (_currentTransaction is not null)
                 throw new InvalidOperationException("A transaction is already active.");
 
             await EnsureConnectionOpenAsync(cancellationToken);
@@ -107,7 +107,7 @@ namespace BlockSense.Backend.Data
             await EnsureConnectionOpenAsync(cancellationToken);
 
             await using var command = CreateCommand(query, parameters);
-            var result =  await command.ExecuteScalarAsync(cancellationToken);
+            var result = await command.ExecuteScalarAsync(cancellationToken);
 
             return (result is null || result == DBNull.Value) ? default : (T)Convert.ChangeType(result, typeof(T));
         }
@@ -169,7 +169,7 @@ namespace BlockSense.Backend.Data
                         throw new ArgumentNullException(nameof(parameters));
 
                     if (command.Parameters.Contains(p.ParameterName))
-                        throw new InvalidOperationException( $"Duplicate SQL parameter detected: {p.ParameterName}");
+                        throw new InvalidOperationException($"Duplicate SQL parameter detected: {p.ParameterName}");
 
                     command.Parameters.Add(p);
                 }

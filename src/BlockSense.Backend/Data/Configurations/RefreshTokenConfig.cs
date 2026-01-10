@@ -9,6 +9,10 @@
         /// The duration for which a refresh token remains valid.
         /// </summary>
         /// <remarks>Once expired, the user must re-authenticate to obtain a new refresh token.</remarks>
-        public TimeSpan Expiration { get; init; }
+        public required TimeSpan Expiration
+        {
+            get;
+            init;
+        }
     }
 }

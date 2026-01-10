@@ -8,11 +8,19 @@
         /// <summary>
         /// The 20-byte (160-bit) Base32-encoded secret key used to configure 2FA in the authenticator app.
         /// </summary>
-        public string SetupKey { get; init; } = string.Empty;
+        public required string SetupKey
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// The QR code image data corresponding to the setup key.
         /// </summary>
-        public byte[] QRCodeData { get; init; } = Array.Empty<byte>();
+        public required byte[] QRCodeData
+        {
+            get;
+            init;
+        }
     }
 }

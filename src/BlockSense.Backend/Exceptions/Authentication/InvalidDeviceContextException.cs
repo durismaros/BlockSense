@@ -1,5 +1,4 @@
 ﻿using BlockSense.Contracts.Definitions;
-using Microsoft.Net.Http.Headers;
 
 namespace BlockSense.Backend.Exceptions.Authentication
 {

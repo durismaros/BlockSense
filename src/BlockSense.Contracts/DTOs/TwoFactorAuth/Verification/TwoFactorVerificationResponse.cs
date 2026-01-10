@@ -1,4 +1,4 @@
-﻿using BlockSense.Contracts.Enums.Auth;
+﻿using BlockSense.Contracts.Enums.Authentication;
 
 namespace BlockSense.Contracts.DTOs.TwoFactorAuth.Verification
 {
@@ -10,11 +10,19 @@ namespace BlockSense.Contracts.DTOs.TwoFactorAuth.Verification
         /// <summary>
         /// Status of the 2FA verification attempt.
         /// </summary>
-        public TwoFactorAuthStatus Status { get; init; } = TwoFactorAuthStatus.Unknown;
+        public TwoFactorAuthStatus Status
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// Optional human-readable message providing additional context.
         /// </summary>
-        public string? Message { get; init; }
+        public string? Message
+        {
+            get;
+            init;
+        }
     }
 }

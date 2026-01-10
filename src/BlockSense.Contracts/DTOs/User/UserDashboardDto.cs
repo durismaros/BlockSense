@@ -8,21 +8,37 @@
         /// <summary>
         /// Basic profile information about the user.
         /// </summary>
-        public UserSummaryDto Profile { get; init; } = new();
+        public required UserSummaryDto Profile
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// Aggregated statistics about the user account.
         /// </summary>
-        public UserStatisticsDto Statistics { get; init; } = new();
+        public required UserStatisticsDto Statistics
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// List of currently active devices/sessions for the user.
         /// </summary>
-        public IReadOnlyList<UserDeviceDto> ActiveDevices { get; init; } = Array.Empty<UserDeviceDto>();
+        public required IReadOnlyList<UserDeviceDto> ActiveDevices
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// List of invitation codes created by the user.
         /// </summary>
-        public IReadOnlyList<InvitationDto> Invitations { get; init; } = Array.Empty<InvitationDto>();
+        public required IReadOnlyList<InvitationDto> Invitations
+        {
+            get;
+            init;
+        }
     }
 }

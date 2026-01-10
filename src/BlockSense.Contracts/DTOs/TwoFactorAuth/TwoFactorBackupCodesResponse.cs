@@ -1,4 +1,4 @@
-﻿using BlockSense.Contracts.Enums.Auth;
+﻿using BlockSense.Contracts.Enums.Authentication;
 
 namespace BlockSense.Contracts.DTOs.TwoFactorAuth
 {
@@ -10,12 +10,20 @@ namespace BlockSense.Contracts.DTOs.TwoFactorAuth
         /// <summary>
         /// Status of the 2FA backup codes operation.
         /// </summary>
-        public TwoFactorAuthStatus Status { get; init; } = TwoFactorAuthStatus.Unknown;
+        public required TwoFactorAuthStatus Status
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// A list of 2FA backup codes.
         /// </summary>
         /// <remarks>Each code is 8 alphanumeric characters in the format XXXX-XXX.</remarks>
-        public IReadOnlyList<string> Codes { get; init; } = new List<string>();
+        public required IReadOnlyList<string> Codes
+        {
+            get;
+            init;
+        }
     }
 }

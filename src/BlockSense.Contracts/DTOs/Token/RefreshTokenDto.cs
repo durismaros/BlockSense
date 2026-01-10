@@ -8,26 +8,47 @@
         /// <summary>
         /// Unique identifier of the refresh token.
         /// </summary>
-        public Guid TokenId { get; init; }
+        public required Guid TokenId
+        {
+            get;
+            init;
+
+        }
 
         /// <summary>
         /// The raw token data, optionally transferred to the client.
         /// </summary>
-        public string? Token { get; init; }
+        public required string Token
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// Unique identifier of the user associated with this refresh token.
         /// </summary>
-        public uint UserId { get; init; }
+        public required uint UserId
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// The UTC date and time at which this token was issued.
         /// </summary>
-        public DateTime IssuedAt { get; init; }
+        public required DateTime IssuedAt
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// The UTC date and time at which this token expires.
         /// </summary>
-        public DateTime ExpiresAt { get; init; }
+        public required DateTime ExpiresAt
+        {
+            get;
+            init;
+        }
     }
 }

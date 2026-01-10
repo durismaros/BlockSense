@@ -17,19 +17,14 @@ namespace BlockSense.Backend.Repositories.Implementations
         /// <summary>
         /// Initializes a new instance of <see cref="UserRepository"/> with the provided <see cref="DatabaseContext"/>.
         /// </summary>
-        /// <param name="databaseContext">The database context used for executing queries.</param>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="databaseContext"/> is null.</exception>
+        /// <param name="databaseContext">The database context used to execute SQL queries.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="databaseContext"/> is <c>null</c>.</exception>
         public UserRepository(DatabaseContext databaseContext)
         {
             _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
         }
 
-        /// <summary>
-        /// Retrieves a user by their unique identifier.
-        /// </summary>
-        /// <param name="userId">The unique identifier of the user.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>The <see cref="UserEntity"/> if found; otherwise, <c>null</c>.</returns>
+        /// <inheritdoc/>
         public async Task<UserEntity?> GetByIdAsync(uint userId, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
@@ -64,12 +59,7 @@ namespace BlockSense.Backend.Repositories.Implementations
             return SqlMapper.Parse<UserEntity>(dbReader).FirstOrDefault();
         }
 
-        /// <summary>
-        /// Retrieves a user by username or email.
-        /// </summary>
-        /// <param name="identifier">The username or email of the user.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>The <see cref="UserEntity"/> if found; otherwise, <c>null</c>.</returns>
+        /// <inheritdoc/>
         public async Task<UserEntity?> GetByUsernameOrEmailAsync(string identifier, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
@@ -104,12 +94,7 @@ namespace BlockSense.Backend.Repositories.Implementations
             return SqlMapper.Parse<UserEntity>(dbReader).FirstOrDefault();
         }
 
-        /// <summary>
-        /// Checks if a username already exists in the database.
-        /// </summary>
-        /// <param name="username">The username to check.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns><c>true</c> if the username exists; otherwise, <c>false</c>.</returns>
+        /// <inheritdoc/>
         public async Task<bool> UsernameExistsAsync(string username, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
@@ -132,12 +117,7 @@ namespace BlockSense.Backend.Repositories.Implementations
             return result > 0;
         }
 
-        /// <summary>
-        /// Checks if an email already exists in the database.
-        /// </summary>
-        /// <param name="email">The email to check.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns><c>true</c> if the email exists; otherwise, <c>false</c>.</returns>
+        /// <inheritdoc/>
         public async Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
@@ -160,12 +140,7 @@ namespace BlockSense.Backend.Repositories.Implementations
             return result > 0;
         }
 
-        /// <summary>
-        /// Inserts a new user into the database.
-        /// </summary>
-        /// <param name="user">The <see cref="UserEntity"/> to insert.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>The newly created user's <c>UserId</c>.</returns>
+        /// <inheritdoc/>
         public async Task<uint> CreateAsync(UserEntity user, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
@@ -207,13 +182,7 @@ namespace BlockSense.Backend.Repositories.Implementations
             return Convert.ToUInt32(result);
         }
 
-        /// <summary>
-        /// Updates the type of a user (e.g., Standard, Administrator, Banned).
-        /// </summary>
-        /// <param name="userId">The user's unique identifier.</param>
-        /// <param name="newType">The new <see cref="UserType"/> to assign.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        /// <inheritdoc/>
         public async Task UpdateUserTypeAsync(uint userId, UserType newType, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
@@ -232,12 +201,7 @@ namespace BlockSense.Backend.Repositories.Implementations
             await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
         }
 
-        /// <summary>
-        /// Soft-deletes a user by setting the <c>deleted_at</c> timestamp.
-        /// </summary>
-        /// <param name="userId">The unique identifier of the user to delete.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        /// <inheritdoc/>
         public async Task SoftDeleteAsync(uint userId, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
@@ -256,12 +220,7 @@ namespace BlockSense.Backend.Repositories.Implementations
             await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
         }
 
-        /// <summary>
-        /// Restores a previously soft-deleted user by clearing the <c>deleted_at</c> timestamp.
-        /// </summary>
-        /// <param name="userId">The unique identifier of the user to restore.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        /// <inheritdoc/>
         public async Task RestoreAsync(uint userId, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """

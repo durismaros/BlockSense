@@ -1,6 +1,6 @@
 ﻿using BlockSense.Backend.Models;
 using BlockSense.Backend.Services.Interfaces;
-using BlockSense.Contracts.DTOs.Auth;
+using BlockSense.Contracts.DTOs.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,7 +8,7 @@ namespace BlockSense.Backend.Controllers
 {
     [Route("api/auth")]
     [ApiController]
-    public sealed class AuthController : ControllerBase
+    public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
 

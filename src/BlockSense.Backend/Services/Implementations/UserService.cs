@@ -11,12 +11,22 @@ using System.Text;
 
 namespace BlockSense.Backend.Services.Implementations
 {
+    /// <summary>
+    /// Implements user-related operations, including account registration, with transactional safety and invitation validation.
+    /// </summary>
     public sealed class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
         private readonly IInvitationRepository _invitationRepository;
         private readonly DatabaseContext _databaseContext;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="UserService"/> with required dependencies.
+        /// </summary>
+        /// <param name="userRepository">The repository for user entity operations.</param>
+        /// <param name="invitationRepository">The repository for invitation entity operations.</param>
+        /// <param name="databaseContext">The database context used to execute SQL queries.</param>
+        /// <exception cref="ArgumentNullException">Thrown if any dependency is <c>null</c>.</exception>
         public UserService(
             IUserRepository userRepository,
             IInvitationRepository invitationRepository,
@@ -27,6 +37,7 @@ namespace BlockSense.Backend.Services.Implementations
             _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
         }
 
+        /// <inheritdoc/>
         public async Task<RegistrationResponse> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken = default)
         {
             request = request with
@@ -62,6 +73,7 @@ namespace BlockSense.Backend.Services.Implementations
 
                 var userEntity = new UserEntity
                 {
+                    UserId = uint.MinValue,
                     Username = request.Username,
                     Email = request.Email,
                     PasswordHash = computedHash,

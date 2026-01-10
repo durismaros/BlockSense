@@ -8,11 +8,19 @@
         /// <summary>
         /// The JWT or opaque token string used for API authentication.
         /// </summary>
-        public string Token { get; init; } = string.Empty;
+        public required string Token
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// The UTC time at which this token expires.
         /// </summary>
-        public DateTime ExpiresAt { get; init; }
+        public required DateTime ExpiresAt
+        {
+            get;
+            init;
+        }
     }
 }

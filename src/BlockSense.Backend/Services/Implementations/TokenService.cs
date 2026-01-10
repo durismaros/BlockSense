@@ -5,7 +5,7 @@ using BlockSense.Backend.Models;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
-using BlockSense.Contracts.Cryptography.Utils;
+using BlockSense.Contracts.Cryptography.Utilities;
 using BlockSense.Contracts.DTOs.Token;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -14,12 +14,23 @@ using System.Security.Claims;
 
 namespace BlockSense.Backend.Services.Implementations
 {
+    /// <summary>
+    /// Provides token management services, including creation and validation of JWT access tokens and refresh tokens.
+    /// </summary>
     public sealed class TokenService : ITokenService
     {
         private readonly RefreshTokenConfig _refreshTokenConfig;
         private readonly JwtTokenConfig _jwtTokenConfig;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="TokenService"/> with required configurations and dependencies.
+        /// </summary>
+        /// <param name="refreshTokenConfig">Configuration for refresh token lifespan and settings.</param>
+        /// <param name="jwtTokenConfig">Configuration for JWT signing, issuer, audience, and expiration.</param>
+        /// <param name="refreshTokenRepository">Repository for managing refresh token persistence.</param>
+        /// <param name="databaseContext">The database context used to execute SQL queries.</param>
+        /// <exception cref="ArgumentNullException">Thrown if any dependency is <c>null</c>.</exception>
         public TokenService(
             IOptions<RefreshTokenConfig> refreshTokenConfig,
             IOptions<JwtTokenConfig> jwtTokenConfig,
@@ -30,6 +41,8 @@ namespace BlockSense.Backend.Services.Implementations
             _jwtTokenConfig = jwtTokenConfig.Value ?? throw new ArgumentNullException(nameof(jwtTokenConfig));
             _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
         }
+
+        /// <inheritdoc/>
         public async Task<RefreshTokenDto> CreateRefreshTokenAsync(uint userId, DeviceContext deviceContext, CancellationToken cancellationToken = default)
         {
             Guid tokenId = Guid.NewGuid();
@@ -68,6 +81,7 @@ namespace BlockSense.Backend.Services.Implementations
             };
         }
 
+        /// <inheritdoc/>
         public async Task<bool> ValidateRefreshTokenAsync(string token, CancellationToken cancellationToken = default)
         {
             string tokenHash;
@@ -85,6 +99,7 @@ namespace BlockSense.Backend.Services.Implementations
             return tokenEntity != null && !tokenEntity.IsRevoked && tokenEntity.ExpiresAt > DateTime.UtcNow;
         }
 
+        /// <inheritdoc/>
         public async Task<AccessTokenDto> CreateAccessTokenAsync(UserEntity user, CancellationToken cancellationToken = default)
         {
             byte[] key = Convert.FromBase64String(_jwtTokenConfig.SigningKey);
