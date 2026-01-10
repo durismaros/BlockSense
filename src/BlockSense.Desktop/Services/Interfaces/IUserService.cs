@@ -7,6 +7,6 @@ namespace BlockSense.Desktop.Services.Interfaces
 {
     public interface IUserService
     {
-        Task<ServiceResponse> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken);
+        Task<ServiceResponse> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken = default);
     }
 }

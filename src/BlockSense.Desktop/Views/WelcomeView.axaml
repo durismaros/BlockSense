@@ -23,9 +23,9 @@
             
             <!-- Application Header -->
 			<TextBlock HorizontalAlignment="Center"
+                       Foreground="#4A4238"
 					   FontSize="40"
-					   FontWeight="Light"
-					   Foreground="#4A4238">
+					   FontWeight="Light">
                     Block
                 <Span Foreground="#2A2118">
                     Sense
@@ -36,48 +36,41 @@
                     Width="120"/>
 
             <TextBlock Width="280"
-                       Margin="0 10 0 20"
+                       Text="Manage your crypto assets easily and securely"
                        Foreground="#2A2118"
+                       Margin="0 10 0 20"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       LineHeight="22"
                        FontSize="14"
                        FontWeight="SemiBold"
-                       TextAlignment="Center"
-                       LineHeight="22"
-                       Opacity="0.9"
-                       TextWrapping="Wrap"
-                       Text="Manage your crypto assets easily and securely"/>
+                       Opacity="0.9"/>
             
             
             <!--Authenticate Button-->
-            <Button
-				x:Name="authenticateButton"
-				Classes="DefaultDarkBrown"
-				Click="AuthenticateAsync">
+            <Button x:Name="AuthenticateButton"
+                    Classes="DefaultDarkBrown">
 				
-				<TextBlock
-					Text="Authenticate"
-					HorizontalAlignment="Center"
-					VerticalAlignment="Center"
-					FontWeight="Medium"
-					Foreground="#E6C8A0"/>
+				<TextBlock Text="Authenticate"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="#E6C8A0"
+                           FontWeight="Medium"/>
 
 			</Button>
 
             <!--Register Button-->
-			<Button
-				x:Name="registerButton"
-				Classes="DefaultLightBrown"
-				Click="RegisterAsync">
+			<Button x:Name="RegisterButton"
+                    Classes="DefaultLightBrown">
 				
-				<TextBlock
-					Text="Create an account"
-					HorizontalAlignment="Center"
-					VerticalAlignment="Center"
-					FontWeight="Medium"
-					Foreground="#5D3F36"/>
+				<TextBlock Text="Create an account"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="#5D3F36"
+                           FontWeight="Medium"/>
 			</Button>
 			
         </StackPanel>
-
     </Panel>
 
 </UserControl>

@@ -1,41 +1,37 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using BlockSense.Contracts.Definitions;
 using BlockSense.Contracts.DTOs.Registration;
-using BlockSense.Desktop.Models;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Threading;
 
 namespace BlockSense.Desktop;
 
 public partial class RegistrationView : UserControl
 {
-    private readonly NavigationManager _navigationManager;
     private readonly IUserService _userService;
+    private readonly NavigationManager _navigationManager;
 
     private CancellationTokenSource? _cancellationTokenSource;
 
-    public RegistrationView(NavigationManager navigationManager, IUserService userService)
+    public RegistrationView(IUserService userService, NavigationManager navigationManager)
     {
-        _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
         _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+        _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
 
         InitializeComponent();
 
-        RegisterButton.Click += RegisterAsync;
+        HomeButton.Click += ToWelcomeViewClick;
+        RegisterButton.Click += RegisterClick;
     }
 
-    public async void GoHomeAsync(object? sender, RoutedEventArgs e)
+    private async void ToWelcomeViewClick(object? sender, RoutedEventArgs e)
     {
         await _navigationManager.NavigateToAsync<WelcomeView>();
     }
 
-    private async void RegisterAsync(object? sender, RoutedEventArgs e)
+    private async void RegisterClick(object? sender, RoutedEventArgs e)
     {
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource = new CancellationTokenSource();

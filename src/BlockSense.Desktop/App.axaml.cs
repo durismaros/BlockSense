@@ -3,7 +3,6 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using BlockSense.Desktop.Services.Implementations;
 using BlockSense.Desktop.Services.Interfaces;
-using BlockSense.Desktop.Utilities.FileManagement;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -64,6 +63,7 @@ namespace BlockSense.Desktop
             services.AddSingleton<NavigationManager>();
 
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IAuthService, AuthService>();
 
             // --- Views ---
             services.AddSingleton<WelcomeView>();

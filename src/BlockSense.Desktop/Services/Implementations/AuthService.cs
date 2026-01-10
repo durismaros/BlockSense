@@ -1,34 +1,35 @@
 ﻿using BlockSense.Contracts.Definitions;
+using BlockSense.Contracts.DTOs.Auth;
 using BlockSense.Contracts.DTOs.Registration;
 using BlockSense.Desktop.Models;
 using BlockSense.Desktop.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace BlockSense.Desktop.Services.Implementations
 {
-    public sealed class UserService : IUserService
+    public sealed class AuthService : IAuthService
     {
         private readonly IApiClient _apiClient;
-        private readonly ILogger<UserService> _logger;
+        private readonly ILogger<AuthService> _logger;
 
-        public UserService(ApiClient apiClient, ILogger<UserService> logger)
+        public AuthService(ApiClient apiClient, ILogger<AuthService> logger)
         {
             _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<ServiceResponse> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken = default)
+        public async Task<ServiceResponse> AuthAsync(AuthRequest request, CancellationToken cancellationToken = default)
         {
             if (request is null)
             {
                 throw new ArgumentNullException(nameof(request));
             }
 
-            var response = await _apiClient.PostAsync<RegistrationRequest, RegistrationResponse>(
-                endpoint: "/api/user/register",
+            var response = await _apiClient.PostAsync<AuthRequest, AuthResponse>(
+                endpoint: "/api/auth",
                 request: request,
                 cancellationToken: cancellationToken);
 
@@ -37,7 +38,7 @@ namespace BlockSense.Desktop.Services.Implementations
                 return new ServiceResponse
                 {
                     ProblemType = ApiProblemTypes.Registration.RegistrationSuccess,
-                    Message = "Registration Successful"
+                    Message = "Authentication Successful"
                 };
             }
 
