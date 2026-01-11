@@ -5,7 +5,7 @@ namespace BlockSense.Contracts.DTOs.TwoFactorAuth
     /// <summary>
     /// Represents the response returned by the backend containing backup codes for two-factor authentication (2FA).
     /// </summary>
-    public sealed record TwoFactorBackupCodesResponse
+    public sealed record TwoFactorBackupResponse
     {
         /// <summary>
         /// Status of the 2FA backup codes operation.

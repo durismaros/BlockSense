@@ -22,6 +22,8 @@ namespace BlockSense.Desktop.Utilities.Logging
                 .MinimumLevel.Override("System", LogEventLevel.Warning)
                 .MinimumLevel.Override("Avalonia", LogEventLevel.Warning)
 
+                .Enrich.WithClassName()
+
                 .WriteTo.File(
                     path: DirectoryStructure.GetLogFilePath("blocksense.log"),
                     rollingInterval: RollingInterval.Day,
@@ -35,6 +37,7 @@ namespace BlockSense.Desktop.Utilities.Logging
                 .WriteTo.Console(
                     outputTemplate:
                         "[{Timestamp:HH:mm:ss} {Level:u3}] " +
+                        "[{ClassName}] " +
                         "{Message:lj} " +
                         "{NewLine}{Exception}")
 #endif

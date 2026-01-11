@@ -23,7 +23,7 @@ namespace BlockSense.Desktop.Services.Implementations
         /// <param name="logger">Logger for capturing authentication-related events.</param>
         /// <param name="apiClient">The API client used to send authentication requests.</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="apiClient"/> or <paramref name="logger"/> is null.</exception>
-        public AuthService(ILogger<AuthService> logger, ApiClient apiClient)
+        public AuthService(ILogger<AuthService> logger, IApiClient apiClient)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));

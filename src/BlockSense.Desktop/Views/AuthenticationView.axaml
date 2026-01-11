@@ -10,7 +10,7 @@
         <Panel Width="400"
                HorizontalAlignment="Left">
             <Image Width="250"
-                   Source="avares://BlockSense.Desktop/Assets/Icons/window-icon.png"/>
+                   Source="\Assets\Icons\icon_app_window.png"/>
 		</Panel>
 
         <!--Authentication Content-->
@@ -42,7 +42,7 @@
 					</Button.Styles>
 
 					<Image Height="30"
-                           Source="avares://BlockSense.Desktop/Assets/Icons/back-arrow-icon.png"/>
+                           Source="\Assets\Icons\icon_back.png"/>
 				</Button>
                 
                 <TextBlock Text="Authentication"

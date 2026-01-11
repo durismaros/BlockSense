@@ -33,8 +33,6 @@ namespace BlockSense.Desktop
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.MainWindow = ServiceProvider.GetRequiredService<MainWindow>();
-
-                var _ = ServiceProvider.GetRequiredService<NavigationManager>().NavigateToAsync<WelcomeView>();
             }
 
             base.OnFrameworkInitializationCompleted();
@@ -50,9 +48,7 @@ namespace BlockSense.Desktop
                 builder.AddSerilog(dispose: true);
             });
 
-            services.AddSingleton<IApiClient, ApiClient>();
-
-            services.AddHttpClient<ApiClient>(client =>
+            services.AddHttpClient<IApiClient, ApiClient>(client =>
             {
                 client.BaseAddress = new Uri("https://localhost:7147/");
                 client.Timeout = TimeSpan.FromSeconds(30);

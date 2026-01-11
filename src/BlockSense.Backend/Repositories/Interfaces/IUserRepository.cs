@@ -13,9 +13,7 @@ namespace BlockSense.Backend.Repositories.Interfaces
         /// </summary>
         /// <param name="userId">The unique identifier of the user.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>The corresponding <see cref="UserEntity"/> if found; 
-        /// 
-        /// , <c>null</c>.</returns>
+        /// <returns>The corresponding <see cref="UserEntity"/> if found; otherwise, <c>null</c>.</returns>
         Task<UserEntity?> GetByIdAsync(uint userId, CancellationToken cancellationToken = default);
         /// <summary>
         /// Retrieves a user by username or email address.

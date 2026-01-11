@@ -17,7 +17,7 @@ namespace BlockSense.Backend.Repositories.Implementations
         /// Initializes a new instance of <see cref="RefreshTokenRepository"/> with the provided <see cref="DatabaseContext"/>.
         /// </summary>
         /// <param name="databaseContext">The database context used to execute SQL queries.</param>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="databaseContext"/> is <c>null</c>.</exception>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="databaseContext"/> is <c>null</c>.</exception>
         public RefreshTokenRepository(DatabaseContext databaseContext)
         {
             _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));

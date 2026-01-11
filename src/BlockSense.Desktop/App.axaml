@@ -5,6 +5,21 @@
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.Styles>
-        <FluentTheme />
+        <FluentTheme/>
+        <StyleInclude Source="\Assets\AppDefaultStyles.axaml"/>
     </Application.Styles>
+    
+    <Application.Resources>
+        <FontFamily x:Key="Montserrat">
+            avares://BlockSense.Desktop/Assets/Fonts/Montserrat#Montserrat
+        </FontFamily>
+        
+        <FontFamily x:Key="Roboto">
+            avares://BlockSense.Desktop/Assets/Fonts/Roboto#Roboto
+        </FontFamily>
+        
+        <FontFamily x:Key="Pacifico">
+            avares://BlockSense.Desktop/Assets/Fonts/Pacifico#Pacifico
+        </FontFamily>
+    </Application.Resources>
 </Application>

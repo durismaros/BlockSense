@@ -18,6 +18,7 @@ namespace BlockSense.Desktop
             try
             {
                 Log.Information("Starting BlockSense Desktop Application");
+
                 BuildAvaloniaApp()
                     .StartWithClassicDesktopLifetime(args);
             }

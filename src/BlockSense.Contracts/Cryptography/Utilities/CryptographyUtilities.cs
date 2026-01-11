@@ -1,5 +1,6 @@
 ﻿using Org.BouncyCastle.Crypto.Prng;
 using Org.BouncyCastle.Security;
+using SimpleBase;
 
 namespace BlockSense.Contracts.Cryptography.Utilities
 {

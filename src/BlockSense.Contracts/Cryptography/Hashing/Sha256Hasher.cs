@@ -1,4 +1,5 @@
 ﻿using Org.BouncyCastle.Crypto.Digests;
+using SimpleBase;
 
 namespace BlockSense.Contracts.Cryptography.Hashing
 {
@@ -30,15 +31,6 @@ namespace BlockSense.Contracts.Cryptography.Hashing
         }
 
         /// <summary>
-        /// Computes a SHA-256 hash with optional salt and returns it as a Base64-encoded string.
-        /// </summary>
-        /// <param name="data">The input data to hash. Cannot be null.</param>
-        /// <param name="salt">Optional salt appended to the data before hashing.</param>
-        /// <returns>A Base64-encoded string representing the computed SHA-256 hash.</returns>
-        public static string ComputeBase64(byte[] data, byte[]? salt = null)
-            => Convert.ToBase64String(ComputeByte(data, salt));
-
-        /// <summary>
         /// Computes a SHA-256 hash with optional salt and returns it as a hexadecimal string.
         /// </summary>
         /// <param name="data">The input data to hash. Cannot be null.</param></param>
@@ -46,5 +38,14 @@ namespace BlockSense.Contracts.Cryptography.Hashing
         /// <returns>A hexadecimal string representing the computed SHA-256 hash.</returns>
         public static string ComputeHex(byte[] data, byte[]? salt = null)
             => Convert.ToHexString(ComputeByte(data, salt));
+
+        /// <summary>
+        /// Computes a SHA-256 hash with optional salt and returns it as a Base64-encoded string.
+        /// </summary>
+        /// <param name="data">The input data to hash. Cannot be null.</param>
+        /// <param name="salt">Optional salt appended to the data before hashing.</param>
+        /// <returns>A Base64-encoded string representing the computed SHA-256 hash.</returns>
+        public static string ComputeBase64(byte[] data, byte[]? salt = null)
+            => Convert.ToBase64String(ComputeByte(data, salt));
     }
 }

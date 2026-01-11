@@ -35,7 +35,7 @@ namespace BlockSense.Desktop.Utilities.UIComponents
         {
             var view = App.ServiceProvider.GetRequiredService<TView>();
 
-            _logger.LogDebug("Navigating to `{View}`", nameof(view));
+            _logger.LogDebug("Navigating to `{View}`", view.GetType().Name);
             await _mainWindow.SwitchViewAsync(view);
         }
 
@@ -49,7 +49,7 @@ namespace BlockSense.Desktop.Utilities.UIComponents
         {
             if (view is null) throw new ArgumentNullException(nameof(view));
 
-            _logger.LogDebug("Navigation to `{View}`", nameof(view));
+            _logger.LogDebug("Navigation to `{View}`", view.GetType().Name);
             await _mainWindow.SwitchViewAsync(view);
         }
     }
