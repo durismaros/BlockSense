@@ -1,0 +1,121 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="BlockSense.Desktop.AuthenticationView">
+
+    <Panel>
+        <!-- Left Icon -->
+        <Panel Width="400"
+               HorizontalAlignment="Left">
+            <Image Width="250"
+                   Source="avares://BlockSense.Desktop/Assets/Icons/window-icon.png"/>
+		</Panel>
+
+        <!--Authentication Content-->
+        <StackPanel Width="400"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Spacing="14"
+                    Margin="20 50 20 20">
+
+			<!--Authentication Header-->
+            <Panel Width="300"
+                   Height="40">
+                <Border Height="40"
+                        Background="#6D4C41"
+                        CornerRadius="20"
+                        BoxShadow="0 2 8 0 #30000000"/>
+                
+                <Button x:Name="HomeButton"
+						Width="40"
+						Height="30"
+                        Background="#5A3D34"
+                        CornerRadius="20"
+                        Margin="6 0 0 0">
+					
+					<Button.Styles>
+						<Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
+							<Setter Property="Background" Value="#4A322A" />
+						</Style>
+					</Button.Styles>
+
+					<Image Height="30"
+                           Source="avares://BlockSense.Desktop/Assets/Icons/back-arrow-icon.png"/>
+				</Button>
+                
+                <TextBlock Text="Authentication"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="#E6C8A0"
+                           FontSize="18"
+                           FontWeight="SemiBold"/>
+            </Panel>
+            
+            <!--Separator-->
+			<Border Classes="DefaultSeparator"
+                    Width="280"/>
+
+			<!-- Inputs -->
+            <TextBox x:Name="LoginTextBox"
+					 Width="320"
+					 Height="20"
+					 Watermark="username or email address*"
+					 Margin="0 8 0 0"/>
+			
+			<TextBox x:Name="PasswordTextBox"
+                     Width="320"
+					 Height="20"
+					 Watermark="password*"
+					 PasswordChar="*"
+					 FontFamily="{DynamicResource Roboto}"
+					 FontWeight="Bold"/>
+
+			
+			<!-- Authentication Button -->
+			<Button x:Name="AuthenticateButton"
+					Classes="DefaultDarkBrown"
+					Margin="0 8 0 0">
+				
+				<TextBlock Text="Authenticate"
+						   HorizontalAlignment="Center"
+						   VerticalAlignment="Center"
+						   Foreground="#E6C8A0"
+						   FontWeight="Medium"/>
+			</Button>
+			
+			<!--System Output-->
+			<Border x:Name="OutputBorder"
+					Width="250"
+					Height="20"
+					Background="#5D3F36"
+					CornerRadius="2 2 10 10"
+					Margin="0 -15 0 0"
+					IsVisible="False">
+
+				<TextBlock x:Name="OutputTextBlock"
+						   HorizontalAlignment="Center"
+						   VerticalAlignment="Center"
+						   Foreground="Black"
+						   FontSize="12"
+						   FontWeight="SemiBold"
+						   FontStyle="Italic"/>
+			</Border>
+
+			<!--Reset password Button-->
+			<Button Classes="DefaultLightBrown"
+					Width="210"
+					Height="30"
+					CornerRadius="12">
+
+				<TextBlock Text="forgot your password?"
+						   HorizontalAlignment="Center"
+						   VerticalAlignment="Center"
+						   Foreground="#5D3F36"
+						   FontWeight="SemiBold"/>
+			</Button>
+		</StackPanel>
+	</Panel>
+
+</UserControl>

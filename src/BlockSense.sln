@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.1.11312.151 d18.0
+VisualStudioVersion = 18.1.11312.151
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockSense.Contracts", "BlockSense.Contracts\BlockSense.Contracts.csproj", "{E2CF8651-CD2B-4B18-889A-B2022D98E128}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockSense.Backend", "BlockSense.Backend\BlockSense.Backend.csproj", "{7E491EB6-AA93-4AB5-BDF3-7DEBCAC27699}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockSense.Desktop", "BlockSense.Desktop\BlockSense.Desktop.csproj", "{3132EA89-084D-4C4E-A02B-21A0854C045C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{7E491EB6-AA93-4AB5-BDF3-7DEBCAC27699}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7E491EB6-AA93-4AB5-BDF3-7DEBCAC27699}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7E491EB6-AA93-4AB5-BDF3-7DEBCAC27699}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3132EA89-084D-4C4E-A02B-21A0854C045C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3132EA89-084D-4C4E-A02B-21A0854C045C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3132EA89-084D-4C4E-A02B-21A0854C045C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3132EA89-084D-4C4E-A02B-21A0854C045C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
