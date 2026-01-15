@@ -1,15 +1,15 @@
 ﻿using BlockSense.Backend.Data.Configurations;
 using BlockSense.Backend.Entities;
+using BlockSense.Backend.Exceptions.TwoFactorAuthentication;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Encryption;
 using BlockSense.Contracts.Cryptography.Hashing;
 using BlockSense.Contracts.Cryptography.Utilities;
-using BlockSense.Contracts.DTOs.TwoFactorAuth;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Setup;
+using Microsoft.Extensions.Options;
 using OtpNet;
 using QRCoder;
-using System.Collections.ObjectModel;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -22,55 +22,20 @@ namespace BlockSense.Backend.Services.Implementations
         private readonly IUserRepository _userRepository;
 
         public TwoFactorAuthService(
-            TwoFactorAuthConfig twoFactorAuthConfig,
+            IOptions<TwoFactorAuthConfig> twoFactorAuthConfig,
             ITwoFactorAuthRepository twoFactorAuthRepository,
             IUserRepository userRepository)
         {
-            _twoFactorAuthConfig = twoFactorAuthConfig ?? throw new ArgumentNullException(nameof(twoFactorAuthConfig));
+            _twoFactorAuthConfig = twoFactorAuthConfig.Value ?? throw new ArgumentNullException(nameof(twoFactorAuthConfig));
             _twoFactorAuthRepository = twoFactorAuthRepository ?? throw new ArgumentNullException(nameof(twoFactorAuthRepository));
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-        }
-
-        public async Task<bool> VerifyAsync(uint userId, string code)
-        {
-            code = code.Trim().ToUpperInvariant();
-
-            var twoFaAuthEntity = await _twoFactorAuthRepository.GetByUserIdAsync(userId);
-
-            if (twoFaAuthEntity is null || twoFaAuthEntity.EncryptedTotpSecret is null)
-            {
-                throw new InvalidOperationException("Two-factor authentication is not enabled for this user.");
-            }
-
-            if (twoFaAuthEntity.BackupCodes is not null &&
-                VerifyBackupCode(twoFaAuthEntity.BackupCodes, code))
-            {
-                twoFaAuthEntity.RemoveBackupCode(code);
-                twoFaAuthEntity.UpdatedAt = DateTime.UtcNow;
-
-                await _twoFactorAuthRepository.CreateOrUpdateAsync(twoFaAuthEntity);
-                return true;
-            }
-
-            byte[] iv = new byte[12];
-            Buffer.BlockCopy(twoFaAuthEntity.EncryptedTotpSecret, 0, iv, 0, 12);
-
-            byte[] cipherText = new byte[twoFaAuthEntity.EncryptedTotpSecret.Length - iv.Length];
-            Buffer.BlockCopy(twoFaAuthEntity.EncryptedTotpSecret, 12, cipherText, 0, cipherText.Length);
-
-            var aes256GcmEncryptor = new Aes256GcmEncryptor();
-
-            byte[] key = Convert.FromBase64String(_twoFactorAuthConfig.MasterKey);
-            byte[] decryptedSecret = aes256GcmEncryptor.Decrypt(key, iv, cipherText);
-
-            return VerifyCode(decryptedSecret, code);
         }
 
         public async Task<TwoFactorSetupInit> SetupInitAsync(uint userId)
         {
             if (await _twoFactorAuthRepository.IsEnabledAsync(userId))
             {
-                throw new InvalidOperationException("Two-factor authentication is already enabled.");
+                throw new TwoFactorAlreadyConfiguredException();
             }
 
             var user = await _userRepository.GetByIdAsync(userId);
@@ -97,7 +62,7 @@ namespace BlockSense.Backend.Services.Implementations
         {
             if (await _twoFactorAuthRepository.IsEnabledAsync(userId))
             {
-                throw new InvalidOperationException("Two-factor authentication is already enabled.");
+                throw new TwoFactorAlreadyConfiguredException();
             }
 
             request = request with
@@ -110,7 +75,7 @@ namespace BlockSense.Backend.Services.Implementations
 
             if (!VerifyCode(secretKey, request.TwoFactorCode))
             {
-                return false;
+                throw new TwoFactorInvalidCodeException();
             }
 
             var aes256GcmEncryptor = new Aes256GcmEncryptor();
@@ -133,29 +98,59 @@ namespace BlockSense.Backend.Services.Implementations
             };
 
             await _twoFactorAuthRepository.CreateOrUpdateAsync(twoFaAuthEntity);
+
             return true;
         }
 
-        public async Task<bool> DisableAsync(uint userId, string code)
+        public async Task<bool> VerifyAsync(uint userId, string code)
         {
-            if (!await VerifyAsync(userId, code))
+            code = code.Trim().ToUpperInvariant();
+
+            var twoFaAuthEntity = await _twoFactorAuthRepository.GetByUserIdAsync(userId);
+
+            if (twoFaAuthEntity is null || twoFaAuthEntity.EncryptedTotpSecret is null)
             {
-                throw new InvalidOperationException("not verified");
+                throw new TwoFactorNotConfiguredException();
             }
 
-            await _twoFactorAuthRepository.DisableAsync(userId);
+            if (twoFaAuthEntity.BackupCodes is not null &&
+                VerifyBackupCode(twoFaAuthEntity.BackupCodes, code))
+            {
+                twoFaAuthEntity.RemoveBackupCode(code);
+                twoFaAuthEntity.UpdatedAt = DateTime.UtcNow;
+
+                await _twoFactorAuthRepository.CreateOrUpdateAsync(twoFaAuthEntity);
+                return true;
+            }
+
+            byte[] iv = new byte[12];
+            Buffer.BlockCopy(twoFaAuthEntity.EncryptedTotpSecret, 0, iv, 0, 12);
+
+            byte[] cipherText = new byte[twoFaAuthEntity.EncryptedTotpSecret.Length - iv.Length];
+            Buffer.BlockCopy(twoFaAuthEntity.EncryptedTotpSecret, 12, cipherText, 0, cipherText.Length);
+
+            var aes256GcmEncryptor = new Aes256GcmEncryptor();
+
+            byte[] key = Convert.FromBase64String(_twoFactorAuthConfig.MasterKey);
+            byte[] decryptedSecret = aes256GcmEncryptor.Decrypt(key, iv, cipherText);
+
+            if (!VerifyCode(decryptedSecret, code))
+            {
+                throw new TwoFactorInvalidCodeException();
+            }
+
             return true;
         }
 
-        public async Task<TwoFactorBackupResponse> GenerateBackupAsync(uint userId)
+        public async Task<IReadOnlyList<string>> GenerateBackupAsync(uint userId)
         {
             var twoFaAuthEntity = await _twoFactorAuthRepository.GetByUserIdAsync(userId);
 
             if (twoFaAuthEntity is null || twoFaAuthEntity.EncryptedTotpSecret is null)
             {
-                throw new InvalidOperationException("Two-factor authentication is not enabled for this user.");
+                throw new TwoFactorNotConfiguredException();
             }
-            
+
             var backupCodes = GenerateBackupCodes();
 
             twoFaAuthEntity.UpdatedAt = DateTime.UtcNow;
@@ -165,11 +160,7 @@ namespace BlockSense.Backend.Services.Implementations
 
             await _twoFactorAuthRepository.CreateOrUpdateAsync(twoFaAuthEntity);
 
-            return new TwoFactorBackupResponse
-            {
-                Status 
-                Codes = backupCodes
-            };
+            return backupCodes;
         }
 
         private bool VerifyCode(byte[] secretKey, string code)
@@ -183,6 +174,20 @@ namespace BlockSense.Backend.Services.Implementations
             {
                 return false;
             }
+        }
+
+        public async Task<bool> DisableAsync(uint userId, string code)
+        {
+            if (!await _twoFactorAuthRepository.IsEnabledAsync(userId))
+            {
+                throw new TwoFactorNotConfiguredException();
+            }
+
+            await VerifyAsync(userId, code);
+
+            await _twoFactorAuthRepository.DisableAsync(userId);
+
+            return true;
         }
 
         private bool VerifyBackupCode(IEnumerable<string> backupCodes, string code)
@@ -203,21 +208,6 @@ namespace BlockSense.Backend.Services.Implementations
             }
 
             return false;
-        }
-
-        private string GenerateAuthUri(string userEmail, string secretKey)
-        {
-            return $"otpauth://totp/{Uri.EscapeDataString(_twoFactorAuthConfig.Issuer)}:{Uri.EscapeDataString(userEmail)}?" +
-                   $"secret={secretKey}&issuer={Uri.EscapeDataString(_twoFactorAuthConfig.Issuer)}" +
-                   $"&algorithm=SHA1&digits={_twoFactorAuthConfig.CodeLength}&period={_twoFactorAuthConfig.CodeLifetime}";
-        }
-
-        private byte[] GenerateQRCodeData(string authUri)
-        {
-            QRCodeGenerator qrGenerator = new QRCodeGenerator();
-            QRCodeData qrCodeData = qrGenerator.CreateQrCode(authUri, QRCodeGenerator.ECCLevel.Q);
-            var qrCode = new PngByteQRCode(qrCodeData);
-            return qrCode.GetGraphic(10);
         }
 
         private IReadOnlyList<string> GenerateBackupCodes()
@@ -243,6 +233,21 @@ namespace BlockSense.Backend.Services.Implementations
             }
 
             return backupCodes;
+        }
+
+        private string GenerateAuthUri(string userEmail, string secretKey)
+        {
+            return $"otpauth://totp/{Uri.EscapeDataString(_twoFactorAuthConfig.Issuer)}:{Uri.EscapeDataString(userEmail)}?" +
+                   $"secret={secretKey}&issuer={Uri.EscapeDataString(_twoFactorAuthConfig.Issuer)}" +
+                   $"&algorithm=SHA1&digits={_twoFactorAuthConfig.CodeLength}&period={_twoFactorAuthConfig.CodeLifetime}";
+        }
+
+        private byte[] GenerateQRCodeData(string authUri)
+        {
+            QRCodeGenerator qrGenerator = new QRCodeGenerator();
+            QRCodeData qrCodeData = qrGenerator.CreateQrCode(authUri, QRCodeGenerator.ECCLevel.Q);
+            var qrCode = new PngByteQRCode(qrCodeData);
+            return qrCode.GetGraphic(10);
         }
     }
 }

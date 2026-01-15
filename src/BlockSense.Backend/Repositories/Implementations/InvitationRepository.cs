@@ -117,12 +117,12 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<InvitationCodeEntity>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<InvitationCodeEntity>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
                 SELECT
                     invitation_code_id  AS InvitationCodeId,
-                    code                AS Code,
+                    invitation_code     AS InvitationCode,
                     is_used             AS IsUsed,
                     generated_by        AS GeneratedBy,
                     created_at          AS CreatedAt,
@@ -144,7 +144,7 @@ namespace BlockSense.Backend.Repositories.Implementations
             await using MySqlDataReader dbReader =
                 await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
 
-            return SqlMapper.Parse<InvitationCodeEntity>(dbReader).AsEnumerable();
+            return SqlMapper.Parse<InvitationCodeEntity>(dbReader).ToList();
         }
 
         /// <inheritdoc/>

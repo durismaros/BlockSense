@@ -24,18 +24,18 @@
         }
 
         /// <summary>
-        /// The secret key used to sign the JWT token.
+        /// The duration for which the token remains valid.
         /// </summary>
-        public required string SigningKey
+        public required TimeSpan Expiration
         {
             get;
             init;
         }
 
         /// <summary>
-        /// The duration for which the token remains valid.
+        /// The secret key used to sign the JWT token.
         /// </summary>
-        public required TimeSpan Expiration
+        public required string SigningKey
         {
             get;
             init;

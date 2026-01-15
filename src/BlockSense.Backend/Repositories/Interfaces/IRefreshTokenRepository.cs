@@ -28,14 +28,14 @@ namespace BlockSense.Backend.Repositories.Interfaces
         /// <param name="userId">The unique identifier of the user.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>A collection of <see cref="RefreshTokenEntity"/> instances associated with the specified user.</returns>
-        Task<IEnumerable<RefreshTokenEntity>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<RefreshTokenEntity>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default);
         /// <summary>
         /// Retrieves all active (non-revoked and non-expired) refresh tokens issued to a specific user.
         /// </summary>
         /// <param name="userId">The unique identifier of the user.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>A collection of active <see cref="RefreshTokenEntity"/> instances.</returns>
-        Task<IEnumerable<RefreshTokenEntity>> GetActiveByUserAsync(uint userId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<RefreshTokenEntity>> GetActiveByUserAsync(uint userId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Creates and persists a new refresh token.

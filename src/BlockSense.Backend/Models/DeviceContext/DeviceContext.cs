@@ -1,7 +1,8 @@
 ﻿using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Contracts.Definitions;
+using static Mysqlx.Expect.Open.Types.Condition.Types;
 
-namespace BlockSense.Backend.Models
+namespace BlockSense.Backend.Models.DeviceContext
 {
     /// <summary>
     /// Represents the context of a client device making a request to the backend.
@@ -56,14 +57,18 @@ namespace BlockSense.Backend.Models
         /// <summary>
         /// Creates a <see cref="DeviceContext"/> from an <see cref="HttpContext"/>, extracting device headers and IP address.
         /// </summary>
-        /// <param name="context">The HTTP context containing request headers and connection information.</param>
+        /// <param name="httpContext">The HTTP context containing request headers and connection information.</param>
         /// <returns>A <see cref="DeviceContext"/> populated from HTTP headers.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="context"/> is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="httpContext"/> is null.</exception>
         /// <exception cref="InvalidDeviceContextException">Thrown if any required device header is missing or empty.</exception>
-        public static DeviceContext FromHttpContext(HttpContext context)
+        public static DeviceContext FromHttpContext(HttpContext httpContext)
         {
-            if (context is null)
-                throw new ArgumentNullException(nameof(context));
+            if (httpContext is null)
+                throw new ArgumentNullException(nameof(httpContext));
+
+            // Helper to retrieve header values
+            string GetHeader(string key)
+                => httpContext.Request.Headers.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value.ToString() : throw new InvalidDeviceContextException(key);
 
             return new DeviceContext
             {
@@ -71,19 +76,8 @@ namespace BlockSense.Backend.Models
                 HardwareFingerprint = GetHeader(DeviceHeaders.HardwareFingerprint),
                 NetworkFingerprint = GetHeader(DeviceHeaders.NetworkFingerprint),
                 DeviceOs = GetHeader(DeviceHeaders.DeviceOs),
-                IpAddress = context.Connection.RemoteIpAddress?.ToString() ?? "unknown"
+                IpAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"
             };
-
-            // Local helper to safely retrieve header values
-            string GetHeader(string key)
-            {
-                if (!context.Request.Headers.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
-                {
-                    throw new InvalidDeviceContextException(key);
-                }
-
-                return value.ToString();
-            }
         }
     }
 }

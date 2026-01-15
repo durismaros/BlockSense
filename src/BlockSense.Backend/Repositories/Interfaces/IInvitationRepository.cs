@@ -35,7 +35,7 @@ namespace BlockSense.Backend.Repositories.Interfaces
         /// <param name="userId">The unique identifier of the user.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>A collection of <see cref="InvitationCodeEntity"/> instances.</returns>
-        Task<IEnumerable<InvitationCodeEntity>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<InvitationCodeEntity>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Checks whether an invitation code exists.

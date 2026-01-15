@@ -1,5 +1,5 @@
 ﻿using BlockSense.Backend.Entities;
-using BlockSense.Backend.Models;
+using BlockSense.Backend.Models.DeviceContext;
 using BlockSense.Contracts.DTOs.Token;
 
 namespace BlockSense.Backend.Services.Interfaces

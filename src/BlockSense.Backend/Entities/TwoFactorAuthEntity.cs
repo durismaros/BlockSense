@@ -27,13 +27,25 @@ namespace BlockSense.Backend.Entities
             set;
         }
 
+        private string? BackupCodesJson
+        {
+            get;
+            set;
+        }
+
         /// <summary>
         /// An optional array of hashed backup codes used for recovery.
         /// </summary>
         public IReadOnlyList<string>? BackupCodes
         {
-            get;
-            set;
+            get
+            {
+                return (BackupCodesJson is null) ? null : JsonSerializer.Deserialize<List<string>>(BackupCodesJson);
+            }
+            set
+            {
+                BackupCodesJson = (value is null) ? null : JsonSerializer.Serialize(value);
+            }
         }
 
         /// <summary>

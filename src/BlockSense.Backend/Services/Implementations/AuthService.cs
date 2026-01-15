@@ -1,6 +1,6 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Exceptions.Authentication;
-using BlockSense.Backend.Models;
+using BlockSense.Backend.Models.DeviceContext;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
@@ -17,7 +17,9 @@ namespace BlockSense.Backend.Services.Implementations
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
+        private readonly ITwoFactorAuthRepository _twoFactorAuthRepository;
         private readonly ITokenService _tokenService;
+        private readonly ITwoFactorAuthService _twoFactorAuthService;
         private readonly DatabaseContext _databaseContext;
 
         /// <summary>
@@ -29,11 +31,15 @@ namespace BlockSense.Backend.Services.Implementations
         /// <exception cref="ArgumentNullException">Thrown if any dependency is <c>null</c>.</exception>
         public AuthService(
             IUserRepository userRepository,
+            ITwoFactorAuthRepository twoFactorAuthRepository,
             ITokenService tokenService,
+            ITwoFactorAuthService twoFactorAuthService,
             DatabaseContext databaseContext)
         {
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _twoFactorAuthRepository = twoFactorAuthRepository ?? throw new ArgumentNullException(nameof(twoFactorAuthRepository));
             _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
+            _twoFactorAuthService = twoFactorAuthService ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
             _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
         }
 
@@ -61,7 +67,7 @@ namespace BlockSense.Backend.Services.Implementations
 
                 if (user.UserType == UserType.Banned)
                 {
-                    throw new AccountBannedException();
+                    throw new AccessProhibitedException();
                 }
 
                 var argon2idHasher = new Argon2idHasher();
@@ -73,6 +79,16 @@ namespace BlockSense.Backend.Services.Implementations
                 if (!Arrays.FixedTimeEquals(user.PasswordHash, computedHash))
                 {
                     throw new InvalidCredentialsException();
+                }
+
+                if (await _twoFactorAuthRepository.IsEnabledAsync(user.UserId, cancellationToken))
+                {
+                    if (string.IsNullOrWhiteSpace(request.TwoFactorCode))
+                    {
+                        throw new TwoFactorRequiredException();
+                    }
+
+                    await _twoFactorAuthService.VerifyAsync(user.UserId, request.TwoFactorCode);
                 }
 
                 var accessToken =

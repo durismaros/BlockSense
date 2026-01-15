@@ -94,7 +94,7 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<RefreshTokenEntity>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<RefreshTokenEntity>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
                 SELECT
@@ -128,7 +128,7 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<RefreshTokenEntity>> GetActiveByUserAsync(uint userId, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<RefreshTokenEntity>> GetActiveByUserAsync(uint userId, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
                 SELECT
@@ -157,7 +157,9 @@ namespace BlockSense.Backend.Repositories.Implementations
                 }
             };
 
-            await using var dbReader = await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
+            await using var dbReader =
+                await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
+
             return SqlMapper.Parse<RefreshTokenEntity>(dbReader).ToList();
         }
 

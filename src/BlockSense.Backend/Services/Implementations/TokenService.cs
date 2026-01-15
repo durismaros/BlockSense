@@ -1,7 +1,7 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Data.Configurations;
 using BlockSense.Backend.Entities;
-using BlockSense.Backend.Models;
+using BlockSense.Backend.Models.DeviceContext;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
@@ -23,7 +23,7 @@ namespace BlockSense.Backend.Services.Implementations
         private readonly JwtTokenConfig _jwtTokenConfig;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
 
-        /// <summary>
+        /// <summary>       
         /// Initializes a new instance of <see cref="TokenService"/> with required configurations and dependencies.
         /// </summary>
         /// <param name="refreshTokenConfig">Configuration for refresh token lifespan and settings.</param>

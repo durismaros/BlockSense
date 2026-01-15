@@ -15,15 +15,6 @@
         }
 
         /// <summary>
-        /// Master secret key used as a base for generating user-specific 2FA secrets.
-        /// </summary>
-        public required string MasterKey
-        {
-            get;
-            init;
-        }
-
-        /// <summary>
         /// Number of digits used for generated 2FA verification codes.
         /// </summary>
         public required int CodeLength
@@ -54,6 +45,15 @@
         /// Length of each backup code.
         /// </summary>
         public required int BackupCodeLength
+        {
+            get;
+            init;
+        }
+
+        /// <summary>
+        /// Master secret key used as a base for generating user-specific 2FA secrets.
+        /// </summary>
+        public required string MasterKey
         {
             get;
             init;

@@ -27,14 +27,45 @@
             public const string TwoFactorRequired = "AUTH_2FA_REQUIRED";
 
             /// <summary>
-            /// Indicates that the authentication token has expired.
+            /// Occurs when provided JWT token is invalid, expired, or missing required claims.
             /// </summary>
-            public const string TokenExpired = "AUTH_TOKEN_EXPIRED";
+            public const string InvalidAccessToken = "AUTH_INVALID_ACCESS_TOKEN";
 
             /// <summary>
             /// Indicates that authentication was successful.
             /// </summary>
             public const string AuthenticationSuccess = "AUTH_SUCCESS";
+        }
+
+        /// <summary>
+        /// Problem types related to two-factor authentication (2FA) operations.
+        /// </summary>
+        public static class TwoFactorAuthentication
+        {
+            /// <summary>
+            /// Occurs when the provided two-factor authentication (2FA) code is invalid.
+            /// </summary>
+            public const string InvalidCode = "2FA_INVALID_CODE";
+
+            /// <summary>
+            /// Indicates that 2FA has not been configured for the current user account.
+            /// </summary>
+            public const string NotConfigured = "2FA_NOT_CONFIGURED";
+
+            /// <summary>
+            /// Indicates that 2FA has already been configured for the user.
+            /// </summary>
+            public const string AlreadyConfigured = "2FA_ALREADY_CONFIGURED";
+
+            /// <summary>
+            /// Indicates that 2FA setup is required for the current operation.
+            /// </summary>
+            public const string SetupRequired = "2FA_SETUP_REQUIRED";
+
+            /// <summary>
+            /// Indicates that 2FA verification was successful.
+            /// </summary>
+            public const string TwoFactorAuthenticationSuccess = "2FA_SUCCESS";
         }
 
         /// <summary>

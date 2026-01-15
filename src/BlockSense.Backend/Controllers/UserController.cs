@@ -16,8 +16,8 @@ namespace BlockSense.Backend.Controllers
             _userService = userService;
         }
 
-        [AllowAnonymous]
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegistrationRequest request, CancellationToken cancellationToken)
         {
             var response = await _userService.RegisterAsync(request, cancellationToken);

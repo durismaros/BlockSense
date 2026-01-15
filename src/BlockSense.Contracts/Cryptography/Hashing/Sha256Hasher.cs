@@ -1,5 +1,4 @@
 ﻿using Org.BouncyCastle.Crypto.Digests;
-using SimpleBase;
 
 namespace BlockSense.Contracts.Cryptography.Hashing
 {
