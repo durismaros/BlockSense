@@ -8,6 +8,7 @@ using BlockSense.Backend.Services.Implementations;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Definitions;
 using BlockSense.Contracts.Enums.User;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -116,6 +117,18 @@ builder.Services
 // Controllers for API endpoints and SwaggerUI integration.
 //
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto;
+
+    // Development / trusted environment only
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+
 builder.Services
     .AddControllers()
     .ConfigureApiBehaviorOptions(options =>
@@ -194,6 +207,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseForwardedHeaders();
 
 app.UseAuthentication();
 app.UseAuthorization();

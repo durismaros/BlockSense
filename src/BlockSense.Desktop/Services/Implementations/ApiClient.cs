@@ -1,8 +1,10 @@
 ﻿using BlockSense.Contracts.Definitions;
 using BlockSense.Desktop.Models.Api;
+using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
@@ -17,8 +19,10 @@ namespace BlockSense.Desktop.Services.Implementations
     /// </summary>
     public sealed class ApiClient : IApiClient
     {
-        private readonly ILogger<ApiClient> _logger;
         private readonly HttpClient _httpClient;
+        private readonly IDeviceContextProvider _deviceContextProvider;
+        private readonly ILogger<ApiClient> _logger;
+        private readonly IDictionary<string, string> _requestHeaders;
 
         /// <summary>
         /// Initializes a new instance of <see cref="ApiClient"/>.
@@ -26,10 +30,27 @@ namespace BlockSense.Desktop.Services.Implementations
         /// <param name="logger">The logger for capturing HTTP request events.</param>
         /// <param name="httpClient">The HTTP client used to send requests.</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="httpClient"/> or <paramref name="logger"/> is null.</exception>
-        public ApiClient(ILogger<ApiClient> logger, HttpClient httpClient)
+        public ApiClient(
+            HttpClient httpClient,
+            IDeviceContextProvider deviceContextProvider,
+            ILogger<ApiClient> logger)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _deviceContextProvider = deviceContextProvider ?? throw new ArgumentNullException(nameof(deviceContextProvider));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            _requestHeaders = new Dictionary<string, string>();
+        }
+
+        /// <inheritdoc/>
+        public ApiClient ApplyDeviceHeaders()
+        {
+            _requestHeaders.Add(DeviceHeaders.DeviceIdentifier, _deviceContextProvider.DeviceIdentifier);
+            _requestHeaders.Add(DeviceHeaders.DeviceOs, _deviceContextProvider.DeviceOs);
+            _requestHeaders.Add(DeviceHeaders.HardwareFingerprint, _deviceContextProvider.HardwareFingerprint);
+            _requestHeaders.Add(DeviceHeaders.NetworkFingerprint, _deviceContextProvider.NetworkFingerprint);
+
+            return this;
         }
 
         /// <inheritdoc/>
@@ -56,13 +77,20 @@ namespace BlockSense.Desktop.Services.Implementations
         /// <returns>An <see cref="ApiResult{TResponse}"/> representing the API response.</returns>
         private async Task<ApiResult<TResponse>> SendAsync<TRequest, TResponse>(HttpMethod method, string requestUri, TRequest request, CancellationToken cancellationToken)
         {
-            var httpRequest = new HttpRequestMessage(method, requestUri);
+            using var httpRequest = new HttpRequestMessage(method, requestUri);
 
             if (request is not null)
             {
                 string json = JsonSerializer.Serialize(request);
                 httpRequest.Content = new StringContent(json, Encoding.UTF8, "application/json");
             }
+
+            foreach (var header in _requestHeaders)
+            {
+                httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+            _requestHeaders.Clear();
+
 
             try
             {
@@ -88,7 +116,7 @@ namespace BlockSense.Desktop.Services.Implementations
 
                 return ApiResult<TResponse>.Failure(problemDetails);
             }
-            catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+            catch (TaskCanceledException ex) when (cancellationToken.IsCancellationRequested == false)
             {
                 _logger.LogWarning(ex, "Request to {RequestUri} timed out.", requestUri);
 

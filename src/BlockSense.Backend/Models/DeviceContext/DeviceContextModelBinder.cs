@@ -1,5 +1,4 @@
 ﻿using BlockSense.Backend.Exceptions.Authentication;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace BlockSense.Backend.Models.DeviceContext

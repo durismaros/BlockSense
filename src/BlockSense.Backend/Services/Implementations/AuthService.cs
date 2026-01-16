@@ -92,7 +92,7 @@ namespace BlockSense.Backend.Services.Implementations
                 }
 
                 var accessToken =
-                    await _tokenService.CreateAccessTokenAsync(user, cancellationToken);
+                    await _tokenService.CreateAccessTokenAsync(user.UserId, cancellationToken);
 
                 var refreshToken =
                     await _tokenService.CreateRefreshTokenAsync(

@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using BlockSense.Desktop.Providers.Implementations;
+using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Implementations;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
@@ -50,11 +52,14 @@ namespace BlockSense.Desktop
 
             services.AddHttpClient<IApiClient, ApiClient>(client =>
             {
-                client.BaseAddress = new Uri("https://localhost:7147/");
+                client.BaseAddress = new Uri("https://localhost:7262");
                 client.Timeout = TimeSpan.FromSeconds(30);
                 client.DefaultRequestHeaders.Accept.Add(
                     new MediaTypeWithQualityHeaderValue("application/json"));
             });
+
+            // --- Model Providers ---
+            services.AddSingleton<IDeviceContextProvider, DeviceContextProvider>();
 
             // --- Services / Helpers ---
             services.AddSingleton<NavigationManager>();
@@ -67,6 +72,8 @@ namespace BlockSense.Desktop
             services.AddSingleton<RegistrationView>();
             services.AddSingleton<AuthenticationView>();
             services.AddSingleton<TwoFactorSlidingPanel>();
+            services.AddSingleton<HomeView>();
+            services.AddSingleton<UserDashboardView>();
 
             // --- Windows ---
             services.AddSingleton<MainWindow>();

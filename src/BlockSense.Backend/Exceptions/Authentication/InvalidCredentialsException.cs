@@ -29,6 +29,6 @@ namespace BlockSense.Backend.Exceptions.Authentication
         }
 
         public InvalidCredentialsException()
-            : base("The email/username or password you entered is incorrect. Please check your credentials and try again.") { }
+            : base("The provided email/username or password you entered is incorrect. Please check your credentials and try again.") { }
     }
 }

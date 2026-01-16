@@ -73,7 +73,7 @@ namespace BlockSense.Backend.Services.Implementations
 
             byte[] secretKey = Base32Encoding.ToBytes(request.SecretKey);
 
-            if (!VerifyCode(secretKey, request.TwoFactorCode))
+            if (VerifyCode(secretKey, request.TwoFactorCode) == false)
             {
                 throw new TwoFactorInvalidCodeException();
             }
@@ -113,8 +113,7 @@ namespace BlockSense.Backend.Services.Implementations
                 throw new TwoFactorNotConfiguredException();
             }
 
-            if (twoFaAuthEntity.BackupCodes is not null &&
-                VerifyBackupCode(twoFaAuthEntity.BackupCodes, code))
+            if (twoFaAuthEntity.BackupCodes is not null && VerifyBackupCode(twoFaAuthEntity.BackupCodes, code))
             {
                 twoFaAuthEntity.RemoveBackupCode(code);
                 twoFaAuthEntity.UpdatedAt = DateTime.UtcNow;
@@ -134,7 +133,7 @@ namespace BlockSense.Backend.Services.Implementations
             byte[] key = Convert.FromBase64String(_twoFactorAuthConfig.MasterKey);
             byte[] decryptedSecret = aes256GcmEncryptor.Decrypt(key, iv, cipherText);
 
-            if (!VerifyCode(decryptedSecret, code))
+            if (VerifyCode(decryptedSecret, code) == false)
             {
                 throw new TwoFactorInvalidCodeException();
             }
@@ -178,7 +177,7 @@ namespace BlockSense.Backend.Services.Implementations
 
         public async Task<bool> DisableAsync(uint userId, string code)
         {
-            if (!await _twoFactorAuthRepository.IsEnabledAsync(userId))
+            if (await _twoFactorAuthRepository.IsEnabledAsync(userId) == false)
             {
                 throw new TwoFactorNotConfiguredException();
             }
@@ -193,15 +192,13 @@ namespace BlockSense.Backend.Services.Implementations
         private bool VerifyBackupCode(IEnumerable<string> backupCodes, string code)
         {
             if (backupCodes is null)
-            {
                 return false;
-            }
 
             var backupCodeHash = Sha256Hasher.ComputeByte(Encoding.UTF8.GetBytes(code));
 
             foreach (var backupCode in backupCodes)
             {
-                if (!CryptographicOperations.FixedTimeEquals(backupCodeHash, Convert.FromBase64String(backupCode)))
+                if (CryptographicOperations.FixedTimeEquals(backupCodeHash, Convert.FromBase64String(backupCode)) == false)
                     continue;
 
                 return true;

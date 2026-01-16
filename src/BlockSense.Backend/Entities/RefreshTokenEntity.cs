@@ -6,9 +6,9 @@
     public sealed class RefreshTokenEntity
     {
         /// <summary>
-        /// Primary key of the refresh token in GUID v4 format.
+        /// Hashed value of the refresh token for secure storage.
         /// </summary>
-        public required Guid TokenId
+        public required string TokenHash
         {
             get;
             set;
@@ -18,15 +18,6 @@
         /// Foreign key referencing the user who owns the refresh token.
         /// </summary>
         public required uint UserId
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Hashed value of the refresh token for secure storage.
-        /// </summary>
-        public required string TokenHash
         {
             get;
             set;

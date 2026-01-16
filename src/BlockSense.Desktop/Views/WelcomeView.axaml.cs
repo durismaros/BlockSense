@@ -16,7 +16,7 @@ public partial class WelcomeView : UserControl
         InitializeComponent();
 
         AuthenticateButton.Click += ToAuthViewClick;
-        RegisterButton.Click += ToAuthViewClick;
+        RegisterButton.Click += ToRegisterViewClick;
     }
 
     private async void ToAuthViewClick(object? sender, RoutedEventArgs e)

@@ -4,6 +4,7 @@ using BlockSense.Backend.Models.DeviceContext;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.DTOs.Authentication;
+using BlockSense.Contracts.DTOs.Token;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -32,6 +33,15 @@ namespace BlockSense.Backend.Controllers
         public async Task<IActionResult> Authenticate([FromBody] AuthRequest request, [FromDeviceContext] DeviceContext deviceContext, CancellationToken cancellationToken)
         {
             var response = await _authService.AuthenticateAsync(request, deviceContext, cancellationToken);
+
+            return Ok(response);
+        }
+
+        [HttpPost("refresh")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RefreshTokenAsync([FromQuery]string refreshToken, [FromDeviceContext] DeviceContext deviceContext, CancellationToken cancellationToken)
+        {
+            var response = await _tokenService.RefreshAccessTokenAsync(refreshToken, deviceContext, cancellationToken);
 
             return Ok(response);
         }

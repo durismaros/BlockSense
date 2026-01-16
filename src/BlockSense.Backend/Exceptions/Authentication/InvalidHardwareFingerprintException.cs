@@ -2,13 +2,13 @@
 
 namespace BlockSense.Backend.Exceptions.Authentication
 {
-    public sealed class InvalidAccessTokenException : ApiException
+    public class InvalidHardwareFingerprintException : ApiException
     {
         public override string Type
         {
             get
             {
-                return ApiProblemTypes.Authentication.InvalidAccessToken;
+                return ApiProblemTypes.Authentication.InvalidHardwareFingerprint;
             }
         }
 
@@ -16,7 +16,7 @@ namespace BlockSense.Backend.Exceptions.Authentication
         {
             get
             {
-                return "Invalid Access Token";
+                return "Invalid Hardware Fingerprint";
             }
         }
 
@@ -28,7 +28,7 @@ namespace BlockSense.Backend.Exceptions.Authentication
             }
         }
 
-        public InvalidAccessTokenException()
-            : base("The provided JWT token is invalid, expired, or missing required claims. Please authenticate again and repeat the request.") { }
+        public InvalidHardwareFingerprintException()
+            : base("The provided Hardware fingerprint is invalid. If you believe this is a mistake or need assistance, please contact support.") { }
     }
 }

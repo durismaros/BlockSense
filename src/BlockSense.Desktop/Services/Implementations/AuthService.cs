@@ -35,8 +35,10 @@ namespace BlockSense.Desktop.Services.Implementations
             if (request is null)
                 throw new ArgumentNullException(nameof(request));
 
-            var response = await _apiClient.PostAsync<AuthRequest, AuthResponse>(
-                endpoint: "/api/auth",
+            var response = await _apiClient
+                .ApplyDeviceHeaders()
+                .PostAsync<AuthRequest, AuthResponse>(
+                requestUri: "/api/auth",
                 request: request,
                 cancellationToken: cancellationToken);
 
@@ -44,7 +46,7 @@ namespace BlockSense.Desktop.Services.Implementations
             {
                 return new ServiceResponse
                 {
-                    ProblemType = ApiProblemTypes.Registration.RegistrationSuccess,
+                    ProblemType = ApiProblemTypes.Authentication.AuthenticationSuccess,
                     Message = "Authentication Successful"
                 };
             }

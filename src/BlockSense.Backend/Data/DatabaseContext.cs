@@ -150,7 +150,7 @@ namespace BlockSense.Backend.Data
         /// <exception cref="InvalidOperationException">Thrown if duplicate parameter names are detected.</exception>
         private MySqlCommand CreateCommand(string query, IEnumerable<MySqlParameter>? parameters)
         {
-            if (string.IsNullOrEmpty(query))
+            if (string.IsNullOrWhiteSpace(query))
             {
                 throw new ArgumentNullException(nameof(query), "SQL query must not be empty.");
             }

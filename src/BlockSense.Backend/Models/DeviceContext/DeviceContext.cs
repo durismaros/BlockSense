@@ -1,6 +1,5 @@
 ﻿using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Contracts.Definitions;
-using static Mysqlx.Expect.Open.Types.Condition.Types;
 
 namespace BlockSense.Backend.Models.DeviceContext
 {
@@ -28,6 +27,15 @@ namespace BlockSense.Backend.Models.DeviceContext
         }
 
         /// <summary>
+        /// The operating system or platform of the client device.
+        /// </summary>
+        public required string DeviceOs
+        {
+            get;
+            init;
+        }
+
+        /// <summary>
         /// Hardware fingerprint derived from CPU, GPU, and other system info.
         /// </summary>
         public required string HardwareFingerprint
@@ -40,15 +48,6 @@ namespace BlockSense.Backend.Models.DeviceContext
         /// Network fingerprint derived from MAC, network stack, or other unique identifiers.
         /// </summary>
         public required string NetworkFingerprint
-        {
-            get;
-            init;
-        }
-
-        /// <summary>
-        /// The operating system or platform of the client device.
-        /// </summary>
-        public required string DeviceOs
         {
             get;
             init;
@@ -72,11 +71,11 @@ namespace BlockSense.Backend.Models.DeviceContext
 
             return new DeviceContext
             {
-                DeviceIdentifier = GetHeader(DeviceHeaders.DeviceId),
+                DeviceIdentifier = GetHeader(DeviceHeaders.DeviceIdentifier),
+                DeviceOs = GetHeader(DeviceHeaders.DeviceOs),
                 HardwareFingerprint = GetHeader(DeviceHeaders.HardwareFingerprint),
                 NetworkFingerprint = GetHeader(DeviceHeaders.NetworkFingerprint),
-                DeviceOs = GetHeader(DeviceHeaders.DeviceOs),
-                IpAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"
+                IpAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown"
             };
         }
     }

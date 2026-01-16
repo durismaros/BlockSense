@@ -89,6 +89,29 @@ namespace BlockSense.Desktop.Utilities.FileManagement
             }
         }
 
+        /// <summary>
+        /// Returns the full path to a file located within the wallet directory.
+        /// </summary>
+        /// <param name="filename">The wallet file name.</param>
+        /// <returns>The combined wallet file path.</returns>
+        public static string GetWalletFilePath(string filename)
+            => Path.Combine(WalletDirectory, filename);
+
+        /// <summary>
+        /// Returns the full path to a file located within the authentication directory.
+        /// </summary>
+        /// <param name="filename">The authentication file name.</param>
+        /// <returns>The combined authentication file path.</returns>
+        public static string GetAuthFilePath(string filename)
+            => Path.Combine(AuthDirectory, filename);
+
+        /// <summary>
+        /// Returns the full path to a file located within the logs directory.
+        /// </summary>
+        /// <param name="filename">The log file name.</param>
+        /// <returns>The combined log file path.</returns>
+        public static string GetLogFilePath(string filename)
+            => Path.Combine(LogsDirectory, filename);
 
         /// <summary>
         /// Ensures that a directory exists at the specified path and optionally applies hidden and non-indexed attributes on supported platforms.
@@ -121,29 +144,5 @@ namespace BlockSense.Desktop.Utilities.FileManagement
                 }
             }
         }
-
-        /// <summary>
-        /// Returns the full path to a file located within the wallet directory.
-        /// </summary>
-        /// <param name="filename">The wallet file name.</param>
-        /// <returns>The combined wallet file path.</returns>
-        public static string GetWalletFilePath(string filename)
-            => Path.Combine(WalletDirectory, filename);
-
-        /// <summary>
-        /// Returns the full path to a file located within the authentication directory.
-        /// </summary>
-        /// <param name="filename">The authentication file name.</param>
-        /// <returns>The combined authentication file path.</returns>
-        public static string GetAuthFilePath(string filename)
-            => Path.Combine(AuthDirectory, filename);
-
-        /// <summary>
-        /// Returns the full path to a file located within the logs directory.
-        /// </summary>
-        /// <param name="filename">The log file name.</param>
-        /// <returns>The combined log file path.</returns>
-        public static string GetLogFilePath(string filename)
-            => Path.Combine(LogsDirectory, filename);
     }
 }

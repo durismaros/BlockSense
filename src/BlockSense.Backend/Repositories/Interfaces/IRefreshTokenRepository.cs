@@ -8,13 +8,6 @@ namespace BlockSense.Backend.Repositories.Interfaces
     public interface IRefreshTokenRepository
     {
         /// <summary>
-        /// Retrieves a refresh token by its unique identifier.
-        /// </summary>
-        /// <param name="tokenId">The unique identifier of the refresh token.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>The <see cref="RefreshTokenEntity"/> if found; otherwise, <c>null</c>.</returns>
-        Task<RefreshTokenEntity?> GetByIdAsync(Guid tokenId, CancellationToken cancellationToken = default);
-        /// <summary>
         /// Retrieves a refresh token by its hashed token value.
         /// </summary>
         /// <param name="tokenHash">The hashed refresh token value.</param>
@@ -42,8 +35,8 @@ namespace BlockSense.Backend.Repositories.Interfaces
         /// </summary>
         /// <param name="refreshToken">The refresh token entity to create.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>The unique identifier (<see cref="Guid"/>) of the newly created refresh token.</returns>
-        Task<Guid> CreateAsync(RefreshTokenEntity refreshToken, CancellationToken cancellationToken = default);
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        Task CreateAsync(RefreshTokenEntity refreshToken, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Revokes a specific refresh token, preventing further use.
@@ -51,7 +44,7 @@ namespace BlockSense.Backend.Repositories.Interfaces
         /// <param name="tokenId">The unique identifier of the refresh token to revoke.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        Task RevokeAsync(Guid tokenId, CancellationToken cancellationToken = default);
+        Task RevokeAsync(string tokenHash, CancellationToken cancellationToken = default);
         /// <summary>
         /// Revokes all refresh tokens issued to a specific user.
         /// </summary>

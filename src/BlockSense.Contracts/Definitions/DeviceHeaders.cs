@@ -8,7 +8,12 @@
         /// <summary>
         /// Unique identifier for the device.
         /// </summary>
-        public const string DeviceId = "X-Device-Id";
+        public const string DeviceIdentifier = "X-Device-Identifier";
+
+        /// <summary>
+        /// Operating system of the device.
+        /// </summary>
+        public const string DeviceOs = "X-Device-OS";
 
         /// <summary>
         /// Hardware fingerprint of the device.
@@ -19,10 +24,5 @@
         /// Network fingerprint of the device.
         /// </summary>
         public const string NetworkFingerprint = "X-Network-Fingerprint";
-
-        /// <summary>
-        /// Operating system of the device.
-        /// </summary>
-        public const string DeviceOs = "X-Device-OS";
     }
 }

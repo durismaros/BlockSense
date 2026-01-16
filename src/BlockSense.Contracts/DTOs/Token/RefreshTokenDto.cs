@@ -6,16 +6,6 @@
     public sealed record RefreshTokenDto
     {
         /// <summary>
-        /// Unique identifier of the refresh token.
-        /// </summary>
-        public required Guid TokenId
-        {
-            get;
-            init;
-
-        }
-
-        /// <summary>
         /// The raw token data, optionally transferred to the client.
         /// </summary>
         public required string Token

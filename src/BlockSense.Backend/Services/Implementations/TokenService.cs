@@ -1,15 +1,19 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Data.Configurations;
 using BlockSense.Backend.Entities;
+using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Models.DeviceContext;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
 using BlockSense.Contracts.Cryptography.Utilities;
+using BlockSense.Contracts.DTOs.Authentication;
 using BlockSense.Contracts.DTOs.Token;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Runtime.InteropServices;
 using System.Security.Claims;
 
 namespace BlockSense.Backend.Services.Implementations
@@ -22,6 +26,7 @@ namespace BlockSense.Backend.Services.Implementations
         private readonly RefreshTokenConfig _refreshTokenConfig;
         private readonly JwtTokenConfig _jwtTokenConfig;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
+        private readonly IUserRepository _userRepository;
 
         /// <summary>       
         /// Initializes a new instance of <see cref="TokenService"/> with required configurations and dependencies.
@@ -35,19 +40,19 @@ namespace BlockSense.Backend.Services.Implementations
             IOptions<RefreshTokenConfig> refreshTokenConfig,
             IOptions<JwtTokenConfig> jwtTokenConfig,
             IRefreshTokenRepository refreshTokenRepository,
-            DatabaseContext databaseContext)
+            IUserRepository userRepository)
         {
             _refreshTokenConfig = refreshTokenConfig.Value ?? throw new ArgumentNullException(nameof(refreshTokenConfig));
             _jwtTokenConfig = jwtTokenConfig.Value ?? throw new ArgumentNullException(nameof(jwtTokenConfig));
             _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
+            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         }
 
         /// <inheritdoc/>
         public async Task<RefreshTokenDto> CreateRefreshTokenAsync(uint userId, DeviceContext deviceContext, CancellationToken cancellationToken = default)
         {
-            Guid tokenId = Guid.NewGuid();
-
-            byte[] rawToken = CryptographyUtilities.GenerateSecureRandomBytes(32);
+            byte[] rawToken =
+                CryptographyUtilities.GenerateSecureRandomBytes(32);
 
             string tokenHash = Sha256Hasher.ComputeBase64(rawToken);
 
@@ -56,14 +61,13 @@ namespace BlockSense.Backend.Services.Implementations
 
             var refreshTokenEntity = new RefreshTokenEntity
             {
-                TokenId = tokenId,
-                UserId = userId,
                 TokenHash = tokenHash,
+                UserId = userId,
                 IpAddress = deviceContext.IpAddress,
                 DeviceIdentifier = deviceContext.DeviceIdentifier,
+                DeviceOs = deviceContext.DeviceOs,
                 HardwareFingerprint = deviceContext.HardwareFingerprint,
                 NetworkFingerprint = deviceContext.NetworkFingerprint,
-                DeviceOs = deviceContext.DeviceOs,
                 IssuedAt = now,
                 ExpiresAt = expiration,
                 IsRevoked = false
@@ -73,7 +77,6 @@ namespace BlockSense.Backend.Services.Implementations
 
             return new RefreshTokenDto
             {
-                TokenId = tokenId,
                 Token = Convert.ToBase64String(rawToken),
                 UserId = userId,
                 IssuedAt = now,
@@ -82,28 +85,19 @@ namespace BlockSense.Backend.Services.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<bool> ValidateRefreshTokenAsync(string token, CancellationToken cancellationToken = default)
+        public async Task<AccessTokenDto> CreateAccessTokenAsync(uint userId, CancellationToken cancellationToken = default)
         {
-            string tokenHash;
-            try
-            {
-                tokenHash = Sha256Hasher.ComputeBase64(Convert.FromBase64String(token));
-            }
-            catch
-            {
-                return false;
-            }
+            var user =
+                await _userRepository.GetByIdAsync(userId);
 
-            var tokenEntity = await _refreshTokenRepository.GetByTokenAsync(tokenHash, cancellationToken);
+            if (user is null)
+                throw new NullReferenceException();
 
-            return tokenEntity != null && !tokenEntity.IsRevoked && tokenEntity.ExpiresAt > DateTime.UtcNow;
-        }
+            byte[] key =
+                Convert.FromBase64String(_jwtTokenConfig.SigningKey);
 
-        /// <inheritdoc/>
-        public async Task<AccessTokenDto> CreateAccessTokenAsync(UserEntity user, CancellationToken cancellationToken = default)
-        {
-            byte[] key = Convert.FromBase64String(_jwtTokenConfig.SigningKey);
-            DateTime tokenExpiry = DateTime.UtcNow.Add(_jwtTokenConfig.Expiration);
+            var tokenExpiry =
+                DateTime.UtcNow.Add(_jwtTokenConfig.Expiration);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -126,6 +120,41 @@ namespace BlockSense.Backend.Services.Implementations
             {
                 Token = tokenHandler.WriteToken(token),
                 ExpiresAt = tokenExpiry
+            };
+        }
+
+        /// <inheritdoc/>
+        public async Task<AuthResponse> RefreshAccessTokenAsync(string refreshToken, DeviceContext deviceContext, CancellationToken cancellationToken = default)
+        {
+            string tokenHash =
+                Sha256Hasher.ComputeBase64(Convert.FromBase64String(refreshToken));
+
+            var tokenEntity =
+                await _refreshTokenRepository.GetByTokenAsync(tokenHash, cancellationToken);
+
+            if (tokenEntity is null ||
+                tokenEntity.TokenHash != tokenHash ||
+                tokenEntity.ExpiresAt < DateTime.UtcNow ||
+                tokenEntity.IsRevoked)
+            {
+                throw new InvalidRefreshTokenException();
+            }
+
+            if (deviceContext.HardwareFingerprint != tokenEntity.HardwareFingerprint)
+            {
+                throw new InvalidHardwareFingerprintException();
+            }
+
+            var accessToken =
+                await CreateAccessTokenAsync(tokenEntity.UserId, cancellationToken);
+
+            var newRefreshToken =
+                await CreateRefreshTokenAsync(tokenEntity.UserId, deviceContext, cancellationToken);
+
+            return new AuthResponse
+            {
+                AccessToken = accessToken,
+                RefreshToken = newRefreshToken
             };
         }
     }

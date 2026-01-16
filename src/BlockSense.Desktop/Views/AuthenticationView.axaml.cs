@@ -7,6 +7,7 @@ using BlockSense.Desktop.Utilities.UIComponents;
 using BlockSense.Desktop.Utilities.Validation;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace BlockSense.Desktop;
 
@@ -40,8 +41,6 @@ public partial class AuthenticationView : UserControl
 
         HomeButton.Click += ToWelcomeViewClick;
         AuthenticateButton.Click += AuthenticateClick;
-
-        _twoFactorSlidingPanel.ShowPanel(default, default);
     }
 
     private async void ToWelcomeViewClick(object? sender, RoutedEventArgs e)
@@ -73,13 +72,20 @@ public partial class AuthenticationView : UserControl
         switch (response.ProblemType)
         {
             case ApiProblemTypes.Authentication.AuthenticationSuccess:
-                ShowOutput(response.Message);
-                Thread.Sleep(500);
+                _twoFactorSlidingPanel.HidePanel(default, default);
 
-                await _navigationManager.NavigateToAsync<WelcomeView>();
+                ShowOutput(response.Message);
+                await Task.Delay(2000);
+
+                await _navigationManager.NavigateToAsync<HomeView>();
                 break;
 
             case ApiProblemTypes.Authentication.TwoFactorRequired:
+                _twoFactorSlidingPanel.ShowPanel(default, default);
+                break;
+
+            case ApiProblemTypes.TwoFactorAuthentication.InvalidCode:
+                await _twoFactorSlidingPanel.ShowErrorState();
                 break;
 
             default:

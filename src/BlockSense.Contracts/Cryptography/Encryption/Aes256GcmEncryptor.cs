@@ -85,9 +85,14 @@ namespace BlockSense.Contracts.Cryptography.Encryption
         /// <exception cref="ArgumentException">Thrown when key or IV lengths are invalid.</exception>
         private static void ValidateParameters(byte[] key, byte[] iv, byte[] data)
         {
-            if (key is null) throw new ArgumentNullException(nameof(key));
-            if (iv is null) throw new ArgumentNullException(nameof(iv));
-            if (data is null) throw new ArgumentNullException(nameof(data));
+            if (key is null)
+                throw new ArgumentNullException(nameof(key));
+
+            if (iv is null)
+                throw new ArgumentNullException(nameof(iv));
+
+            if (data is null)
+                throw new ArgumentNullException(nameof(data));
 
             if (key.Length != KeySize)
                 throw new ArgumentException($"AES-256 key must be {KeySize} bytes.", nameof(key));

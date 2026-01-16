@@ -2,13 +2,13 @@
 
 namespace BlockSense.Backend.Exceptions.Authentication
 {
-    public sealed class InvalidAccessTokenException : ApiException
+    public class InvalidRefreshTokenException : ApiException
     {
         public override string Type
         {
             get
             {
-                return ApiProblemTypes.Authentication.InvalidAccessToken;
+                return ApiProblemTypes.Authentication.InvalidRefreshToken;
             }
         }
 
@@ -16,7 +16,7 @@ namespace BlockSense.Backend.Exceptions.Authentication
         {
             get
             {
-                return "Invalid Access Token";
+                return "Invalid Refresh Token";
             }
         }
 
@@ -28,7 +28,7 @@ namespace BlockSense.Backend.Exceptions.Authentication
             }
         }
 
-        public InvalidAccessTokenException()
-            : base("The provided JWT token is invalid, expired, or missing required claims. Please authenticate again and repeat the request.") { }
+        public InvalidRefreshTokenException()
+            : base("The provided Refresh token is invalid, expired, or revoked. Please authenticate again and repeat the request.") { }
     }
 }
