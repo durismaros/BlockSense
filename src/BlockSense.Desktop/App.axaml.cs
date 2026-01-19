@@ -5,6 +5,7 @@ using BlockSense.Desktop.Providers.Implementations;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Implementations;
 using BlockSense.Desktop.Services.Interfaces;
+using BlockSense.Desktop.Utilities.ApiHandling;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -50,16 +51,23 @@ namespace BlockSense.Desktop
                 builder.AddSerilog(dispose: true);
             });
 
+            services.AddTransient<AuthorizationHeaderHandler>();
+            services.AddTransient<DeviceContextHeaderHandler>();
+
             services.AddHttpClient<IApiClient, ApiClient>(client =>
             {
                 client.BaseAddress = new Uri("https://localhost:7262");
                 client.Timeout = TimeSpan.FromSeconds(30);
                 client.DefaultRequestHeaders.Accept.Add(
                     new MediaTypeWithQualityHeaderValue("application/json"));
-            });
+            })
+            .AddHttpMessageHandler<AuthorizationHeaderHandler>()
+            .AddHttpMessageHandler<DeviceContextHeaderHandler>();
 
             // --- Model Providers ---
             services.AddSingleton<IDeviceContextProvider, DeviceContextProvider>();
+            services.AddSingleton<IRefreshTokenProvider, RefreshTokenProvider>();
+            services.AddSingleton<IAccessTokenProvider, AccessTokenProvider>();
 
             // --- Services / Helpers ---
             services.AddSingleton<NavigationManager>();

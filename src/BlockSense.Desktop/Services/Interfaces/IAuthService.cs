@@ -17,5 +17,7 @@ namespace BlockSense.Desktop.Services.Interfaces
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>A <see cref="ServiceResponse"/> indicating the result of the authentication attempt.</returns>
         Task<ServiceResponse> AuthAsync(AuthRequest request, CancellationToken cancellationToken = default);
+
+        Task<AuthResponse> AuthRefreshAsync(AuthRefreshRequest request, CancellationToken cancellationToken = default);
     }
 }

@@ -10,9 +10,17 @@ namespace BlockSense.Desktop;
 
 public partial class MainWindow : Window
 {
+    public static TwoFactorSlidingPanel TwoFactorSlidingPanel
+    {
+        get;
+        private set;
+    } = default!;
+
     public MainWindow()
     {
         InitializeComponent();
+
+        TwoFactorSlidingPanel = TwoFactorPanel;
 
         Opened += OnOpened;
 

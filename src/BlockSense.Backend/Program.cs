@@ -25,9 +25,23 @@ var builder = WebApplication.CreateBuilder(args);
 // Load hard-coded configuration from `appsettings.json` into model classes.
 //
 
-builder.Services.Configure<JwtTokenConfig>(builder.Configuration.GetSection("JwtTokenConfig"));
-builder.Services.Configure<RefreshTokenConfig>(builder.Configuration.GetSection("RefreshTokenConfig"));
-builder.Services.Configure<TwoFactorAuthConfig>(builder.Configuration.GetSection("TwoFactorAuthConfig"));
+builder.Services
+    .AddOptions<JwtTokenConfig>()
+    .Bind(builder.Configuration.GetSection("JwtTokenConfig"))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services
+    .AddOptions<RefreshTokenConfig>()
+    .Bind(builder.Configuration.GetSection("RefreshTokenConfig"))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services
+    .AddOptions<TwoFactorAuthConfig>()
+    .Bind(builder.Configuration.GetSection("TwoFactorAuthConfig"))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 //
 // --------------------------------
@@ -97,7 +111,7 @@ builder.Services
             {
                 context.HandleResponse();
 
-                throw new InvalidAccessTokenException();
+                throw new AuthenticationRequiredException();
             }
         };
     });

@@ -49,11 +49,7 @@ namespace BlockSense.Desktop.Services.Implementations
                 };
             }
 
-            if (response.ProblemDetails is null ||
-                response.ProblemDetails.Type is null ||
-                response.ProblemDetails.Status is null ||
-                response.ProblemDetails.Title is null ||
-                response.ProblemDetails.Detail is null)
+            if (response.ProblemDetails is null)
             {
                 return new ServiceResponse
                 {

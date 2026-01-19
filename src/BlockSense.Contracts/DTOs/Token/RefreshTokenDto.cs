@@ -15,24 +15,6 @@
         }
 
         /// <summary>
-        /// Unique identifier of the user associated with this refresh token.
-        /// </summary>
-        public required uint UserId
-        {
-            get;
-            init;
-        }
-
-        /// <summary>
-        /// The UTC date and time at which this token was issued.
-        /// </summary>
-        public required DateTime IssuedAt
-        {
-            get;
-            init;
-        }
-
-        /// <summary>
         /// The UTC date and time at which this token expires.
         /// </summary>
         public required DateTime ExpiresAt

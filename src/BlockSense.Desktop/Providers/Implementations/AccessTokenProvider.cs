@@ -1,4 +1,7 @@
-﻿using BlockSense.Desktop.Providers.Interfaces;
+﻿using BlockSense.Contracts.DTOs.Authentication;
+using BlockSense.Contracts.DTOs.Token;
+using BlockSense.Desktop.Providers.Interfaces;
+using BlockSense.Desktop.Services.Interfaces;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,35 +10,49 @@ namespace BlockSense.Desktop.Providers.Implementations
 {
     public sealed class AccessTokenProvider : IAccessTokenProvider
     {
+        private readonly IAuthService _authService;
         private readonly IRefreshTokenProvider _refreshTokenProvider;
 
-        public string AccessToken
-        {
-            get;
-            private set;
-        }
+        private string _accessToken;
+        private DateTime _expiresAt;
 
-        public DateTime ExpiresAt
+        public AccessTokenProvider(IAuthService authService, IRefreshTokenProvider refreshTokenProvider)
         {
-            get;
-            private set;
-        }
-
-        public AccessTokenProvider(IRefreshTokenProvider refreshTokenProvider)
-        {
+            _authService = authService ?? throw new ArgumentNullException(nameof(authService));
             _refreshTokenProvider = refreshTokenProvider ?? throw new ArgumentNullException(nameof(refreshTokenProvider));
-            AccessToken = string.Empty;
-            ExpiresAt = DateTime.UtcNow;
+
+            _accessToken = string.Empty;
+            _expiresAt = DateTime.MinValue;
         }
 
-        public async Task<string> GetAsync(CancellationToken cancellationToken = default)
+        public async Task<string> GetAsync(CancellationToken cancellationToken)
         {
-            if (AccessToken is not null && ExpiresAt < DateTime.UtcNow)
+            if (!string.IsNullOrWhiteSpace(_accessToken) && _expiresAt > DateTime.UtcNow)
             {
-                return AccessToken;
+                return _accessToken;
             }
 
-            throw new NotImplementedException();
+            var refreshToken = await _refreshTokenProvider.GetAsync(cancellationToken);
+
+            var request = new AuthRefreshRequest()
+            {
+                RefreshToken = refreshToken
+            };
+
+            var response = await _authService.AuthRefreshAsync(request, cancellationToken);
+
+            _accessToken = response.AccessToken.Token;
+            _expiresAt = response.AccessToken.ExpiresAt;
+
+            await _refreshTokenProvider.SaveAsync(response.RefreshToken);
+
+            return _accessToken;
+        }
+
+        public void Set(AccessTokenDto accessToken)
+        {
+            _accessToken = accessToken.Token;
+            _expiresAt = accessToken.ExpiresAt;
         }
     }
 }

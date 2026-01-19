@@ -4,7 +4,6 @@ using BlockSense.Backend.Models.DeviceContext;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.DTOs.Authentication;
-using BlockSense.Contracts.DTOs.Token;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -39,9 +38,9 @@ namespace BlockSense.Backend.Controllers
 
         [HttpPost("refresh")]
         [AllowAnonymous]
-        public async Task<IActionResult> RefreshTokenAsync([FromQuery]string refreshToken, [FromDeviceContext] DeviceContext deviceContext, CancellationToken cancellationToken)
+        public async Task<IActionResult> RefreshTokenAsync([FromBody] AuthRefreshRequest request, [FromDeviceContext] DeviceContext deviceContext, CancellationToken cancellationToken)
         {
-            var response = await _tokenService.RefreshAccessTokenAsync(refreshToken, deviceContext, cancellationToken);
+            var response = await _tokenService.RefreshAccessTokenAsync(request, deviceContext, cancellationToken);
 
             return Ok(response);
         }
@@ -51,7 +50,7 @@ namespace BlockSense.Backend.Controllers
         public async Task<IActionResult> SetupInit()
         {
             if (!uint.TryParse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out uint userId))
-                throw new InvalidAccessTokenException();
+                throw new AuthenticationRequiredException();
             
             var response = await _twoFactorAuthService.SetupInitAsync(userId);
 

@@ -32,6 +32,6 @@ namespace BlockSense.Backend.Services.Interfaces
         /// <param name="deviceContext">The device context representing the client device requesting the token refresh.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>An <see cref="AuthResponse"/> containing the JWT and a new Refresh token.</returns>
-        Task<AuthResponse> RefreshAccessTokenAsync(string token, DeviceContext deviceContext, CancellationToken cancellationToken = default);
+        Task<AuthResponse> RefreshAccessTokenAsync(AuthRefreshRequest request, DeviceContext deviceContext, CancellationToken cancellationToken = default);
     }
 }

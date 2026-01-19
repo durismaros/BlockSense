@@ -1,10 +1,10 @@
 ﻿using BlockSense.Contracts.Definitions;
 using BlockSense.Desktop.Models.Api;
-using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
+using BlockSense.Desktop.Utilities.ApiHandling;
+using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
@@ -19,10 +19,10 @@ namespace BlockSense.Desktop.Services.Implementations
     /// </summary>
     public sealed class ApiClient : IApiClient
     {
-        private readonly HttpClient _httpClient;
-        private readonly IDeviceContextProvider _deviceContextProvider;
         private readonly ILogger<ApiClient> _logger;
-        private readonly IDictionary<string, string> _requestHeaders;
+        private readonly HttpClient _httpClient;
+        private readonly NavigationManager _navigationManager;
+        private readonly ApiRequestOptions _requestOptions;
 
         /// <summary>
         /// Initializes a new instance of <see cref="ApiClient"/>.
@@ -30,39 +30,64 @@ namespace BlockSense.Desktop.Services.Implementations
         /// <param name="logger">The logger for capturing HTTP request events.</param>
         /// <param name="httpClient">The HTTP client used to send requests.</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="httpClient"/> or <paramref name="logger"/> is null.</exception>
-        public ApiClient(
-            HttpClient httpClient,
-            IDeviceContextProvider deviceContextProvider,
-            ILogger<ApiClient> logger)
+        public ApiClient(ILogger<ApiClient> logger, HttpClient httpClient, NavigationManager navigationManager)
+            : this(logger, httpClient, navigationManager, new ApiRequestOptions())
         {
-            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-            _deviceContextProvider = deviceContextProvider ?? throw new ArgumentNullException(nameof(deviceContextProvider));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-            _requestHeaders = new Dictionary<string, string>();
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
         }
 
-        /// <inheritdoc/>
-        public ApiClient ApplyDeviceHeaders()
+        private ApiClient(ILogger<ApiClient> logger, HttpClient httpClient, NavigationManager navigationManager, ApiRequestOptions apiRequestOptions)
         {
-            _requestHeaders.Add(DeviceHeaders.DeviceIdentifier, _deviceContextProvider.DeviceIdentifier);
-            _requestHeaders.Add(DeviceHeaders.DeviceOs, _deviceContextProvider.DeviceOs);
-            _requestHeaders.Add(DeviceHeaders.HardwareFingerprint, _deviceContextProvider.HardwareFingerprint);
-            _requestHeaders.Add(DeviceHeaders.NetworkFingerprint, _deviceContextProvider.NetworkFingerprint);
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
+            _requestOptions = apiRequestOptions ?? throw new ArgumentNullException(nameof(apiRequestOptions));
+        }
 
-            return this;
+        public IApiClient AddBearerToken()
+        {
+            return new ApiClient(
+                _logger,
+                _httpClient,
+                _navigationManager,
+                _requestOptions with
+                {
+                    AddBearerToken = true
+                });
+        }
+
+        public IApiClient AddDeviceHeaders()
+        {
+            return new ApiClient(
+                _logger,
+                _httpClient,
+                _navigationManager,
+                _requestOptions with
+                {
+                    AddDeviceHeaders = true
+                });
         }
 
         /// <inheritdoc/>
         public async Task<ApiResult<TResponse>> PostAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
         {
-            return await SendAsync<TRequest, TResponse>(HttpMethod.Post, requestUri, request, cancellationToken);
+            return await SendAsync<TRequest, TResponse>(
+                HttpMethod.Post,
+                requestUri,
+                request,
+                cancellationToken);
         }
 
         /// <inheritdoc/>
         public async Task<ApiResult<TResponse>> GetAsync<TResponse>(string requestUri, CancellationToken cancellationToken)
         {
-            return await SendAsync<object, TResponse>(HttpMethod.Get, requestUri, null!, cancellationToken);
+            return await SendAsync<object, TResponse>(
+                HttpMethod.Get,
+                requestUri,
+                default,
+                cancellationToken);
         }
 
         /// <summary>
@@ -75,26 +100,21 @@ namespace BlockSense.Desktop.Services.Implementations
         /// <param name="request">The request payload (can be null for GET requests).</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>An <see cref="ApiResult{TResponse}"/> representing the API response.</returns>
-        private async Task<ApiResult<TResponse>> SendAsync<TRequest, TResponse>(HttpMethod method, string requestUri, TRequest request, CancellationToken cancellationToken)
+        private async Task<ApiResult<TResponse>> SendAsync<TRequest, TResponse>(HttpMethod method, string requestUri, TRequest? request, CancellationToken cancellationToken)
         {
             using var httpRequest = new HttpRequestMessage(method, requestUri);
 
+            _requestOptions.ApplyTo(httpRequest);
+
             if (request is not null)
             {
-                string json = JsonSerializer.Serialize(request);
-                httpRequest.Content = new StringContent(json, Encoding.UTF8, "application/json");
+                httpRequest.Content = JsonContent.Create(request);
             }
-
-            foreach (var header in _requestHeaders)
-            {
-                httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
-            }
-            _requestHeaders.Clear();
-
 
             try
             {
-                var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+                var response = await _httpClient
+                    .SendAsync(httpRequest, cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -103,6 +123,13 @@ namespace BlockSense.Desktop.Services.Implementations
 
                     return ApiResult<TResponse>.Success(data);
                 }
+
+
+                _logger.LogWarning(
+                    "HTTP {Method} {Uri} failed with status {StatusCode}",
+                    method,
+                    requestUri,
+                    response.StatusCode);
 
                 var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>()
                     ?? new ProblemDetails
@@ -114,39 +141,38 @@ namespace BlockSense.Desktop.Services.Implementations
                         Instance = requestUri
                     };
 
+                if (problemDetails.Type is ApiProblemTypes.Authentication.AuthenticationRequired)
+                {
+                    throw new AuthenticationRequiredException();
+                }
+
                 return ApiResult<TResponse>.Failure(problemDetails);
             }
-            catch (TaskCanceledException ex) when (cancellationToken.IsCancellationRequested == false)
+            catch (AuthenticationRequiredException)
             {
-                _logger.LogWarning(ex, "Request to {RequestUri} timed out.", requestUri);
+                await _navigationManager.NavigateToAsync<AuthenticationView>();
 
-                // Timeout handling
-                var problemDetails = new ProblemDetails
+                return ApiResult<TResponse>.Failure(new ProblemDetails
                 {
-                    Type = ApiProblemTypes.Client.Timeout,
-                    Title = "Request Timeout",
-                    Status = 408,
-                    Detail = "The request to the server timed out.",
+                    Type = ApiProblemTypes.Authentication.AuthenticationRequired,
+                    Title = "Reauthentication Required",
+                    Status = 401,
+                    Detail = "Authentication is required to continue.",
                     Instance = requestUri
-                };
-
-                return ApiResult<TResponse>.Failure(problemDetails);
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "HTTP request to {RequestUri} failed.", requestUri);
+                _logger.LogError(ex.Message);
 
-                // Network or connectivity error handling
-                var problemDetails = new ProblemDetails
+                return ApiResult<TResponse>.Failure(new ProblemDetails
                 {
                     Type = ApiProblemTypes.Client.NetworkError,
                     Title = "Network Error",
                     Status = 503,
                     Detail = "A network or connectivity error occurred while sending the request.",
                     Instance = requestUri
-                };
-
-                return ApiResult<TResponse>.Failure(problemDetails);
+                });
             }
         }
     }

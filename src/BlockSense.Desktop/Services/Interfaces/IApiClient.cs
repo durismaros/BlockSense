@@ -12,7 +12,9 @@ namespace BlockSense.Desktop.Services.Interfaces
     /// </summary>
     public interface IApiClient
     {
-        ApiClient ApplyDeviceHeaders();
+        IApiClient AddBearerToken();
+        IApiClient AddDeviceHeaders();
+
         /// <summary>
         /// Sends an HTTP POST request to the specified endpoint with the provided request payload, returning a strongly-typed <see cref="ApiResult{TResponse}"/>.
         /// </summary>

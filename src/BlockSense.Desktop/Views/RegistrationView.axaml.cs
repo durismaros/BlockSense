@@ -59,6 +59,7 @@ public partial class RegistrationView : UserControl
             return;
         }
 
+        ShowOutput("Registering . . .");
         var response = await _userService.RegisterAsync(request, cancellationToken);
 
         ShowOutput(response.Message);

@@ -60,7 +60,7 @@ public partial class TwoFactorSlidingPanel : UserControl
     /// <summary>
     /// Displays the sliding panel, resets code entry, and shows the default instructions state.
     /// </summary>
-    public async void ShowPanel(object? sender, RoutedEventArgs? e)
+    public async void ShowPanel(object? sender = default, RoutedEventArgs? e = default)
     {
         await ShowDefaultState();
         await ResetCodeEntry();
@@ -72,7 +72,7 @@ public partial class TwoFactorSlidingPanel : UserControl
     /// <summary>
     /// Hides the sliding panel with animation.
     /// </summary>
-    public async void HidePanel(object? sender, RoutedEventArgs? e)
+    public async void HidePanel(object? sender = default, RoutedEventArgs? e = default)
     {
         await AnimatePanel(false);
 
@@ -97,7 +97,7 @@ public partial class TwoFactorSlidingPanel : UserControl
 
         await Task.Delay(2000);
         await ResetCodeEntry();
-        HidePanel(default, default);
+        HidePanel();
     }
 
     /// <summary>
@@ -222,7 +222,7 @@ public partial class TwoFactorSlidingPanel : UserControl
         // Handle Escape to cancel
         else if (e.Key == Key.Escape)
         {
-            HidePanel(default, default);
+            HidePanel();
         }
     }
 

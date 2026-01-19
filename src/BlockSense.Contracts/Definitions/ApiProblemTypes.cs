@@ -17,16 +17,6 @@
             public const string InvalidCredentials = "AUTH_INVALID_CREDENTIALS";
 
             /// <summary>
-            /// Occurs when provided JWT token is invalid, expired, or missing required claims.
-            /// </summary>
-            public const string InvalidAccessToken = "AUTH_INVALID_ACCESS_TOKEN";
-
-            /// <summary>
-            /// Occurs when provided Refresh token is invalid, expired, or revoked.
-            /// </summary>
-            public const string InvalidRefreshToken = "AUTH_INVALID_REFRESH_TOKEN";
-
-            /// <summary>
             /// Occurs when provided Hardware fingerprint does not match with the valid one.
             /// </summary>
             public const string InvalidHardwareFingerprint = "AUTH_INVALID_HARDWARE_FINGERPRITN";
@@ -40,6 +30,11 @@
             /// Indicates that two-factor authentication is required for login.
             /// </summary>
             public const string TwoFactorRequired = "AUTH_2FA_REQUIRED";
+
+            /// <summary>
+            /// Occurs when provided JWT or Refresh token is invalid, expired, or missing required claims.
+            /// </summary>
+            public const string AuthenticationRequired = "AUTH_REQUIRED";
 
             /// <summary>
             /// Indicates that authentication was successful.

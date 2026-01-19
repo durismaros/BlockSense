@@ -1,11 +1,12 @@
 ﻿using BlockSense.Contracts.DTOs.Token;
 using BlockSense.Desktop.Providers.Interfaces;
+using BlockSense.Desktop.Utilities.ApiHandling;
 using BlockSense.Desktop.Utilities.FileManagement;
 using System;
 using System.IO;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BlockSense.Desktop.Providers.Implementations
@@ -19,10 +20,46 @@ namespace BlockSense.Desktop.Providers.Implementations
             _filePath = DirectoryStructure.GetAuthFilePath("refresh_token.bin");
         }
 
+        public async Task<string> GetAsync(CancellationToken cancellationToken)
+        {
+            if (!File.Exists(_filePath))
+            {
+                throw new AuthenticationRequiredException();
+            }
+
+            try
+            {
+                var bytes = await File.ReadAllBytesAsync(_filePath, cancellationToken);
+
+                if (OperatingSystem.IsWindows())
+                {
+                    bytes = ProtectedData.Unprotect(
+                        bytes,
+                        null,
+                        DataProtectionScope.CurrentUser);
+                }
+
+                var refreshToken = JsonSerializer.Deserialize<RefreshTokenDto>(bytes);
+
+                if (refreshToken is null ||
+                    string.IsNullOrWhiteSpace(refreshToken.Token) ||
+                    refreshToken.ExpiresAt < DateTime.UtcNow)
+                {
+                    throw new AuthenticationRequiredException();
+                }
+
+                return refreshToken.Token;
+            }
+            catch
+            {
+                File.Delete(_filePath);
+                throw new AuthenticationRequiredException();
+            }
+        }
+
         public async Task SaveAsync(RefreshTokenDto refreshToken)
         {
-            var json = JsonSerializer.Serialize(refreshToken);
-            var bytes = Encoding.UTF8.GetBytes(json);           
+            var bytes = JsonSerializer.SerializeToUtf8Bytes(refreshToken);
 
             if (OperatingSystem.IsWindows())
             {
@@ -32,29 +69,9 @@ namespace BlockSense.Desktop.Providers.Implementations
                     DataProtectionScope.CurrentUser);
             }
 
+            File.Create(_filePath);
+
             await File.WriteAllBytesAsync(_filePath, bytes);
-        }
-
-        public async Task<RefreshTokenDto?> GetAsync()
-        {
-            if (File.Exists(_filePath) == false)
-            {
-                return null;
-            }
-
-            var bytes = await File.ReadAllBytesAsync(_filePath);
-
-            if (OperatingSystem.IsWindows())
-            {
-                bytes = ProtectedData.Unprotect(
-                    bytes,
-                    null,
-                    DataProtectionScope.CurrentUser);
-            }
-
-            var json = Encoding.UTF8.GetString(bytes);
-
-            return JsonSerializer.Deserialize<RefreshTokenDto>(json);
         }
 
         public Task ClearAsync()

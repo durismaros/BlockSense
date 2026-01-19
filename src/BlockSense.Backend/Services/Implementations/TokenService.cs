@@ -1,5 +1,4 @@
-﻿using BlockSense.Backend.Data;
-using BlockSense.Backend.Data.Configurations;
+﻿using BlockSense.Backend.Data.Configurations;
 using BlockSense.Backend.Entities;
 using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Models.DeviceContext;
@@ -9,11 +8,9 @@ using BlockSense.Contracts.Cryptography.Hashing;
 using BlockSense.Contracts.Cryptography.Utilities;
 using BlockSense.Contracts.DTOs.Authentication;
 using BlockSense.Contracts.DTOs.Token;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using System.Runtime.InteropServices;
 using System.Security.Claims;
 
 namespace BlockSense.Backend.Services.Implementations
@@ -78,8 +75,6 @@ namespace BlockSense.Backend.Services.Implementations
             return new RefreshTokenDto
             {
                 Token = Convert.ToBase64String(rawToken),
-                UserId = userId,
-                IssuedAt = now,
                 ExpiresAt = expiration
             };
         }
@@ -124,10 +119,10 @@ namespace BlockSense.Backend.Services.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<AuthResponse> RefreshAccessTokenAsync(string refreshToken, DeviceContext deviceContext, CancellationToken cancellationToken = default)
+        public async Task<AuthResponse> RefreshAccessTokenAsync(AuthRefreshRequest request, DeviceContext deviceContext, CancellationToken cancellationToken = default)
         {
             string tokenHash =
-                Sha256Hasher.ComputeBase64(Convert.FromBase64String(refreshToken));
+                Sha256Hasher.ComputeBase64(Convert.FromBase64String(request.RefreshToken));
 
             var tokenEntity =
                 await _refreshTokenRepository.GetByTokenAsync(tokenHash, cancellationToken);
@@ -137,7 +132,7 @@ namespace BlockSense.Backend.Services.Implementations
                 tokenEntity.ExpiresAt < DateTime.UtcNow ||
                 tokenEntity.IsRevoked)
             {
-                throw new InvalidRefreshTokenException();
+                throw new AuthenticationRequiredException();
             }
 
             if (deviceContext.HardwareFingerprint != tokenEntity.HardwareFingerprint)

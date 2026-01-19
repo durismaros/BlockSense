@@ -2,6 +2,8 @@
 using BlockSense.Contracts.DTOs.Authentication;
 using BlockSense.Desktop.Models.Services;
 using BlockSense.Desktop.Services.Interfaces;
+using BlockSense.Desktop.Utilities.ApiHandling;
+using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
@@ -36,11 +38,11 @@ namespace BlockSense.Desktop.Services.Implementations
                 throw new ArgumentNullException(nameof(request));
 
             var response = await _apiClient
-                .ApplyDeviceHeaders()
+                .AddDeviceHeaders()
                 .PostAsync<AuthRequest, AuthResponse>(
-                requestUri: "/api/auth",
-                request: request,
-                cancellationToken: cancellationToken);
+                    requestUri: "/api/auth",
+                    request: request,
+                    cancellationToken: cancellationToken);
 
             if (response.IsSuccess && response.Data is not null)
             {
@@ -51,11 +53,7 @@ namespace BlockSense.Desktop.Services.Implementations
                 };
             }
 
-            if (response.ProblemDetails is null ||
-                response.ProblemDetails.Type is null ||
-                response.ProblemDetails.Status is null ||
-                response.ProblemDetails.Title is null ||
-                response.ProblemDetails.Detail is null)
+            if (response.ProblemDetails is null)
             {
                 return new ServiceResponse
                 {
@@ -69,6 +67,26 @@ namespace BlockSense.Desktop.Services.Implementations
                 ProblemType = response.ProblemDetails.Type,
                 Message = response.ProblemDetails.Title
             };
+        }
+
+        public async Task<AuthResponse> AuthRefreshAsync(AuthRefreshRequest request, CancellationToken cancellationToken = default)
+        {
+            if (request is null)
+                throw new ArgumentNullException(nameof(request));
+
+            var response = await _apiClient
+                .AddDeviceHeaders()
+                .PostAsync<AuthRefreshRequest, AuthResponse>(
+                    requestUri: "/api/auth",
+                    request: request,
+                    cancellationToken: cancellationToken);
+
+            if (response.IsSuccess && response.Data is not null)
+            {
+                return response.Data;
+            }
+
+            throw new AuthenticationRequiredException();
         }
     }
 }

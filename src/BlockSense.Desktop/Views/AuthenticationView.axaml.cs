@@ -13,31 +13,26 @@ namespace BlockSense.Desktop;
 
 public partial class AuthenticationView : UserControl
 {
+    private readonly IAuthService _authService;
     private readonly NavigationManager _navigationManager;
     private readonly TwoFactorSlidingPanel _twoFactorSlidingPanel;
-    private readonly IAuthService _authService;
 
-    private string? _twoFactorCode;
     private CancellationTokenSource? _cancellationTokenSource;
+    private string? _twoFactorCode;
 
-    public AuthenticationView(NavigationManager navigationManager, TwoFactorSlidingPanel twoFactorSlidingPanel, IAuthService authService)
+    public AuthenticationView(IAuthService authService, NavigationManager navigationManager)
     {
-        _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
-        _twoFactorSlidingPanel = twoFactorSlidingPanel ?? throw new ArgumentNullException(nameof(twoFactorSlidingPanel));
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
+        _twoFactorSlidingPanel = MainWindow.TwoFactorSlidingPanel ?? throw new ArgumentNullException(nameof(MainWindow.TwoFactorSlidingPanel));
 
         _twoFactorSlidingPanel.TwoFactorCodeSubmitted += async code =>
         {
             _twoFactorCode = code;
-            AuthenticateClick(default, default);
+            AuthenticateClick();
         };
 
         InitializeComponent();
-
-        if (Content is Panel panel)
-        {
-            panel.Children.Add(_twoFactorSlidingPanel);
-        }
 
         HomeButton.Click += ToWelcomeViewClick;
         AuthenticateButton.Click += AuthenticateClick;
@@ -48,7 +43,7 @@ public partial class AuthenticationView : UserControl
         await _navigationManager.NavigateToAsync<WelcomeView>();
     }
 
-    private async void AuthenticateClick(object? sender, RoutedEventArgs? e)
+    private async void AuthenticateClick(object? sender = default, RoutedEventArgs? e = default)
     {
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource = new CancellationTokenSource();
@@ -58,7 +53,7 @@ public partial class AuthenticationView : UserControl
         {
             Login = LoginTextBox.Text?.Trim() ?? string.Empty,
             Password = PasswordTextBox.Text ?? string.Empty,
-            TwoFactorCode = _twoFactorCode ?? string.Empty,
+            TwoFactorCode = _twoFactorCode ?? string.Empty
         };
 
         if (!DataAnnotationsValidator.TryValidate(request, out var validationError))
@@ -67,12 +62,13 @@ public partial class AuthenticationView : UserControl
             return;
         }
 
+        ShowOutput("Authenticating . . .");
         var response = await _authService.AuthAsync(request, cancellationToken);
 
         switch (response.ProblemType)
         {
             case ApiProblemTypes.Authentication.AuthenticationSuccess:
-                _twoFactorSlidingPanel.HidePanel(default, default);
+                _twoFactorSlidingPanel.HidePanel();
 
                 ShowOutput(response.Message);
                 await Task.Delay(2000);
@@ -81,7 +77,7 @@ public partial class AuthenticationView : UserControl
                 break;
 
             case ApiProblemTypes.Authentication.TwoFactorRequired:
-                _twoFactorSlidingPanel.ShowPanel(default, default);
+                _twoFactorSlidingPanel.ShowPanel();
                 break;
 
             case ApiProblemTypes.TwoFactorAuthentication.InvalidCode:
@@ -90,6 +86,7 @@ public partial class AuthenticationView : UserControl
 
             default:
                 ShowOutput(response.Message);
+                _twoFactorSlidingPanel.ShowPanel();
                 break;
         }
     }
