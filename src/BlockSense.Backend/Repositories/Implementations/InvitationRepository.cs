@@ -104,7 +104,7 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
 {
-                new MySqlParameter("@InvitationCode", MySqlDbType.String)
+                new MySqlParameter("@InvitationCode", MySqlDbType.VarChar, 32)
                 {
                     Value = invitationCode,
                 }
@@ -158,7 +158,7 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@InvitationCode", MySqlDbType.String)
+                new MySqlParameter("@InvitationCode", MySqlDbType.VarChar, 32)
                 {
                     Value = invitationCode,
                 }
@@ -183,7 +183,7 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@InvitationCode", MySqlDbType.String)
+                new MySqlParameter("@InvitationCode", MySqlDbType.VarChar, 32)
                 {
                     Value = invitationCode,
                 }
@@ -217,7 +217,7 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@InvitationCode", MySqlDbType.String) { Value = invitation.InvitationCode },
+                new MySqlParameter("@InvitationCode", MySqlDbType.VarChar, 32) { Value = invitation.InvitationCode },
                 new MySqlParameter("@IsUsed", MySqlDbType.Bit) { Value = invitation.IsUsed },
                 new MySqlParameter("@GeneratedBy", MySqlDbType.UInt32) { Value = invitation.GeneratedBy },
                 new MySqlParameter("@CreatedAt", MySqlDbType.DateTime) { Value = invitation.CreatedAt },
@@ -242,7 +242,7 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@InvitationCodeId", MySqlDbType.String)
+                new MySqlParameter("@InvitationCodeId", MySqlDbType.VarChar, 32)
                 {
                     Value = invitationCodeId
                 }
@@ -263,7 +263,7 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
 {
-                new MySqlParameter("@InvitationCodeId", MySqlDbType.String)
+                new MySqlParameter("@InvitationCodeId", MySqlDbType.VarChar, 32)
                 {
                     Value = invitationCodeId
                 }

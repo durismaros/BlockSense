@@ -140,7 +140,7 @@ namespace BlockSense.Backend.Repositories.Implementations
                     issued_at,
                     expires_at,
                     is_revoked )
-                VALUES (,
+                VALUES (
                     @TokenHash,
                     @UserId,
                     @IpAddress,
@@ -169,8 +169,8 @@ namespace BlockSense.Backend.Repositories.Implementations
                 new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = refreshToken.UserId },
                 new MySqlParameter("@IpAddress", MySqlDbType.VarChar, 45) { Value = refreshToken.IpAddress },
                 new MySqlParameter("@DeviceIdentifier", MySqlDbType.VarChar, 255) { Value = refreshToken.DeviceIdentifier },
-                new MySqlParameter("@HardwareFingerprint", MySqlDbType.String) { Value = refreshToken.HardwareFingerprint },
-                new MySqlParameter("@NetworkFingerprint", MySqlDbType.String) { Value = refreshToken.NetworkFingerprint },
+                new MySqlParameter("@HardwareFingerprint", MySqlDbType.VarChar, 44) { Value = refreshToken.HardwareFingerprint },
+                new MySqlParameter("@NetworkFingerprint", MySqlDbType.VarChar, 17) { Value = refreshToken.NetworkFingerprint },
                 new MySqlParameter("@DeviceOs", MySqlDbType.VarChar, 150) { Value = refreshToken.DeviceOs },
                 new MySqlParameter("@IssuedAt", MySqlDbType.DateTime) { Value = refreshToken.IssuedAt },
                 new MySqlParameter("@ExpiresAt", MySqlDbType.DateTime) { Value = refreshToken.ExpiresAt },

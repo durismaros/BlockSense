@@ -15,16 +15,16 @@ public partial class WelcomeView : UserControl
 
         InitializeComponent();
 
-        AuthenticateButton.Click += ToAuthViewClick;
-        RegisterButton.Click += ToRegisterViewClick;
+        AuthenticateButton.Click += ToAuthenticationViewClick;
+        RegisterButton.Click += ToRegistrationViewClick;
     }
 
-    private async void ToAuthViewClick(object? sender, RoutedEventArgs e)
+    private async void ToAuthenticationViewClick(object? sender, RoutedEventArgs e)
     {
         await _navigationManager.NavigateToAsync<AuthenticationView>();
     }
 
-    private async void ToRegisterViewClick(object? sender, RoutedEventArgs e)
+    private async void ToRegistrationViewClick(object? sender, RoutedEventArgs e)
     {
         await _navigationManager.NavigateToAsync<RegistrationView>();
     }

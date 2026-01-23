@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -6,116 +6,130 @@
              x:Class="BlockSense.Desktop.AuthenticationView">
 
     <Panel>
-        <!-- Left Icon -->
-        <Panel Width="400"
-               HorizontalAlignment="Left">
-            <Image Width="250"
-                   Source="\Assets\Icons\icon_app_window.png"/>
-		</Panel>
+        <!-- Go Back Button -->
+        <Button x:Name="HomeButton"
+                Width="44"
+                Height="44"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Background="Transparent"
+                CornerRadius="22"
+                Margin="18 32 0 0"
+                IsVisible="True">
+			<Button.Styles>
+                <Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="RenderTransform" Value="scale(1.1)" />
+                </Style>
+            </Button.Styles>
 
-        <!--Authentication Content-->
-        <StackPanel Width="400"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Spacing="14"
-                    Margin="20 50 20 20">
+            <Viewbox Width="20"
+                     Height="20"
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Center">
+                <Path Data="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"
+                      Fill="#28282B"
+                      Stretch="Uniform"/>
+            </Viewbox>
+        </Button>
 
-			<!--Authentication Header-->
-            <Panel Width="300"
-                   Height="40">
-                <Border Height="40"
-                        Background="#6D4C41"
-                        CornerRadius="20"
-                        BoxShadow="0 2 8 0 #30000000"/>
-                
-                <Button x:Name="HomeButton"
-						Width="40"
-						Height="30"
-                        Background="#5A3D34"
-                        CornerRadius="20"
-                        Margin="6 0 0 0">
-					
-					<Button.Styles>
-						<Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
-							<Setter Property="Background" Value="#4A322A" />
-						</Style>
-					</Button.Styles>
+		<StackPanel Width="740"
+                    Height="400"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Spacing="24">
+            
+            <!-- Header -->
+            <StackPanel HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Margin="48 0 0 32">
+                <TextBlock Text="Welcome Back"
+                           Foreground="#28282B"
+                           FontSize="28"
+                           FontWeight="SemiBold"/>
 
-					<Image Height="30"
-                           Source="\Assets\Icons\icon_back.png"/>
-				</Button>
-                
-                <TextBlock Text="Authentication"
+                <TextBlock Text="Please sign in to continue"
+                           Foreground="#2E1812"
+                           FontSize="14"
+                           FontStyle="Italic"/>
+            </StackPanel>
+
+            <!-- Inputs -->
+            <StackPanel Width="400"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="16"
+                        Margin="0 0 0 16">
+
+                <!-- Username / Email -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Username or Email"
+                               FontSize="13"
+                               Foreground="#4E342E"
+                               FontWeight="Medium"
+                               FontStyle="Italic"
+                               Opacity="0.8"/>
+                    <TextBox x:Name="LoginTextBox"
+                             Foreground="#3E2723"
+                             Watermark="example@email.com"/>
+                </StackPanel>
+
+                <!-- Password -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Password"
+                               FontSize="13"
+                               Foreground="#4E342E"
+                               FontWeight="Medium"
+                               FontStyle="Italic"
+                               Opacity="0.8"/>
+                    <TextBox x:Name="PasswordTextBox"
+                             Foreground="#3E2723"
+                             Watermark="●●●●●●●●"
+                             PasswordChar="●"
+                             LetterSpacing="2"/>
+                </StackPanel>
+            </StackPanel>
+
+			
+            <!-- Authenticate Button -->
+            <Button x:Name="AuthenticateButton"
+                    Classes="DefaultDarkBrown"
+                    Width="300"
+                    Height="38">
+				<TextBlock Text="Authenticate"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center"
                            Foreground="#E6C8A0"
-                           FontSize="18"
-                           FontWeight="SemiBold"/>
-            </Panel>
-            
-            <!--Separator-->
-			<Border Classes="DefaultSeparator"
-                    Width="280"/>
-
-			<!-- Inputs -->
-            <TextBox x:Name="LoginTextBox"
-					 Width="320"
-					 Height="20"
-					 Watermark="username or email address*"
-					 Margin="0 8 0 0"/>
+                           FontWeight="Medium"/>
+            </Button>
 			
-			<TextBox x:Name="PasswordTextBox"
-                     Width="320"
-					 Height="20"
-					 Watermark="password*"
-					 PasswordChar="*"
-					 FontFamily="{DynamicResource Roboto}"
-					 FontWeight="Bold"/>
-
-			
-			<!-- Authentication Button -->
-			<Button x:Name="AuthenticateButton"
-					Classes="DefaultDarkBrown"
-					Margin="0 8 0 0">
-				
-				<TextBlock Text="Authenticate"
-						   HorizontalAlignment="Center"
-						   VerticalAlignment="Center"
-						   Foreground="#E6C8A0"
-						   FontWeight="Medium"/>
-			</Button>
-			
-			<!--System Output-->
+            <!--System Output-->
 			<Border x:Name="OutputBorder"
 					Width="250"
 					Height="20"
 					Background="#5D3F36"
-					CornerRadius="2 2 10 10"
-					Margin="0 -15 0 0"
+					CornerRadius="2 2 20 20"
+					Margin="0 -22 0 0"
 					IsVisible="False">
 
 				<TextBlock x:Name="OutputTextBlock"
 						   HorizontalAlignment="Center"
 						   VerticalAlignment="Center"
-						   Foreground="Black"
+						   Foreground="#1F1F1F"
 						   FontSize="12"
 						   FontWeight="SemiBold"
 						   FontStyle="Italic"/>
 			</Border>
 
-			<!--Reset password Button-->
-			<Button Classes="DefaultLightBrown"
-					Width="210"
-					Height="30"
-					CornerRadius="12">
-
-				<TextBlock Text="forgot your password?"
-						   HorizontalAlignment="Center"
-						   VerticalAlignment="Center"
-						   Foreground="#5D3F36"
-						   FontWeight="SemiBold"/>
-			</Button>
+            <!-- Forgot Password Button-->
+            <Button Classes="ForgotPassword"
+                    HorizontalAlignment="Center">
+                <TextBlock Text="Forgot your password?"
+                           Foreground="#4E342E"
+                           FontWeight="Medium"
+                           FontStyle="Italic"/>
+            </Button>
 		</StackPanel>
-	</Panel>
+    </Panel>
 
 </UserControl>

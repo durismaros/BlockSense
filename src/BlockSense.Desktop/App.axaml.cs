@@ -82,6 +82,7 @@ namespace BlockSense.Desktop
             services.AddSingleton<TwoFactorSlidingPanel>();
             services.AddSingleton<HomeView>();
             services.AddSingleton<UserDashboardView>();
+            services.AddSingleton<TestView>();
 
             // --- Windows ---
             services.AddSingleton<MainWindow>();

@@ -6,7 +6,7 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="BlockSense.Desktop.MainWindow"
         Title="BlockSense"
-		Icon="\Assets\Icons\icon_app_window.png"
+		Icon="\Assets\Icons\icon_app_taskbar.ico"
         Width="800" Height="450"
 		CanResize="False"
 		TransparencyLevelHint="AcrylicBlur"
@@ -19,7 +19,7 @@
 				<ExperimentalAcrylicMaterial BackgroundSource="Digger"
 											 TintColor="Orange"
 											 TintOpacity="0.25"
-											 MaterialOpacity="0.7"/>
+											 MaterialOpacity="0.6"/>
 			</ExperimentalAcrylicBorder.Material>
 		</ExperimentalAcrylicBorder>
 		

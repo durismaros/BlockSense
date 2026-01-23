@@ -53,7 +53,7 @@ public partial class RegistrationView : UserControl
             return;
         }
 
-        if (request.Password != ConfirmPasswordTextBox.Text)
+        if (request.Password != RepeatPasswordTextBox.Text)
         {
             ShowOutput("Passwords Do Not Match");
             return;
@@ -71,7 +71,18 @@ public partial class RegistrationView : UserControl
     /// <param name="message">The message text to display.</param>
     private async void ShowOutput(string message)
     {
+        if (string.IsNullOrEmpty(message))
+            return;
+
+        if (OutputTextBlock.Text == message)
+            return;
+
         OutputTextBlock.Text = message;
+        await Animations.FadeInAnimation.RunAsync(OutputTextBlock);
+
+        if (OutputBorder.IsVisible)
+            return;
+
         OutputBorder.IsVisible = true;
         await Animations.FadeInAnimation.RunAsync(OutputBorder);
     }

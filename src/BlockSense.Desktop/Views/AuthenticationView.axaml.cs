@@ -17,8 +17,8 @@ public partial class AuthenticationView : UserControl
     private readonly NavigationManager _navigationManager;
     private readonly TwoFactorSlidingPanel _twoFactorSlidingPanel;
 
-    private CancellationTokenSource? _cancellationTokenSource;
     private string? _twoFactorCode;
+    private CancellationTokenSource? _cancellationTokenSource;
 
     public AuthenticationView(IAuthService authService, NavigationManager navigationManager)
     {
@@ -97,7 +97,18 @@ public partial class AuthenticationView : UserControl
     /// <param name="message">The message text to display.</param>
     private async void ShowOutput(string message)
     {
+        if (string.IsNullOrEmpty(message))
+            return;
+
+        if (OutputTextBlock.Text == message)
+            return;
+
         OutputTextBlock.Text = message;
+        await Animations.FadeInAnimation.RunAsync(OutputTextBlock);
+
+        if (OutputBorder.IsVisible)
+            return;
+
         OutputBorder.IsVisible = true;
         await Animations.FadeInAnimation.RunAsync(OutputBorder);
     }
