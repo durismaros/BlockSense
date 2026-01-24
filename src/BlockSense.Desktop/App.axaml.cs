@@ -31,11 +31,13 @@ namespace BlockSense.Desktop
             ConfigureServices();
         }
 
-        public override void OnFrameworkInitializationCompleted()
+        public override async void OnFrameworkInitializationCompleted()
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.MainWindow = ServiceProvider.GetRequiredService<MainWindow>();
+
+                await ServiceProvider.GetRequiredService<IAuthService>().InitializeAsync();
             }
 
             base.OnFrameworkInitializationCompleted();

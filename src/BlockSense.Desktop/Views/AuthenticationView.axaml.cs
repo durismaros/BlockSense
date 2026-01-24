@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
 using BlockSense.Contracts.Definitions;
 using BlockSense.Contracts.DTOs.Authentication;
@@ -24,7 +24,7 @@ public partial class AuthenticationView : UserControl
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
-        _twoFactorSlidingPanel = MainWindow.TwoFactorSlidingPanel ?? throw new ArgumentNullException(nameof(MainWindow.TwoFactorSlidingPanel));
+        _twoFactorSlidingPanel = MainWindow.Instance.TwoFactorSlidingPanel ?? throw new ArgumentNullException(nameof(MainWindow.Instance.TwoFactorSlidingPanel));
 
         _twoFactorSlidingPanel.TwoFactorCodeSubmitted += async code =>
         {
@@ -36,6 +36,7 @@ public partial class AuthenticationView : UserControl
 
         HomeButton.Click += ToWelcomeViewClick;
         AuthenticateButton.Click += AuthenticateClick;
+        RevealPasswordButton.Click += RevealPasswordClick;
     }
 
     private async void ToWelcomeViewClick(object? sender, RoutedEventArgs e)
@@ -62,8 +63,18 @@ public partial class AuthenticationView : UserControl
             return;
         }
 
-        ShowOutput("Authenticating . . .");
-        var response = await _authService.AuthAsync(request, cancellationToken);
+        var authTask = _authService.AuthAsync(request, cancellationToken);
+        var delayTask = Task.Delay(1000, cancellationToken);
+
+        // Wait for whichever finishes first
+        var completedTask = await Task.WhenAny(authTask, delayTask);
+
+        if (completedTask == delayTask)
+        {
+            ShowOutput("Authenticating . . .");
+        }
+
+        var response = await authTask;
 
         switch (response.ProblemType)
         {
@@ -74,6 +85,11 @@ public partial class AuthenticationView : UserControl
                 await Task.Delay(2000);
 
                 await _navigationManager.NavigateToAsync<HomeView>();
+
+                LoginTextBox.Text = string.Empty;
+                PasswordTextBox.Text = string.Empty;
+                OutputTextBlock.Text = string.Empty;
+                OutputBorder.IsVisible = false;
                 break;
 
             case ApiProblemTypes.Authentication.TwoFactorRequired:
@@ -86,8 +102,25 @@ public partial class AuthenticationView : UserControl
 
             default:
                 ShowOutput(response.Message);
-                _twoFactorSlidingPanel.ShowPanel();
                 break;
+        }
+    }
+
+    private async void RevealPasswordClick(object? sender, RoutedEventArgs e)
+    {
+        PasswordTextBox.PasswordChar = EyeCrossLine.IsVisible ? '●' : '\0';
+
+        if (EyeCrossLine.IsVisible)
+        {
+            // Password revealed → remove the cross line
+            await Animations.FadeOutAnimation.RunAsync(EyeCrossLine);
+            EyeCrossLine.IsVisible = false;
+        }
+        else
+        {
+            // Password hidden → show the cross line
+            EyeCrossLine.IsVisible = true;
+            await Animations.FadeInAnimation.RunAsync(EyeCrossLine);
         }
     }
 

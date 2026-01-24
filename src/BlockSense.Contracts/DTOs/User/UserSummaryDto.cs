@@ -44,15 +44,6 @@ namespace BlockSense.Contracts.DTOs.User
         }
 
         /// <summary>
-        /// Indicates whether two-factor authentication (2FA) is enabled for this user.
-        /// </summary>
-        public required bool TwoFactorEnabled
-        {
-            get;
-            init;
-        }
-
-        /// <summary>
         /// UTC timestamp when the user account was created.
         /// </summary>
         public required DateTime CreatedAt

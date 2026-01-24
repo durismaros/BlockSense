@@ -1,7 +1,6 @@
-﻿using BlockSense.Contracts.DTOs.Authentication;
-using BlockSense.Contracts.DTOs.Token;
+﻿using BlockSense.Contracts.DTOs.Token;
 using BlockSense.Desktop.Providers.Interfaces;
-using BlockSense.Desktop.Services.Interfaces;
+using BlockSense.Desktop.Utilities.ApiHandling;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,17 +9,13 @@ namespace BlockSense.Desktop.Providers.Implementations
 {
     public sealed class AccessTokenProvider : IAccessTokenProvider
     {
-        private readonly IAuthService _authService;
-        private readonly IRefreshTokenProvider _refreshTokenProvider;
-
         private string _accessToken;
         private DateTime _expiresAt;
 
-        public AccessTokenProvider(IAuthService authService, IRefreshTokenProvider refreshTokenProvider)
-        {
-            _authService = authService ?? throw new ArgumentNullException(nameof(authService));
-            _refreshTokenProvider = refreshTokenProvider ?? throw new ArgumentNullException(nameof(refreshTokenProvider));
+        public event AccessTokenRefreshRequestedAsync? RefreshRequested;
 
+        public AccessTokenProvider()
+        {
             _accessToken = string.Empty;
             _expiresAt = DateTime.MinValue;
         }
@@ -32,21 +27,15 @@ namespace BlockSense.Desktop.Providers.Implementations
                 return _accessToken;
             }
 
-            var refreshToken = await _refreshTokenProvider.GetAsync(cancellationToken);
+            if (RefreshRequested is null)
+                throw new AuthenticationRequiredException();
 
-            var request = new AuthRefreshRequest()
+            if (await RefreshRequested.Invoke(cancellationToken))
             {
-                RefreshToken = refreshToken
-            };
+                return _accessToken;
+            }
 
-            var response = await _authService.AuthRefreshAsync(request, cancellationToken);
-
-            _accessToken = response.AccessToken.Token;
-            _expiresAt = response.AccessToken.ExpiresAt;
-
-            await _refreshTokenProvider.SaveAsync(response.RefreshToken);
-
-            return _accessToken;
+            throw new AuthenticationRequiredException();
         }
 
         public void Set(AccessTokenDto accessToken)
@@ -55,4 +44,6 @@ namespace BlockSense.Desktop.Providers.Implementations
             _expiresAt = accessToken.ExpiresAt;
         }
     }
+
+    public delegate Task<bool> AccessTokenRefreshRequestedAsync(CancellationToken cancellationToken);
 }

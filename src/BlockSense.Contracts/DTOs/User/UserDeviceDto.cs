@@ -13,9 +13,9 @@ namespace BlockSense.Contracts.DTOs.User
     public sealed record UserDeviceDto
     {
         /// <summary>
-        /// Unique identifier of the device session (refresh token ID).
+        /// Unique identifier of the device session (Hashed value of the refresh token).
         /// </summary>
-        public required Guid TokenId
+        public required string TokenHash
         {
             get;
             init;

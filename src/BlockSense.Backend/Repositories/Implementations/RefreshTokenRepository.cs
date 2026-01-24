@@ -28,15 +28,15 @@ namespace BlockSense.Backend.Repositories.Implementations
         {
             const string sqlQuery = """
                 SELECT
-                    token_hash              AS TokenHash
-                    user_id                 AS UserId
-                    ip_address              AS IpAddress
-                    device_identifier       AS DeviceIdentifier
-                    device_os               AS DeviceOs
-                    hardware_fingerprint    AS HardwareFingerprint
-                    network_fingerprint     AS NetworkFingerprint
-                    issued_at               AS IssuedAt
-                    expires_at              AS ExpiresAt
+                    token_hash              AS TokenHash,
+                    user_id                 AS UserId,
+                    ip_address              AS IpAddress,
+                    device_identifier       AS DeviceIdentifier,
+                    device_os               AS DeviceOs,
+                    hardware_fingerprint    AS HardwareFingerprint,
+                    network_fingerprint     AS NetworkFingerprint,
+                    issued_at               AS IssuedAt,
+                    expires_at              AS ExpiresAt,
                     is_revoked              AS IsRevoked
                 FROM refresh_tokens
                 WHERE token_hash = @TokenHash

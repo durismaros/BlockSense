@@ -25,7 +25,7 @@
 		
 		<ContentControl x:Name="ContentContainer"/>
 
-		<local:TwoFactorSlidingPanel x:Name="TwoFactorPanel"/>
+		<local:TwoFactorSlidingPanel x:Name="TwoFactorSlidingPanel"/>
 
 	</Panel>
 

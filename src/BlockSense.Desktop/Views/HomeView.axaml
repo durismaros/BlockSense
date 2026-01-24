@@ -31,20 +31,22 @@
 			
 			<Button x:Name="UserDashboardButton"
 					Classes="DefaultWhite"
-					Content="User Profile"
 					HorizontalContentAlignment="Center"
 					VerticalContentAlignment="Center"
+					Content="User Profile"
 					FontSize="12"
-					FontWeight="SemiBold">
+					FontWeight="SemiBold"
+					Opacity="0.8">
 			</Button>
 
 			<Button x:Name="UserWalletButton"
 					Classes="DefaultWhite"
-					Content="Wallet"
 					HorizontalContentAlignment="Center"
 					VerticalContentAlignment="Center"
+					Content="Wallet"
 					FontSize="12"
-					FontWeight="SemiBold">
+					FontWeight="SemiBold"
+					Opacity="0.8">
 			</Button>
 
 		</StackPanel>

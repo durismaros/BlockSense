@@ -14,8 +14,7 @@
                 VerticalAlignment="Top"
                 Background="Transparent"
                 CornerRadius="22"
-                Margin="18 32 0 0"
-                IsVisible="True">
+                Margin="18 32 0 0">
 			<Button.Styles>
                 <Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
                     <Setter Property="Background" Value="Transparent"/>
@@ -82,11 +81,36 @@
                                FontWeight="Medium"
                                FontStyle="Italic"
                                Opacity="0.8"/>
-                    <TextBox x:Name="PasswordTextBox"
+                    <Panel>
+						<TextBox x:Name="PasswordTextBox"
                              Foreground="#3E2723"
                              Watermark="●●●●●●●●"
                              PasswordChar="●"
                              LetterSpacing="2"/>
+                        
+                        <Button x:Name="RevealPasswordButton"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Background="Transparent">
+                            <Viewbox Width="24" Height="24">
+                                <Panel Width="24" Height="24">
+                                    
+                                    <!-- Eye Icon -->
+                                    <Path Classes="ReavealPasswordEyeIcon"/>
+                                    
+                                    <!-- Cross Line (hidden by default) -->
+                                    <Path x:Name="EyeCrossLine"
+                                          Classes="ReavealPasswordCrossIcon"/>
+                                </Panel>
+                            </Viewbox>
+                            <Button.Styles>
+                                <Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="RenderTransform" Value="scale(1.1)" />
+                                </Style>
+                            </Button.Styles>
+                        </Button>
+                    </Panel>
                 </StackPanel>
             </StackPanel>
 
@@ -108,7 +132,7 @@
 					Width="250"
 					Height="20"
 					Background="#5D3F36"
-					CornerRadius="2 2 20 20"
+					CornerRadius="0 0 24 24"
 					Margin="0 -22 0 0"
 					IsVisible="False">
 

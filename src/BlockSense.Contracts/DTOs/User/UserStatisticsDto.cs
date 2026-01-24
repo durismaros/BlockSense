@@ -26,27 +26,18 @@ namespace BlockSense.Contracts.DTOs.User
         }
 
         /// <summary>
-        /// UTC timestamp when the user account was created.
-        /// </summary>
-        public required DateTime CreatedAt
-        {
-            get;
-            init;
-        }
-
-        /// <summary>
-        /// UTC timestamp of the user's last login, if available.
-        /// </summary>
-        public DateTime? LastLoginAt
-        {
-            get;
-            init;
-        }
-
-        /// <summary>
-        /// Indicates whether two-factor authentication (2FA) is enabled for the user.
+        /// Indicates whether two-factor authentication (2FA) is enabled for this user.
         /// </summary>
         public required bool TwoFactorEnabled
+        {
+            get;
+            init;
+        }
+
+        /// <summary>
+        /// The Username of the user who invited this user.
+        /// </summary>
+        public required string InvitedBy
         {
             get;
             init;
@@ -56,6 +47,15 @@ namespace BlockSense.Contracts.DTOs.User
         /// Total number of users invited by this user.
         /// </summary>
         public required int TotalInvitedUsers
+        {
+            get;
+            init;
+        }
+
+        /// <summary>
+        /// UTC timestamp of the user's last login, if available.
+        /// </summary>
+        public DateTime? LastLoginAt
         {
             get;
             init;

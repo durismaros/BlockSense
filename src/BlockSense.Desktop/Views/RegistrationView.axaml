@@ -102,11 +102,36 @@
                                    FontWeight="Medium"
                                    FontStyle="Italic"
                                    Opacity="0.8"/>
-                        <TextBox x:Name="PasswordTextBox"
-                                 Foreground="#3E2723"
-                                 Watermark="●●●●●●●●"
-                                 PasswordChar="●"
-                                 LetterSpacing="2"/>
+                        <Panel>
+							<TextBox x:Name="PasswordTextBox"
+                                     Foreground="#3E2723"
+                                     Watermark="●●●●●●●●"
+                                     PasswordChar="●"
+                                     LetterSpacing="2"/>
+                            
+                            <Button x:Name="RevealPasswordButton"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent">
+                                <Viewbox Width="24" Height="24">
+                                    <Panel Width="24" Height="24">
+
+                                    <!-- Eye Icon -->
+                                    <Path Classes="ReavealPasswordEyeIcon"/>
+                                    
+                                    <!-- Cross Line (hidden by default) -->
+                                    <Path x:Name="EyeCrossLine1"
+                                          Classes="ReavealPasswordCrossIcon"/>
+                                    </Panel>
+                                </Viewbox>
+                                <Button.Styles>
+                                    <Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="RenderTransform" Value="scale(1.1)" />
+                                    </Style>
+                                </Button.Styles>
+                            </Button>
+                        </Panel>
                     </StackPanel>
 
                     <StackPanel Spacing="4" Width="280">
@@ -116,11 +141,37 @@
                                    FontWeight="Medium"
                                    FontStyle="Italic"
                                    Opacity="0.8"/>
-                        <TextBox x:Name="RepeatPasswordTextBox"
-                                 Foreground="#3E2723"
-                                 Watermark="●●●●●●●●"
-                                 PasswordChar="●"
-                                 LetterSpacing="2"/>
+
+                        <Panel>
+                            <TextBox x:Name="RepeatPasswordTextBox"
+                                     Foreground="#3E2723"
+                                     Watermark="●●●●●●●●"
+                                     PasswordChar="●"
+                                     LetterSpacing="2"/>
+                            
+                            <Button x:Name="RevealRepeatedPasswordButton"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent">
+                                <Viewbox Width="24" Height="24">
+                                    <Panel Width="24" Height="24">
+
+                                    <!-- Eye Icon -->
+                                    <Path Classes="ReavealPasswordEyeIcon"/>
+                                    
+                                    <!-- Cross Line (hidden by default) -->
+                                    <Path x:Name="EyeCrossLine2"
+                                          Classes="ReavealPasswordCrossIcon"/>
+                                    </Panel>
+                                </Viewbox>
+                                <Button.Styles>
+                                    <Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="RenderTransform" Value="scale(1.1)" />
+                                    </Style>
+                                </Button.Styles>
+                            </Button>
+                        </Panel>
                     </StackPanel>
                 </StackPanel>
 
@@ -158,7 +209,7 @@
                     Width="250"
                     Height="20"
                     Background="#C29A72"
-                    CornerRadius="2 2 20 20"
+                    CornerRadius="0 0 24 24"
                     Margin="0 -22 0 0"
                     IsVisible="False">
 

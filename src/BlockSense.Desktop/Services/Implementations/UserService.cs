@@ -36,7 +36,7 @@ namespace BlockSense.Desktop.Services.Implementations
                 throw new ArgumentNullException(nameof(request));
 
             var response = await _apiClient.PostAsync<RegistrationRequest, RegistrationResponse>(
-                requestUri: "/api/user/register",
+                requestUri: "/api/users",
                 request: request,
                 cancellationToken: cancellationToken);
 

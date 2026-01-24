@@ -98,14 +98,14 @@
 	<Style Selector="Button.DefaultWhite">
 		<Setter Property="Width" Value="120"/>
 		<Setter Property="Height" Value="30"/>
-		<Setter Property="Background" Value="White"/>
-		<Setter Property="Foreground" Value="Gray"/>
+		<Setter Property="Background" Value="#F5F5F5"/>
+		<Setter Property="Foreground" Value="#7A7A7A"/>
 		<Setter Property="CornerRadius" Value="20"/>
 		<Setter Property="HorizontalAlignment" Value="Center"/>
 	</Style>
 
 	<Style Selector="Button.DefaultWhite:pointerover ContentPresenter, Button.DefaultWhite:pressed ContentPresenter">
-		<Setter Property="Background" Value="LightGray"/>
+		<Setter Property="Background" Value="#CCCCCC"/>
 		<Setter Property="Foreground" Value="#6E6E6E"/>
 	</Style>
 
@@ -180,56 +180,55 @@
 		<Setter Property="IsVisible" Value="True"/>
 	</Style>
 	
-<Style Selector="TextBox">
-    <Setter Property="Background" Value="Transparent"/>
-    <Setter Property="VerticalContentAlignment" Value="Center"/>
-    <Setter Property="LetterSpacing" Value="1"/>
-    <Setter Property="BorderBrush" Value="#5D4037"/>
-    <Setter Property="BorderThickness" Value="0 0 0 2"/>
-    <Setter Property="CaretBrush" Value="#3E2723"/>
-    <Setter Property="Padding" Value="12 8"/>
-    <Setter Property="FontSize" Value="14"/>
-	<Setter Property="FontWeight" Value="Medium"/>
-    <Setter Property="CornerRadius" Value="0"/>
-    <Setter Property="FontFamily" Value="{DynamicResource Montserrat}"/>
-    <Setter Property="Transitions">
-        <Transitions>
-            <BrushTransition Property="BorderBrush" Duration="0:0:0.25"/>
-        </Transitions>
-    </Setter>
-</Style>
-
-<Style Selector="TextBox /template/ TextBlock#PART_Watermark">
-    <Setter Property="Opacity" Value="0.6"/>
-    <Setter Property="Transitions">
-        <Transitions>
-            <BrushTransition Property="Foreground" Duration="0:0:0.1"/>
-        </Transitions>
-    </Setter>
-</Style>
-
-<Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
-    <Setter Property="Background" Value="Transparent"/>
-    <Setter Property="BorderBrush" Value="#4E342E"/>
-	<Setter Property="BorderThickness" Value="0 0 0 2"/>
-    <Setter Property="Transitions">
-        <Transitions>
-            <BrushTransition Property="BorderBrush" Duration="0:0:0.25"/>
-        </Transitions>
-    </Setter>
-</Style>
-
-<Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
-    <Setter Property="Background" Value="Transparent"/>
-    <Setter Property="BorderBrush" Value="#4E342E"/>
-    <Setter Property="BorderThickness" Value="0 0 0 2"/>
-    <Setter Property="Transitions">
-        <Transitions>
-            <BrushTransition Property="BorderBrush" Duration="0:0:0.25"/>
-        </Transitions>
-    </Setter>
-</Style>
-
+	<Style Selector="TextBox">
+		<Setter Property="Background" Value="Transparent"/>
+		<Setter Property="VerticalContentAlignment" Value="Center"/>
+		<Setter Property="LetterSpacing" Value="1"/>
+		<Setter Property="BorderBrush" Value="#5D4037"/>
+		<Setter Property="BorderThickness" Value="0 0 0 2"/>
+		<Setter Property="CaretBrush" Value="#3E2723"/>
+		<Setter Property="Padding" Value="12 8"/>
+		<Setter Property="FontSize" Value="14"/>
+		<Setter Property="FontWeight" Value="Medium"/>
+		<Setter Property="CornerRadius" Value="0"/>
+		<Setter Property="FontFamily" Value="{DynamicResource Montserrat}"/>
+		<Setter Property="Transitions">
+			<Transitions>
+				<BrushTransition Property="BorderBrush" Duration="0:0:0.25"/>
+			</Transitions>
+		</Setter>
+	</Style>
+	
+	<Style Selector="TextBox /template/ TextBlock#PART_Watermark">
+		<Setter Property="Opacity" Value="0.6"/>
+		<Setter Property="Transitions">
+			<Transitions>
+				<BrushTransition Property="Foreground" Duration="0:0:0.1"/>
+			</Transitions>
+		</Setter>
+	</Style>
+	
+	<Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+		<Setter Property="Background" Value="Transparent"/>
+		<Setter Property="BorderBrush" Value="#4E342E"/>
+		<Setter Property="BorderThickness" Value="0 0 0 2"/>
+		<Setter Property="Transitions">
+			<Transitions>
+				<BrushTransition Property="BorderBrush" Duration="0:0:0.25"/>
+			</Transitions>
+		</Setter>
+	</Style>
+	
+	<Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+		<Setter Property="Background" Value="Transparent"/>
+		<Setter Property="BorderBrush" Value="#4E342E"/>
+		<Setter Property="BorderThickness" Value="0 0 0 2"/>
+		<Setter Property="Transitions">
+			<Transitions>
+				<BrushTransition Property="BorderBrush" Duration="0:0:0.25"/>
+			</Transitions>
+		</Setter>
+	</Style>
 
 	<!-- CheckBox style with fade in/out transition -->
 	<Style Selector="CheckBox">
@@ -409,6 +408,28 @@
 
 	<Style Selector="MenuItem:pointerover">
 		<Setter Property="Foreground" Value="#6B6B6B"/>
+	</Style>
+
+	<Style Selector="Path.ReavealPasswordEyeIcon">
+		<Setter Property="VerticalAlignment" Value="Center"/>
+		<Setter Property="Data" Value="M1,12C3.5,7.5 7.5,5 12,5C16.5,5 20.5,7.5 23,12C20.5,16.5 16.5,19 12,19C7.5,19 3.5,16.5 1,12Z
+		M12,9A3,3 0 1 0 12,15A3,3 0 1 0 12,9Z"/>
+		<Setter Property="Stroke" Value="#4E342E"/>
+		<Setter Property="StrokeThickness" Value="1.8"/>
+		<Setter Property="StrokeLineCap" Value="Round"/>
+		<Setter Property="StrokeJoin" Value="Round"/>
+		<Setter Property="Fill" Value="Transparent"/>
+	</Style>
+
+	<Style Selector="Path.ReavealPasswordCrossIcon">
+		<Setter Property="VerticalAlignment" Value="Center"/>
+		<Setter Property="Data" Value="M5,5L19,19"/>
+		<Setter Property="Stroke" Value="#4E342E"/>
+		<Setter Property="StrokeThickness" Value="1.8"/>
+		<Setter Property="StrokeLineCap" Value="Round"/>
+		<Setter Property="StrokeJoin" Value="Round"/>
+		<Setter Property="Fill" Value="Transparent"/>
+		<Setter Property="IsVisible" Value="False"/>
 	</Style>
 
 </Styles>

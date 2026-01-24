@@ -3,14 +3,16 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
+using Org.BouncyCastle.Operators.Utilities;
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace BlockSense.Desktop;
 
 public partial class MainWindow : Window
 {
-    public static TwoFactorSlidingPanel TwoFactorSlidingPanel
+    public static MainWindow Instance
     {
         get;
         private set;
@@ -20,9 +22,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        TwoFactorSlidingPanel = TwoFactorPanel;
-
-        Opened += OnOpened;
+        Instance = this;
 
         // Pointer press handler
         this.AddHandler(InputElement.PointerPressedEvent, (sender, e) =>
@@ -51,11 +51,5 @@ public partial class MainWindow : Window
         ContentContainer.Content = newView;
 
         await Animations.FadeInAnimation.RunAsync(newView);
-    }
-
-    private async void OnOpened(object? sender, EventArgs e)
-    {
-        var navigation = App.ServiceProvider.GetRequiredService<NavigationManager>();
-        await navigation.NavigateToAsync<WelcomeView>();
     }
 }

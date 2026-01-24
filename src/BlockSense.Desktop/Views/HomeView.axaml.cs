@@ -3,18 +3,27 @@ using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Styling;
+using BlockSense.Contracts.DTOs.TwoFactorAuth.Setup;
+using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
+using Org.BouncyCastle.Asn1.Ocsp;
+using Serilog;
 using System;
+using System.Threading;
 
 namespace BlockSense.Desktop;
 
 public partial class HomeView : UserControl
 {
     private readonly NavigationManager _navigationManager;
+    private readonly IApiClient _apiClient;
 
-    public HomeView(NavigationManager navigationManager)
+    private CancellationTokenSource? _cancellationTokenSource;
+
+    public HomeView(NavigationManager navigationManager, IApiClient apiClient)
     {
         _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
+        _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
 
         InitializeComponent();
         FadeInText();
@@ -30,7 +39,21 @@ public partial class HomeView : UserControl
 
     private async void ToUserWalletViewClick(object? sender, RoutedEventArgs e)
     {
+        _cancellationTokenSource?.Cancel();
+        _cancellationTokenSource = new CancellationTokenSource();
+        var cancellationToken = _cancellationTokenSource.Token;
 
+        var response = await _apiClient
+            .AddBearerToken()
+            .GetAsync<TwoFactorSetupInit>(
+            requestUri: "/api/auth/2fa/setup",
+            cancellationToken: cancellationToken);
+
+        if (response.IsSuccess)
+            Log.Debug(response.Data.SetupKey);
+
+        else
+            Log.Debug(response.ProblemDetails.Type);
     }
 
     private async void FadeInText()

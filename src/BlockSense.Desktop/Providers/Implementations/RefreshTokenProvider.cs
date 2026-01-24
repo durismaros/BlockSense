@@ -69,8 +69,6 @@ namespace BlockSense.Desktop.Providers.Implementations
                     DataProtectionScope.CurrentUser);
             }
 
-            File.Create(_filePath);
-
             await File.WriteAllBytesAsync(_filePath, bytes);
         }
 
