@@ -1,19 +1,4 @@
-using BlockSense.Backend.Data;
-using BlockSense.Backend.Data.Configurations;
-using BlockSense.Backend.Exceptions.Authentication;
-using BlockSense.Backend.Exceptions.Handlers;
-using BlockSense.Backend.Repositories.Implementations;
-using BlockSense.Backend.Repositories.Interfaces;
-using BlockSense.Backend.Services.Implementations;
-using BlockSense.Backend.Services.Interfaces;
-using BlockSense.Contracts.Definitions;
-using BlockSense.Contracts.Enums.User;
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.IdentityModel.Tokens;
-using MySql.Data.MySqlClient;
+using BlockSense.Backend.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,23 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Load hard-coded configuration from `appsettings.json` into model classes.
 //
 
-builder.Services
-    .AddOptions<JwtTokenConfig>()
-    .Bind(builder.Configuration.GetSection("JwtTokenConfig"))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-
-builder.Services
-    .AddOptions<RefreshTokenConfig>()
-    .Bind(builder.Configuration.GetSection("RefreshTokenConfig"))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-
-builder.Services
-    .AddOptions<TwoFactorAuthConfig>()
-    .Bind(builder.Configuration.GetSection("TwoFactorAuthConfig"))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
+builder.Services.ConfigureApplicationOptions(builder.Configuration);
 
 //
 // --------------------------------
@@ -51,14 +20,7 @@ builder.Services
 // Services created once per HTTP request.
 //
 
-builder.Services.AddScoped<MySqlConnection>(_ =>
-    new MySqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddScoped<DatabaseContext>();
-
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IInvitationRepository, InvitationRepository>();
-builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-builder.Services.AddScoped<ITwoFactorAuthRepository, TwoFactorAuthRepository>();
+builder.Services.ConfigureMySqlContext(builder.Configuration);
 
 //
 // --------------------------------
@@ -68,10 +30,7 @@ builder.Services.AddScoped<ITwoFactorAuthRepository, TwoFactorAuthRepository>();
 // Interface-to-implementation mapping.
 //
 
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<ITwoFactorAuthService, TwoFactorAuthService>();
+builder.Services.ConfigureApplicationServices();
 
 //
 // --------------------------------
@@ -81,47 +40,7 @@ builder.Services.AddScoped<ITwoFactorAuthService, TwoFactorAuthService>();
 // Configuration of JWT Bearer authentication, validating access tokens using symmetric key signing.
 //
 
-builder.Services
-    .AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        var jwtTokenConfig = builder.Configuration.GetSection("JwtTokenConfig").Get<JwtTokenConfig>() ?? throw new NullReferenceException(nameof(JwtTokenConfig));
-
-        options.RequireHttpsMetadata = true;
-        options.MapInboundClaims = false;
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtTokenConfig.Issuer,
-            ValidAudience = jwtTokenConfig.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Convert.FromBase64String(jwtTokenConfig.SigningKey)),
-            ClockSkew = TimeSpan.Zero
-        };
-        options.Events = new JwtBearerEvents
-        {
-            OnChallenge = context =>
-            {
-                context.HandleResponse();
-
-                throw new AuthenticationRequiredException();
-            }
-        };
-    });
-
-builder.Services
-    .AddAuthorization(options =>
-    {
-        options.AddPolicy("AdminOnly", policy =>
-            policy.RequireClaim(JwtRegisteredClaimNames.Typ, UserType.Administrator.ToString()));
-    });
+builder.Services.ConfigureJwtAuthentication(builder.Configuration);
 
 //
 // --------------------------------
@@ -131,58 +50,8 @@ builder.Services
 // Controllers for API endpoints and SwaggerUI integration.
 //
 
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders =
-        ForwardedHeaders.XForwardedFor |
-        ForwardedHeaders.XForwardedProto;
-
-    // Development / trusted environment only
-    options.KnownNetworks.Clear();
-    options.KnownProxies.Clear();
-});
-
-
-builder.Services
-    .AddControllers()
-    .ConfigureApiBehaviorOptions(options =>
-    {
-        options.InvalidModelStateResponseFactory = context =>
-        {
-            var validationErrors = context.ModelState
-            .Where(kvp => kvp.Value?.Errors.Count > 0)
-            .ToDictionary(
-                kvp => kvp.Key,
-                kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
-                );
-
-            var httpContext = context.HttpContext;
-
-            httpContext.Response.ContentType = "application/json";
-            httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-
-            var problemDetails = new ProblemDetails
-            {
-                Type = ApiProblemTypes.Generic.BadRequest,
-                Title = "Invalid request",
-                Status = StatusCodes.Status400BadRequest,
-                Detail = "One or more validation errors occurred.",
-                Instance = httpContext.Request.Path,
-                Extensions =
-                {
-                    ["errors"] = validationErrors,
-                    ["traceId"] = httpContext.TraceIdentifier,
-                }
-            };
-
-            return new BadRequestObjectResult(problemDetails);
-        };
-    });
-
-builder.Services.AddProblemDetails();
-
-builder.Services.AddExceptionHandler<ApiExceptionHandler>();
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.ConfigureExceptionHandling();
+builder.Services.ConfigureForwardedHeaders();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

@@ -62,15 +62,6 @@ namespace BlockSense.Backend.Entities
         }
 
         /// <summary>
-        /// The ID of the invitation code used during registration.
-        /// </summary>
-        public required uint InvitationCodeId
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
         /// Timestamp when the user account was created (UTC).
         /// </summary>
         public required DateTime CreatedAt

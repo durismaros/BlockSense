@@ -12,14 +12,9 @@
         public static class Authentication
         {
             /// <summary>
-            /// Occurs when the provided credentials are invalid.
+            /// Occurs when provided JWT or Refresh token is invalid, expired, or missing required claims.
             /// </summary>
-            public const string InvalidCredentials = "AUTH_INVALID_CREDENTIALS";
-
-            /// <summary>
-            /// Occurs when provided Hardware fingerprint does not match with the valid one.
-            /// </summary>
-            public const string InvalidHardwareFingerprint = "AUTH_INVALID_HARDWARE_FINGERPRITN";
+            public const string AuthenticationRequired = "AUTH_REQUIRED";
 
             /// <summary>
             /// Occurs when the user account has been banned.
@@ -27,14 +22,19 @@
             public const string AccountBanned = "AUTH_ACCOUNT_BANNED";
 
             /// <summary>
+            /// Occurs when the provided credentials are invalid.
+            /// </summary>
+            public const string InvalidCredentials = "AUTH_INVALID_CREDENTIALS";
+
+            /// <summary>
             /// Indicates that two-factor authentication is required for login.
             /// </summary>
             public const string TwoFactorRequired = "AUTH_2FA_REQUIRED";
 
             /// <summary>
-            /// Occurs when provided JWT or Refresh token is invalid, expired, or missing required claims.
+            /// Occurs when provided Device context is invalid or does not match.
             /// </summary>
-            public const string AuthenticationRequired = "AUTH_REQUIRED";
+            public const string InvalidClientContext = "AUTH_INVALID_CLIENT_CONTEXT";
 
             /// <summary>
             /// Indicates that authentication was successful.
@@ -47,11 +47,6 @@
         /// </summary>
         public static class TwoFactorAuthentication
         {
-            /// <summary>
-            /// Occurs when the provided two-factor authentication (2FA) code is invalid.
-            /// </summary>
-            public const string InvalidCode = "2FA_INVALID_CODE";
-
             /// <summary>
             /// Indicates that 2FA has not been configured for the current user account.
             /// </summary>
@@ -66,6 +61,11 @@
             /// Indicates that 2FA setup is required for the current operation.
             /// </summary>
             public const string SetupRequired = "2FA_SETUP_REQUIRED";
+
+            /// <summary>
+            /// Occurs when the provided two-factor authentication (2FA) code is invalid.
+            /// </summary>
+            public const string InvalidCode = "2FA_INVALID_CODE";
 
             /// <summary>
             /// Indicates that 2FA verification was successful.

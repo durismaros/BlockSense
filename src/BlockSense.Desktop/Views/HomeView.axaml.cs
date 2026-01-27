@@ -39,21 +39,7 @@ public partial class HomeView : UserControl
 
     private async void ToUserWalletViewClick(object? sender, RoutedEventArgs e)
     {
-        _cancellationTokenSource?.Cancel();
-        _cancellationTokenSource = new CancellationTokenSource();
-        var cancellationToken = _cancellationTokenSource.Token;
 
-        var response = await _apiClient
-            .AddBearerToken()
-            .GetAsync<TwoFactorSetupInit>(
-            requestUri: "/api/auth/2fa/setup",
-            cancellationToken: cancellationToken);
-
-        if (response.IsSuccess)
-            Log.Debug(response.Data.SetupKey);
-
-        else
-            Log.Debug(response.ProblemDetails.Type);
     }
 
     private async void FadeInText()

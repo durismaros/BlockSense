@@ -15,7 +15,7 @@ namespace BlockSense.Backend.Models.DeviceContext
                 var deviceContext = DeviceContext.FromHttpContext(bindingContext.HttpContext);
                 bindingContext.Result = ModelBindingResult.Success(deviceContext);
             }
-            catch (InvalidDeviceContextException ex)
+            catch (InvalidClientContextException ex)
             {
                 bindingContext.ModelState.AddModelError("DeviceContext", ex.Message);
                 bindingContext.Result = ModelBindingResult.Failed();

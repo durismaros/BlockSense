@@ -28,23 +28,23 @@ namespace BlockSense.Backend.Repositories.Implementations
         {
             const string sqlQuery = """
                 SELECT
-                    invitation_code_id  AS InvitationCodeId,
-                    invitation_code     AS Code,
-                    is_used             AS IsUsed,
+                    invitation_id       AS InvitationId,
+                    invitation_code     AS InvitationCode,
                     generated_by        AS GeneratedBy,
+                    used_by             AS UsedBy,
                     created_at          AS CreatedAt,
                     expires_at          AS ExpiresAt,
                     is_revoked          AS IsRevoked
                 FROM invitation_codes
-                WHERE invitation_code_id = @InvitationCodeId
+                WHERE invitation_id = @InvitationId
                 LIMIT 1;
             """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@InvitationCodeId", MySqlDbType.UInt32)
+                new MySqlParameter("@InvitationId", MySqlDbType.UInt32)
                 {
-                    Value = invitationCodeId,
+                    Value = invitationCodeId
                 }
             };
 
@@ -59,10 +59,10 @@ namespace BlockSense.Backend.Repositories.Implementations
         {
             const string sqlQuery = """
                 SELECT
-                    invitation_code_id  AS InvitationCodeId,
-                    invitation_code     AS Code,
-                    is_used             AS IsUsed,
+                    invitation_id       AS InvitationId,
+                    invitation_code     AS InvitationCode,
                     generated_by        AS GeneratedBy,
+                    used_by             AS UsedBy,
                     created_at          AS CreatedAt,
                     expires_at          AS ExpiresAt,
                     is_revoked          AS IsRevoked
@@ -73,9 +73,9 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@InvitationCode", MySqlDbType.String)
+                new MySqlParameter("@InvitationCode", MySqlDbType.VarChar, 32)
                 {
-                    Value = invitationCode,
+                    Value = invitationCode
                 }
             };
 
@@ -85,19 +85,23 @@ namespace BlockSense.Backend.Repositories.Implementations
             return SqlMapper.Parse<InvitationCodeEntity>(dbReader).FirstOrDefault();
         }
 
+        /// <inheritdoc/>
         public async Task<InvitationCodeEntity?> GetByCodeForUpdateAsync(string invitationCode, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
                 SELECT
-                    invitation_code_id  AS InvitationCodeId,
-                    invitation_code     AS Code,
-                    is_used             AS IsUsed,
+                    invitation_id       AS InvitationId,
+                    invitation_code     AS InvitationCode,
                     generated_by        AS GeneratedBy,
+                    used_by             AS UsedBy,
                     created_at          AS CreatedAt,
                     expires_at          AS ExpiresAt,
                     is_revoked          AS IsRevoked
                 FROM invitation_codes
                 WHERE invitation_code = @InvitationCode
+                    AND used_by is NULL
+                    AND is_revoked = 0
+                    AND expires_at > UTC_TIMESTAMP(6)
                 LIMIT 1
                 FOR UPDATE;
             """;
@@ -106,7 +110,7 @@ namespace BlockSense.Backend.Repositories.Implementations
 {
                 new MySqlParameter("@InvitationCode", MySqlDbType.VarChar, 32)
                 {
-                    Value = invitationCode,
+                    Value = invitationCode
                 }
             };
 
@@ -121,23 +125,28 @@ namespace BlockSense.Backend.Repositories.Implementations
         {
             const string sqlQuery = """
                 SELECT
-                    invitation_code_id  AS InvitationCodeId,
-                    invitation_code     AS InvitationCode,
-                    is_used             AS IsUsed,
-                    generated_by        AS GeneratedBy,
-                    created_at          AS CreatedAt,
-                    expires_at          AS ExpiresAt,
-                    is_revoked          AS IsRevoked
-                FROM invitation_codes
-                WHERE generated_by = @UserId
-                ORDER BY is_used ASC;
+                    ic.invitation_id        AS InvitationId,
+                    ic.invitation_code      AS InvitationCode,
+                    ic.generated_by         AS GeneratedBy,
+                    ic.used_by              AS UsedBy,
+                    u.username              AS UserByUsername,
+                    ic.created_at           AS CreatedAt,
+                    ic.expires_at           AS ExpiresAt,
+                    ic.is_revoked           AS IsRevoked
+                FROM invitation_codes ic
+                LEFT JOIN users u
+                    ON ic.used_by = u.user_id
+                WHERE ic.generated_by = @UserId
+                ORDER BY
+                    ic.used_by IS NULL DESC,
+                    ic.invitation_id ASC;
             """;
 
             var parameters = new[]
             {
                 new MySqlParameter("@UserId", MySqlDbType.UInt32)
                 {
-                    Value = userId,
+                    Value = userId
                 }
             };
 
@@ -145,6 +154,29 @@ namespace BlockSense.Backend.Repositories.Implementations
                 await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
 
             return SqlMapper.Parse<InvitationCodeEntity>(dbReader).ToList();
+        }
+
+        /// <inheritdoc/>
+        public async Task<string?> GetGenerationUsernameByUsedUser(uint userId, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                SELECT
+                    users.user_id AS GeneratedByUsername
+                FROM invitation_codes
+                JOIN users
+                ON invitation_codes.generated_by = users.user_id
+                WHERE used_by = @UserId
+            """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@UserId", MySqlDbType.UInt32)
+                {
+                    Value = userId
+                }
+            };
+
+            return await _databaseContext.ExecuteScalarAsync<string?>(sqlQuery, parameters, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -160,7 +192,7 @@ namespace BlockSense.Backend.Repositories.Implementations
             {
                 new MySqlParameter("@InvitationCode", MySqlDbType.VarChar, 32)
                 {
-                    Value = invitationCode,
+                    Value = invitationCode
                 }
             };
 
@@ -176,16 +208,16 @@ namespace BlockSense.Backend.Repositories.Implementations
                 SELECT COUNT(1)
                 FROM invitation_codes
                 WHERE invitation_code = @InvitationCode
-                    AND is_used = 0
+                    AND used_by is NULL
                     AND is_revoked = 0
-                    AND (expires_at IS NULL OR expires_at > UTC_TIMESTAMP(6));
+                    AND expires_at > UTC_TIMESTAMP(6);
             """;
 
             var parameters = new[]
             {
                 new MySqlParameter("@InvitationCode", MySqlDbType.VarChar, 32)
                 {
-                    Value = invitationCode,
+                    Value = invitationCode
                 }
             };
 
@@ -200,15 +232,15 @@ namespace BlockSense.Backend.Repositories.Implementations
             const string sqlQuery = """
                 INSERT INTO invitation_codes (
                     invitation_code,
-                    is_used,
                     generated_by,
+                    used_by,
                     created_at,
                     expires_at,
                     is_revoked )
                 VALUES (
                     @InvitationCode,
-                    @IsUsed,
                     @GeneratedBy,
+                    @UsedBy,
                     @CreatedAt,
                     @ExpiresAt,
                     @IsRevoked );
@@ -218,10 +250,10 @@ namespace BlockSense.Backend.Repositories.Implementations
             var parameters = new[]
             {
                 new MySqlParameter("@InvitationCode", MySqlDbType.VarChar, 32) { Value = invitation.InvitationCode },
-                new MySqlParameter("@IsUsed", MySqlDbType.Bit) { Value = invitation.IsUsed },
                 new MySqlParameter("@GeneratedBy", MySqlDbType.UInt32) { Value = invitation.GeneratedBy },
+                new MySqlParameter("@UsedBy", MySqlDbType.UInt32) { Value = invitation.UsedBy },
                 new MySqlParameter("@CreatedAt", MySqlDbType.DateTime) { Value = invitation.CreatedAt },
-                new MySqlParameter("@ExpiresAt", MySqlDbType.DateTime) { Value = invitation.ExpiresAt.HasValue ? invitation.ExpiresAt.Value : DBNull.Value },
+                new MySqlParameter("@ExpiresAt", MySqlDbType.DateTime) { Value = invitation.ExpiresAt },
                 new MySqlParameter("@IsRevoked", MySqlDbType.Bit) { Value = invitation.IsRevoked }
             };
 
@@ -231,18 +263,24 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task MarkAsUsedAsync(uint invitationCodeId, CancellationToken cancellationToken = default)
+        public async Task MarkAsUsedAsync(uint invitationCodeId, uint userId, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
                 UPDATE invitation_codes
-                SET is_used = 1
-                WHERE invitation_code_id = @InvitationCodeId
-                  AND is_used = 0;
+                SET used_by = @UserId
+                WHERE invitation_id = @InvitationId
+                    AND used_by is NULL
+                    AND is_revoked = 0
+                    AND expires_at > UTC_TIMESTAMP(6);
             """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@InvitationCodeId", MySqlDbType.VarChar, 32)
+                new MySqlParameter("@UserId", MySqlDbType.UInt32)
+                {
+                    Value = userId
+                },
+                new MySqlParameter("@InvitationId", MySqlDbType.VarChar, 32)
                 {
                     Value = invitationCodeId
                 }
@@ -257,13 +295,13 @@ namespace BlockSense.Backend.Repositories.Implementations
             const string sqlQuery = """
                 UPDATE invitation_codes
                 SET is_revoked = 1
-                WHERE invitation_code_id = @InvitationCodeId
+                WHERE invitation_id = @InvitationId
                   AND is_revoked = 0;
             """;
 
             var parameters = new[]
 {
-                new MySqlParameter("@InvitationCodeId", MySqlDbType.VarChar, 32)
+                new MySqlParameter("@InvitationId", MySqlDbType.VarChar, 32)
                 {
                     Value = invitationCodeId
                 }

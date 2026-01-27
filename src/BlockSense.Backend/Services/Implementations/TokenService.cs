@@ -1,6 +1,7 @@
 ﻿using BlockSense.Backend.Data.Configurations;
 using BlockSense.Backend.Entities;
 using BlockSense.Backend.Exceptions.Authentication;
+using BlockSense.Backend.Exceptions.User;
 using BlockSense.Backend.Models.DeviceContext;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
@@ -51,7 +52,8 @@ namespace BlockSense.Backend.Services.Implementations
             byte[] rawToken =
                 CryptographyUtilities.GenerateSecureRandomBytes(32);
 
-            string tokenHash = Sha256Hasher.ComputeBase64(rawToken);
+            string tokenHash =
+                Sha256Hasher.ComputeBase64(rawToken);
 
             var now = DateTime.UtcNow;
             var expiration = now.Add(_refreshTokenConfig.Expiration);
@@ -86,7 +88,9 @@ namespace BlockSense.Backend.Services.Implementations
                 await _userRepository.GetByIdAsync(userId);
 
             if (user is null)
-                throw new NullReferenceException();
+            {
+                throw new UserNotFoundException();
+            }
 
             byte[] key =
                 Convert.FromBase64String(_jwtTokenConfig.SigningKey);
@@ -105,11 +109,15 @@ namespace BlockSense.Backend.Services.Implementations
                 Expires = tokenExpiry,
                 Issuer = _jwtTokenConfig.Issuer,
                 Audience = _jwtTokenConfig.Audience,
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha256Signature)
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            var token =
+                tokenHandler.CreateToken(tokenDescriptor);
 
             return new AccessTokenDto
             {
@@ -137,7 +145,7 @@ namespace BlockSense.Backend.Services.Implementations
 
             if (deviceContext.HardwareFingerprint != tokenEntity.HardwareFingerprint)
             {
-                throw new InvalidHardwareFingerprintException();
+                throw new InvalidClientContextException();
             }
 
             var accessToken =

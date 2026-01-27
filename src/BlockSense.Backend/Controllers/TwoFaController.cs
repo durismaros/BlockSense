@@ -3,6 +3,7 @@ using BlockSense.Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
+using System.Security.Claims;
 
 namespace BlockSense.Backend.Controllers
 {
@@ -21,7 +22,7 @@ namespace BlockSense.Backend.Controllers
         [Authorize]
         public async Task<IActionResult> SetupInit()
         {
-            if (!uint.TryParse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out uint userId))
+            if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
                 throw new AuthenticationRequiredException();
 
             var response = await _twoFactorAuthService.SetupInitAsync(userId);

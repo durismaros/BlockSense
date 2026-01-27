@@ -60,5 +60,23 @@ namespace BlockSense.Contracts.DTOs.User
             get;
             init;
         }
+
+        /// <summary>
+        /// Identifier (Username) of the user who invited this account.
+        /// </summary>
+        public required string InvitedBy
+        {
+            get;
+            init;
+        }
+
+        /// <summary>
+        /// Indicates whether two-factor authentication (2FA) is enabled for this user.
+        /// </summary>
+        public required bool TwoFactorEnabled
+        {
+            get;
+            init;
+        }
     }
 }

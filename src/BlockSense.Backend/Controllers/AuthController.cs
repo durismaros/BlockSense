@@ -1,13 +1,9 @@
 ﻿using BlockSense.Backend.Attributes;
-using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Models.DeviceContext;
-using BlockSense.Backend.Repositories.Interfaces;
-using BlockSense.Backend.Services.Implementations;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.DTOs.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace BlockSense.Backend.Controllers
 {

@@ -15,18 +15,9 @@
         }
 
         /// <summary>
-        /// Aggregated statistics about the user account.
-        /// </summary>
-        public required UserStatisticsDto Statistics
-        {
-            get;
-            init;
-        }
-
-        /// <summary>
         /// List of currently active devices/sessions for the user.
         /// </summary>
-        public required IReadOnlyList<UserDeviceDto> ActiveDevices
+        public required IReadOnlyList<UserTokenSessionDto> ActiveTokens
         {
             get;
             init;
@@ -35,7 +26,7 @@
         /// <summary>
         /// List of invitation codes created by the user.
         /// </summary>
-        public required IReadOnlyList<InvitationDto> Invitations
+        public required IReadOnlyList<InvitationCodeDto> UserInvitations
         {
             get;
             init;

@@ -1,7 +1,11 @@
-﻿using BlockSense.Backend.Services.Interfaces;
+﻿using BlockSense.Backend.Exceptions.Authentication;
+using BlockSense.Backend.Exceptions.User;
+using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.DTOs.Registration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.JsonWebTokens;
+using System.Security.Claims;
 
 namespace BlockSense.Backend.Controllers
 {
@@ -29,24 +33,46 @@ namespace BlockSense.Backend.Controllers
         }
 
         [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> GetAllUsersAsync(CancellationToken cancellationToken)
+        [Authorize(Policy = "AdministratorPolicy")]
+        public async Task<IActionResult> GetAllUsersSummaryAsync(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
         [HttpGet("{id:int}")]
-        [Authorize]
-        public async Task<IActionResult> GetUserByIdAsync(CancellationToken cancellationToken)
+        [Authorize(Policy = "AdministratorPolicy")]
+        public async Task<IActionResult> GetUserSummaryByIdAsync([FromRoute] int userId, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            if (userId <= 0)
+                throw new UserNotFoundException();
+
+            var response = await _userService.GetUserSummaryAsync((uint)userId, cancellationToken);
+
+            return Ok(response);
         }
 
         [HttpGet("me")]
         [Authorize]
-        public async Task<IActionResult> GetCurrentUsersAsync(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetUserSummaryAsync(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
+                throw new AuthenticationRequiredException();
+
+            var response = await _userService.GetUserSummaryAsync(userId, cancellationToken);
+
+            return Ok(response);
+        }
+
+        [HttpGet("me/dashboard")]
+        [Authorize]
+        public async Task<IActionResult> GetUserDashboardAsync(CancellationToken cancellationToken)
+        {
+            if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
+                throw new AuthenticationRequiredException();
+
+            var response = await _userService.GetUserDashboardAsync(userId, cancellationToken);
+
+            return Ok(response);
         }
     }
 }

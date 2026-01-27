@@ -1,4 +1,6 @@
-﻿namespace BlockSense.Backend.Entities
+﻿using BlockSense.Contracts.Enums.User;
+
+namespace BlockSense.Backend.Entities
 {
     /// <summary>
     /// Represents an invitation code used for user registration or access control.
@@ -8,7 +10,7 @@
         /// <summary>
         /// Primary key of the invitation code.
         /// </summary>
-        public required uint InvitationCodeId
+        public required uint InvitationId
         {
             get;
             set;
@@ -17,16 +19,7 @@
         /// <summary>
         /// The unique alphanumeric invitation code.
         /// </summary>
-        public required  string InvitationCode
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Indicates whether the invitation code has already been used.
-        /// </summary>
-        public required bool IsUsed
+        public required string InvitationCode
         {
             get;
             set;
@@ -36,6 +29,24 @@
         /// The unique identifier of the user who generated the invitation code.
         /// </summary>
         public required uint GeneratedBy
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// The unique identifier of the user who used the invitation code.
+        /// </summary>
+        public uint? UsedBy
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// The Username of the user who used the invitation code.
+        /// </summary>
+        public string? UsedByUsername
         {
             get;
             set;
@@ -54,7 +65,7 @@
         /// Optional UTC timestamp indicating when the invitation code expires.
         /// </summary>
         /// <remarks><c>null</c> means the code does not expire.</remarks>
-        public DateTime? ExpiresAt
+        public required DateTime ExpiresAt
         {
             get;
             set;
@@ -70,17 +81,19 @@
         }
 
         /// <summary>
-        /// Returns <c>true</c> if the invitation code is currently valid.
+        /// Gets the current status of the invitation code based on its state.
         /// </summary>
-        public bool IsActive
-            => !IsUsed && !IsRevoked && (ExpiresAt is null || ExpiresAt > DateTime.UtcNow);
+        public InvitationStatus Status
+            => IsRevoked ? InvitationStatus.Revoked :
+            UsedBy.HasValue ? InvitationStatus.Used :
+            ExpiresAt < DateTime.UtcNow ? InvitationStatus.Expired :
+            InvitationStatus.Active;
 
         /// <summary>
         /// Returns the remaining time until the code expires.
         /// If no expiration is set, returns <see cref="TimeSpan.Zero"/>.
         /// </summary>
         public TimeSpan TimeUntilExpiration
-            => ExpiresAt.HasValue ? ExpiresAt.Value - DateTime.UtcNow : TimeSpan.Zero;
-
+            => ExpiresAt - DateTime.UtcNow;
     }
 }

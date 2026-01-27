@@ -35,13 +35,12 @@ namespace BlockSense.Backend.Repositories.Implementations
                     user_type             AS UserType,
                     password_hash         AS PasswordHash,
                     password_salt         AS PasswordSalt,
-                    invitation_code_id    AS InvitationCodeId,
                     created_at            AS CreatedAt,
                     updated_at            AS UpdatedAt,
                     deleted_at            AS DeletedAt
                 FROM users
                 WHERE user_id = @UserId
-                  AND deleted_at IS NULL
+                    AND deleted_at IS NULL
                 LIMIT 1;
                 """;
 
@@ -70,7 +69,6 @@ namespace BlockSense.Backend.Repositories.Implementations
                     user_type           AS UserType,
                     password_hash       AS PasswordHash,
                     password_salt       AS PasswordSalt,
-                    invitation_code_id  AS InvitationCodeId,
                     created_at          AS CreatedAt,
                     updated_at          AS UpdatedAt,
                     deleted_at          AS DeletedAt
@@ -150,7 +148,6 @@ namespace BlockSense.Backend.Repositories.Implementations
                     user_type,
                     password_hash,
                     password_salt,
-                    invitation_code_id,
                     created_at,
                     updated_at )
                 VALUES (
@@ -159,7 +156,6 @@ namespace BlockSense.Backend.Repositories.Implementations
                     @UserType,
                     @PasswordHash,
                     @PasswordSalt,
-                    @InvitationCodeId,
                     @CreatedAt,
                     @UpdatedAt );
                 SELECT LAST_INSERT_ID();
@@ -172,7 +168,6 @@ namespace BlockSense.Backend.Repositories.Implementations
                 new MySqlParameter("@UserType", MySqlDbType.Enum) { Value = user.UserType },
                 new MySqlParameter("@PasswordHash", MySqlDbType.Binary, 32) { Value = user.PasswordHash },
                 new MySqlParameter("@PasswordSalt", MySqlDbType.Binary, 16) { Value = user.PasswordSalt },
-                new MySqlParameter("@InvitationCodeId", MySqlDbType.UInt32) { Value = user.InvitationCodeId },
                 new MySqlParameter("@CreatedAt", MySqlDbType.DateTime) { Value = user.CreatedAt },
                 new MySqlParameter("@UpdatedAt", MySqlDbType.DateTime) { Value = user.UpdatedAt },
             };

@@ -38,6 +38,14 @@ namespace BlockSense.Backend.Repositories.Interfaces
         Task<IReadOnlyList<InvitationCodeEntity>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Retrieves a username of user who generated the invitation code.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns>Username of user who generated the invitation code.</returns>
+        Task<string?> GetGenerationUsernameByUsedUser(uint userId, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Checks whether an invitation code exists.
         /// </summary>
         /// <param name="invitationCode">The invitation code string.</param>
@@ -64,9 +72,10 @@ namespace BlockSense.Backend.Repositories.Interfaces
         /// Marks an invitation code as used.
         /// </summary>
         /// <param name="invitationCodeId">The unique identifier of the invitation code.</param>
+        /// <param name="userId">The unique identifier of the user.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        Task MarkAsUsedAsync(uint invitationCodeId, CancellationToken cancellationToken = default);
+        Task MarkAsUsedAsync(uint invitationCodeId, uint userId, CancellationToken cancellationToken = default);
         /// <summary>
         /// Revokes an invitation code, preventing future use.
         /// </summary>

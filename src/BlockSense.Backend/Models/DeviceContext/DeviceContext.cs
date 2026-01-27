@@ -67,7 +67,7 @@ namespace BlockSense.Backend.Models.DeviceContext
 
             // Helper to retrieve header values
             string GetHeader(string key)
-                => httpContext.Request.Headers.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value.ToString() : throw new InvalidDeviceContextException(key);
+                => httpContext.Request.Headers.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value.ToString() : throw new InvalidClientContextException();
 
             return new DeviceContext
             {

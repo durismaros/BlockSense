@@ -56,25 +56,26 @@ namespace BlockSense.Backend.Services.Implementations
 
             try
             {
-                var user = await _userRepository.GetByUsernameOrEmailAsync(
-                    request.Login,
-                    cancellationToken);
+                var user =
+                    await _userRepository.GetByUsernameOrEmailAsync(request.Login, cancellationToken);
 
                 if (user is null || user.DeletedAt.HasValue)
                 {
                     throw new InvalidCredentialsException();
                 }
 
-                if (user.UserType == UserType.Banned)
+                if (user.UserType is UserType.Banned)
                 {
                     throw new AccessProhibitedException();
                 }
 
                 var argon2idHasher = new Argon2idHasher();
-                var computedHash = argon2idHasher.Derive(
-                    Encoding.UTF8.GetBytes(request.Password),
-                    out _,
-                    user.PasswordSalt);
+
+                var computedHash =
+                    argon2idHasher.Derive(
+                        Encoding.UTF8.GetBytes(request.Password),
+                        out _,
+                        user.PasswordSalt);
 
                 if (!Arrays.FixedTimeEquals(user.PasswordHash, computedHash))
                 {

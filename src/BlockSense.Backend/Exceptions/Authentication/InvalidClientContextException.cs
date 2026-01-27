@@ -2,13 +2,13 @@
 
 namespace BlockSense.Backend.Exceptions.Authentication
 {
-    public class InvalidHardwareFingerprintException : ApiException
+    public sealed class InvalidClientContextException : ApiException
     {
         public override string Type
         {
             get
             {
-                return ApiProblemTypes.Authentication.InvalidHardwareFingerprint;
+                return ApiProblemTypes.Authentication.InvalidClientContext;
             }
         }
 
@@ -16,7 +16,7 @@ namespace BlockSense.Backend.Exceptions.Authentication
         {
             get
             {
-                return "Invalid Hardware Fingerprint";
+                return "Invalid Client Context";
             }
         }
 
@@ -28,7 +28,7 @@ namespace BlockSense.Backend.Exceptions.Authentication
             }
         }
 
-        public InvalidHardwareFingerprintException()
-            : base("The provided Hardware fingerprint is invalid. If you believe this is a mistake or need assistance, please contact support.") { }
+        public InvalidClientContextException()
+            : base("The client context provided with this request is invalid or incomplete. Please ensure your device is properly configured and try again.") { }
     }
 }

@@ -1,10 +1,12 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Entities;
 using BlockSense.Backend.Exceptions.Registration;
+using BlockSense.Backend.Exceptions.User;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
 using BlockSense.Contracts.DTOs.Registration;
+using BlockSense.Contracts.DTOs.User;
 using BlockSense.Contracts.Enums.User;
 using MySql.Data.MySqlClient;
 using System.Text;
@@ -18,6 +20,8 @@ namespace BlockSense.Backend.Services.Implementations
     {
         private readonly IUserRepository _userRepository;
         private readonly IInvitationRepository _invitationRepository;
+        private readonly IRefreshTokenRepository _refreshTokenRepository;
+        private readonly ITwoFactorAuthRepository _twoFactorAuthRepository;
         private readonly DatabaseContext _databaseContext;
 
         /// <summary>
@@ -30,10 +34,14 @@ namespace BlockSense.Backend.Services.Implementations
         public UserService(
             IUserRepository userRepository,
             IInvitationRepository invitationRepository,
+            IRefreshTokenRepository refreshTokenRepository,
+            ITwoFactorAuthRepository twoFactorAuthRepository,
             DatabaseContext databaseContext)
         {
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _invitationRepository = invitationRepository ?? throw new ArgumentNullException(nameof(invitationRepository));
+            _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
+            _twoFactorAuthRepository = twoFactorAuthRepository ?? throw new ArgumentNullException(nameof(twoFactorAuthRepository));
             _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
         }
 
@@ -56,10 +64,7 @@ namespace BlockSense.Backend.Services.Implementations
                         request.InvitationCode,
                         cancellationToken);
 
-                if (invitation is null ||
-                    invitation.IsUsed ||
-                    invitation.IsRevoked ||
-                    invitation.ExpiresAt < DateTime.UtcNow)
+                if (invitation is null)
                 {
                     throw new InvalidInvitationCodeException();
                 }
@@ -71,7 +76,7 @@ namespace BlockSense.Backend.Services.Implementations
 
                 var now = DateTime.UtcNow;
 
-                var userEntity = new UserEntity
+                var user = new UserEntity
                 {
                     UserId = uint.MinValue,
                     Username = request.Username,
@@ -79,16 +84,16 @@ namespace BlockSense.Backend.Services.Implementations
                     PasswordHash = computedHash,
                     PasswordSalt = computedSalt,
                     UserType = UserType.Standard,
-                    InvitationCodeId = invitation.InvitationCodeId,
                     CreatedAt = now,
                     UpdatedAt = now,
                 };
 
                 uint userId =
-                    await _userRepository.CreateAsync(userEntity, cancellationToken);
+                    await _userRepository.CreateAsync(user, cancellationToken);
 
                 await _invitationRepository.MarkAsUsedAsync(
-                    invitation.InvitationCodeId,
+                    invitation.InvitationId,
+                    userId,
                     cancellationToken);
 
                 await _databaseContext.CommitAsync(cancellationToken);
@@ -96,10 +101,10 @@ namespace BlockSense.Backend.Services.Implementations
                 return new RegistrationResponse
                 {
                     UserId = userId,
-                    Username = userEntity.Username,
-                    Email = userEntity.Email,
-                    UserType = userEntity.UserType,
-                    CreatedAt = userEntity.CreatedAt
+                    Username = user.Username,
+                    Email = user.Email,
+                    UserType = user.UserType,
+                    CreatedAt = user.CreatedAt
                 };
             }
             catch (MySqlException ex) when (ex.Number == 1062)
@@ -128,5 +133,82 @@ namespace BlockSense.Backend.Services.Implementations
                 await _databaseContext.DisposeAsync();
             }
         }
+
+        public async Task<UserSummaryDto> GetUserSummaryAsync(uint userId, CancellationToken cancellationToken = default)
+        {
+            var user =
+                await _userRepository.GetByIdAsync(userId, cancellationToken);
+
+            if (user is null)
+            {
+                throw new UserNotFoundException();
+            }
+
+            var invitedBy =
+                await _invitationRepository.GetGenerationUsernameByUsedUser(userId, cancellationToken);
+
+            var twoFaEnabled =
+                await _twoFactorAuthRepository.IsEnabledAsync(userId);
+
+            return new UserSummaryDto
+            {
+                UserId = userId,
+                Username = user.Username,
+                Email = user.Email,
+                UserType = user.UserType,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt,
+                InvitedBy = invitedBy ?? "Unknown",
+                TwoFactorEnabled = twoFaEnabled
+            };
+        }
+
+        public async Task<UserDashboardDto> GetUserDashboardAsync(uint userId, CancellationToken cancellationToken = default)
+        {
+            var userSummary =
+                await GetUserSummaryAsync(userId, cancellationToken);
+
+            var activeTokens =
+                await _refreshTokenRepository.GetActiveByUserAsync(userId, cancellationToken);
+
+            var invitationCodes =
+                await _invitationRepository.GetByUserAsync(userId, cancellationToken);
+
+            return new UserDashboardDto
+            {
+                Profile = userSummary,
+                ActiveTokens = ToActiveUserTokens(activeTokens),
+                UserInvitations = ToUserInvitations(invitationCodes)
+            };
+        }
+
+        private static IReadOnlyList<UserTokenSessionDto> ToActiveUserTokens(IReadOnlyList<RefreshTokenEntity> tokens)
+        {
+            return tokens
+                .Select(token => new UserTokenSessionDto
+                {
+                    TokenHash = token.TokenHash,
+                    DeviceName = token.DeviceIdentifier,
+                    IpAddress = token.IpAddress,
+                    IssuedAt = token.IssuedAt,
+                    ExpiresAt = token.ExpiresAt
+                })
+                .ToList();
+        }
+
+        private static IReadOnlyList<InvitationCodeDto> ToUserInvitations(IReadOnlyList<InvitationCodeEntity> invitations)
+        {
+            return invitations
+                .Select(invitation => new InvitationCodeDto
+                {
+                    InvitationCode = invitation.InvitationCode,
+                    CreatedAt = invitation.CreatedAt,
+                    ExpiresAt = invitation.ExpiresAt,
+                    InvitedUser = invitation.UsedByUsername,
+                    Status = invitation.Status
+                })
+                .ToList();
+        }
+
     }
 }
