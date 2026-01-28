@@ -17,5 +17,7 @@ namespace BlockSense.Desktop.Services.Interfaces
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>A <see cref="ServiceResponse"/> indicating the result of the registration attempt.</returns>
         Task<ServiceResponse> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken = default);
+
+        Task InitializeAsync(CancellationToken cancellationToken = default);
     }
 }

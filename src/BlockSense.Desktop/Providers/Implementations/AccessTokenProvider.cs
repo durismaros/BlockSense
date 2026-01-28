@@ -1,6 +1,5 @@
 ﻿using BlockSense.Contracts.DTOs.Token;
 using BlockSense.Desktop.Providers.Interfaces;
-using BlockSense.Desktop.Utilities.ApiHandling;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,14 +27,11 @@ namespace BlockSense.Desktop.Providers.Implementations
             }
 
             if (RefreshRequested is null)
-                throw new AuthenticationRequiredException();
+                throw new InvalidOperationException("No service is registered to handle this event.");
 
-            if (await RefreshRequested.Invoke(cancellationToken))
-            {
-                return _accessToken;
-            }
-
-            throw new AuthenticationRequiredException();
+            await RefreshRequested.Invoke(cancellationToken);
+            
+            return _accessToken;
         }
 
         public void Set(AccessTokenDto accessToken)
@@ -45,5 +41,5 @@ namespace BlockSense.Desktop.Providers.Implementations
         }
     }
 
-    public delegate Task<bool> AccessTokenRefreshRequestedAsync(CancellationToken cancellationToken);
+    public delegate Task AccessTokenRefreshRequestedAsync(CancellationToken cancellationToken);
 }

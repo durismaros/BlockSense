@@ -35,8 +35,7 @@
 					VerticalContentAlignment="Center"
 					Content="User Profile"
 					FontSize="12"
-					FontWeight="SemiBold"
-					Opacity="0.8">
+					FontWeight="SemiBold">
 			</Button>
 
 			<Button x:Name="UserWalletButton"
@@ -45,8 +44,7 @@
 					VerticalContentAlignment="Center"
 					Content="Wallet"
 					FontSize="12"
-					FontWeight="SemiBold"
-					Opacity="0.8">
+					FontWeight="SemiBold">
 			</Button>
 
 		</StackPanel>

@@ -4,8 +4,6 @@ using BlockSense.Desktop.Models.Services;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.ApiHandling;
-using BlockSense.Desktop.Utilities.UIComponents;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
@@ -22,7 +20,6 @@ namespace BlockSense.Desktop.Services.Implementations
         private readonly IApiClient _apiClient;
         private readonly IAccessTokenProvider _accessTokenProvider;
         private readonly IRefreshTokenProvider _refreshTokenProvider;
-        private readonly NavigationManager _navigationManager;
 
         /// <summary>
         /// Initializes a new instance of <see cref="AuthService"/>.
@@ -30,13 +27,12 @@ namespace BlockSense.Desktop.Services.Implementations
         /// <param name="logger">Logger for capturing authentication-related events.</param>
         /// <param name="apiClient">The API client used to send authentication requests.</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="apiClient"/> or <paramref name="logger"/> is null.</exception>
-        public AuthService(ILogger<AuthService> logger, IApiClient apiClient, IAccessTokenProvider accessTokenProvider, IRefreshTokenProvider refreshTokenProvider, NavigationManager navigationManager)
+        public AuthService(ILogger<AuthService> logger, IApiClient apiClient, IAccessTokenProvider accessTokenProvider, IRefreshTokenProvider refreshTokenProvider)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
             _accessTokenProvider = accessTokenProvider ?? throw new ArgumentNullException(nameof(accessTokenProvider));
             _refreshTokenProvider = refreshTokenProvider ?? throw new ArgumentNullException(nameof(refreshTokenProvider));
-            _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
 
             _accessTokenProvider.RefreshRequested += AuthRefreshAsync;
         }
@@ -82,7 +78,7 @@ namespace BlockSense.Desktop.Services.Implementations
             };
         }
 
-        public async Task<bool> AuthRefreshAsync(CancellationToken cancellationToken = default)
+        public async Task AuthRefreshAsync(CancellationToken cancellationToken = default)
         {
             var refreshToken = await _refreshTokenProvider.GetAsync(cancellationToken);
 
@@ -98,33 +94,11 @@ namespace BlockSense.Desktop.Services.Implementations
                     request: request,
                     cancellationToken: cancellationToken);
 
-            if (response.IsSuccess && response.Data is not null)
-            {
-                await _refreshTokenProvider.SaveAsync(response.Data.RefreshToken);
-                _accessTokenProvider.Set(response.Data.AccessToken);
-
-                return true;
-            }
-
-            return false;
-        }
-
-        public async Task InitializeAsync()
-        {
-            try
-            {
-                if (await AuthRefreshAsync())
-                {
-                    MainWindow.Instance.ContentContainer.Content = App.ServiceProvider.GetRequiredService<HomeView>();
-                    return;
-                }
-
+            if (!response.IsSuccess || response.Data is null)
                 throw new AuthenticationRequiredException();
-            }
-            catch (Exception)
-            {
-                MainWindow.Instance.ContentContainer.Content = App.ServiceProvider.GetRequiredService<WelcomeView>();
-            }
+
+            await _refreshTokenProvider.SaveAsync(response.Data.RefreshToken);
+            _accessTokenProvider.Set(response.Data.AccessToken);
         }
     }
 }

@@ -4,6 +4,8 @@ using BlockSense.Backend.Repositories.Interfaces;
 using Dapper;
 using MySql.Data.MySqlClient;
 using System.Text.Json;
+using System.Threading;
+using static Dapper.SqlMapper;
 
 namespace BlockSense.Backend.Repositories.Implementations
 {
@@ -75,7 +77,7 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task CreateOrUpdateAsync(TwoFactorAuthEntity entity, CancellationToken cancellationToken = default)
+        public async Task CreateAsync(TwoFactorAuthEntity entity, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
                 INSERT INTO two_factor_auth (
@@ -87,19 +89,60 @@ namespace BlockSense.Backend.Repositories.Implementations
                     @UserId,
                     @EncryptedTotpSecret,
                     @BackupCodesJson,
-                    @UpdatedAt )
-                ON DUPLICATE KEY UPDATE
-                    encrypted_totp_secret = @EncryptedTotpSecret,
-                    backup_codes = @BackupCodesJson,
-                    updated_at = @UpdatedAt;
+                    @UpdatedAt );
                 """;
 
             var parameters = new[]
             {
                 new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = entity.UserId },
                 new MySqlParameter("@EncryptedTotpSecret", MySqlDbType.Binary, 48) { Value = entity.EncryptedTotpSecret },
-                new MySqlParameter("@BackupCodesJson", MySqlDbType.JSON) { Value = (object?)JsonSerializer.Serialize(entity.BackupCodes) ?? DBNull.Value },
+                new MySqlParameter("@BackupCodesJson", MySqlDbType.JSON) { Value = (object)JsonSerializer.Serialize(entity.BackupCodes) ?? DBNull.Value },
                 new MySqlParameter("@UpdatedAt", MySqlDbType.DateTime) { Value = entity.UpdatedAt }
+            };
+
+            await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
+        }
+
+        public async Task ConsumeBackupCodeAsync(uint userId, IReadOnlyList<string> backupCodes, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                UPDATE two_factor_auth
+                SET backup_codes = @BackupCodesJson
+                WHERE
+                    user_id = @UserId
+                    AND backup_codes IS NOT NULL
+                """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@UserId", MySqlDbType.UInt32)
+                {
+                    Value = userId
+                },
+                new MySqlParameter("BackupCodesJson", MySqlDbType.JSON)
+                {
+                    Value = JsonSerializer.Serialize(backupCodes)
+                }
+            };
+
+            await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
+        }
+
+        public async Task InsertBackupCodesAsync(uint userId, IReadOnlyList<string> backupCodes, DateTime updatedAt, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                UPDATE two_factor_auth
+                SET
+                    backup_codes = @BackupCodesJson,
+                    updated_at = @UpdatedAt
+                WHERE user_id = @UserId;
+                """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId },
+                new MySqlParameter("@BackupCodesJson", MySqlDbType.JSON) { Value = JsonSerializer.Serialize(backupCodes) },
+                new MySqlParameter("@UpdatedAt", MySqlDbType.DateTime) { Value = updatedAt }
             };
 
             await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);

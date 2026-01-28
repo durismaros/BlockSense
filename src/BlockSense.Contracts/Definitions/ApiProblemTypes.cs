@@ -63,6 +63,11 @@
             public const string SetupRequired = "2FA_SETUP_REQUIRED";
 
             /// <summary>
+            /// Indicates that backup codes cannot be generated because the cooldown period has not elapsed.
+            /// </summary>
+            public const string BackupCodesCooldown = "2FA_BACKUP_CODES_COOLDOWN";
+
+            /// <summary>
             /// Occurs when the provided two-factor authentication (2FA) code is invalid.
             /// </summary>
             public const string InvalidCode = "2FA_INVALID_CODE";

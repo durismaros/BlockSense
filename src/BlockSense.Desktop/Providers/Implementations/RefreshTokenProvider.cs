@@ -22,11 +22,6 @@ namespace BlockSense.Desktop.Providers.Implementations
 
         public async Task<string> GetAsync(CancellationToken cancellationToken)
         {
-            if (!File.Exists(_filePath))
-            {
-                throw new AuthenticationRequiredException();
-            }
-
             try
             {
                 var bytes = await File.ReadAllBytesAsync(_filePath, cancellationToken);
@@ -52,7 +47,7 @@ namespace BlockSense.Desktop.Providers.Implementations
             }
             catch
             {
-                File.Delete(_filePath);
+                await ClearAsync();
                 throw new AuthenticationRequiredException();
             }
         }

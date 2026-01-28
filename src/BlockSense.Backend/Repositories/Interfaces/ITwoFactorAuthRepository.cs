@@ -22,12 +22,29 @@ namespace BlockSense.Backend.Repositories.Interfaces
         /// <returns><c>true</c> if 2FA is enabled; otherwise, <c>false</c>.</returns>
         Task<bool> IsEnabledAsync(uint userId, CancellationToken cancellationToken = default);
         /// <summary>
-        /// Inserts a new 2FA entity or updates an existing one.
+        /// Inserts a new 2FA entity.
         /// </summary>
         /// <param name="entity">The 2FA entity to create or update.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        Task CreateOrUpdateAsync(TwoFactorAuthEntity entity, CancellationToken cancellationToken = default);
+        Task CreateAsync(TwoFactorAuthEntity entity, CancellationToken cancellationToken = default);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="backupCodes"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task ConsumeBackupCodeAsync(uint userId, IReadOnlyList<string> backupCodes, CancellationToken cancellationToken = default);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="backupCodes"></param>
+        /// <param name="updatedAt"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task InsertBackupCodesAsync(uint userId, IReadOnlyList<string> backupCodes, DateTime updatedAt, CancellationToken cancellationToken = default);
         /// <summary>
         /// Deletes the 2FA data for a specific user.
         /// </summary>

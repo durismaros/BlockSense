@@ -61,7 +61,7 @@
 	
 	<!-- Scale up transition -->
 	<Style Selector="Button:not(#PART_CloseButton):not(#PART_MinimizeButton):pointerover">
-		<Setter Property="RenderTransform" Value="scale(1.02)" />
+		<Setter Property="RenderTransform" Value="scale(1.02)"/>
 	</Style>
 	
 	<Style Selector="Button:pressed">
@@ -98,14 +98,14 @@
 	<Style Selector="Button.DefaultWhite">
 		<Setter Property="Width" Value="120"/>
 		<Setter Property="Height" Value="30"/>
-		<Setter Property="Background" Value="#F5F5F5"/>
+		<Setter Property="Background" Value="#FBF7F1"/>
 		<Setter Property="Foreground" Value="#7A7A7A"/>
 		<Setter Property="CornerRadius" Value="20"/>
 		<Setter Property="HorizontalAlignment" Value="Center"/>
 	</Style>
 
 	<Style Selector="Button.DefaultWhite:pointerover ContentPresenter, Button.DefaultWhite:pressed ContentPresenter">
-		<Setter Property="Background" Value="#CCCCCC"/>
+		<Setter Property="Background" Value="#E8E2DA"/>
 		<Setter Property="Foreground" Value="#6E6E6E"/>
 	</Style>
 

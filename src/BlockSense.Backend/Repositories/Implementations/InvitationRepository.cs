@@ -157,11 +157,11 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<string?> GetGenerationUsernameByUsedUser(uint userId, CancellationToken cancellationToken = default)
+        public async Task<string?> GetUsernameByUsedUser(uint userId, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
                 SELECT
-                    users.user_id AS GeneratedByUsername
+                    users.username AS GeneratedByUsername
                 FROM invitation_codes
                 JOIN users
                 ON invitation_codes.generated_by = users.user_id

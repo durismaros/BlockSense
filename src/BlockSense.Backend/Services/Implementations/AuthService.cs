@@ -5,6 +5,7 @@ using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
 using BlockSense.Contracts.DTOs.Authentication;
+using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
 using BlockSense.Contracts.Enums.User;
 using Org.BouncyCastle.Utilities;
 using System.Text;
@@ -89,7 +90,10 @@ namespace BlockSense.Backend.Services.Implementations
                         throw new TwoFactorRequiredException();
                     }
 
-                    await _twoFactorAuthService.VerifyAsync(user.UserId, request.TwoFactorCode);
+                    await _twoFactorAuthService.VerifyAsync(user.UserId, new TwoFactorVerificationRequest
+                    {
+                        TwoFactorCode = request.TwoFactorCode
+                    });
                 }
 
                 var accessToken =

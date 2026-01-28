@@ -5,6 +5,7 @@ using BlockSense.Contracts.DTOs.Authentication;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
 using BlockSense.Desktop.Utilities.Validation;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,11 +21,16 @@ public partial class AuthenticationView : UserControl
     private string? _twoFactorCode;
     private CancellationTokenSource? _cancellationTokenSource;
 
-    public AuthenticationView(IAuthService authService, NavigationManager navigationManager)
+    public AuthenticationView()
     {
-        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
-        _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
-        _twoFactorSlidingPanel = MainWindow.Instance.TwoFactorSlidingPanel ?? throw new ArgumentNullException(nameof(MainWindow.Instance.TwoFactorSlidingPanel));
+        _authService = App.ServiceProvider.GetRequiredService<IAuthService>()
+            ?? throw new ArgumentNullException(nameof(IAuthService));
+
+        _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
+            ?? throw new ArgumentNullException(nameof(NavigationManager));
+
+        _twoFactorSlidingPanel = MainWindow.Instance.TwoFactorSlidingPanel
+            ?? throw new ArgumentNullException(nameof(MainWindow.Instance.TwoFactorSlidingPanel));
 
         _twoFactorSlidingPanel.TwoFactorCodeSubmitted += async code =>
         {

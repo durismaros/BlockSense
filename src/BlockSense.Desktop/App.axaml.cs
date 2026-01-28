@@ -37,7 +37,7 @@ namespace BlockSense.Desktop
             {
                 desktop.MainWindow = ServiceProvider.GetRequiredService<MainWindow>();
 
-                await ServiceProvider.GetRequiredService<IAuthService>().InitializeAsync();
+                await ServiceProvider.GetRequiredService<IUserService>().InitializeAsync();
             }
 
             base.OnFrameworkInitializationCompleted();
@@ -70,6 +70,7 @@ namespace BlockSense.Desktop
             services.AddSingleton<IDeviceContextProvider, DeviceContextProvider>();
             services.AddSingleton<IRefreshTokenProvider, RefreshTokenProvider>();
             services.AddSingleton<IAccessTokenProvider, AccessTokenProvider>();
+            services.AddSingleton<ICurrentUserProvider, CurrentUserProvider>();
 
             // --- Services / Helpers ---
             services.AddSingleton<NavigationManager>();
@@ -84,7 +85,6 @@ namespace BlockSense.Desktop
             services.AddSingleton<TwoFactorSlidingPanel>();
             services.AddSingleton<HomeView>();
             services.AddSingleton<UserDashboardView>();
-            services.AddSingleton<TestView>();
 
             // --- Windows ---
             services.AddSingleton<MainWindow>();

@@ -1,9 +1,11 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
 using BlockSense.Contracts.DTOs.Registration;
+using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
 using BlockSense.Desktop.Utilities.Validation;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading;
 
@@ -11,15 +13,18 @@ namespace BlockSense.Desktop;
 
 public partial class RegistrationView : UserControl
 {
-    private readonly NavigationManager _navigationManager;
     private readonly IUserService _userService;
+    private readonly NavigationManager _navigationManager;
 
     private CancellationTokenSource? _cancellationTokenSource;
 
-    public RegistrationView(NavigationManager navigationManager, IUserService userService)
+    public RegistrationView()
     {
-        _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
-        _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+        _userService = App.ServiceProvider.GetRequiredService<IUserService>()
+            ?? throw new ArgumentNullException(nameof(IUserService));
+
+        _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
+            ?? throw new ArgumentNullException(nameof(NavigationManager));
 
         InitializeComponent();
 

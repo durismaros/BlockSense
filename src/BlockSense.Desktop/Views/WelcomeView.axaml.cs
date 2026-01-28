@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using BlockSense.Desktop.Utilities.UIComponents;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 
 namespace BlockSense.Desktop;
@@ -9,9 +10,10 @@ public partial class WelcomeView : UserControl
 {
     private readonly NavigationManager _navigationManager;
 
-    public WelcomeView(NavigationManager navigationManager)
+    public WelcomeView()
     {
-        _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
+        _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
+            ?? throw new ArgumentNullException(nameof(NavigationManager));
 
         InitializeComponent();
 

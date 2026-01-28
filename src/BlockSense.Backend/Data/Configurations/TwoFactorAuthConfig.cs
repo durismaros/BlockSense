@@ -62,6 +62,17 @@ namespace BlockSense.Backend.Data.Configurations
         }
 
         /// <summary>
+        /// The timespan at which Backup Codes can be generated.
+        /// </summary>
+        [Required]
+        [Range(typeof(TimeSpan), "00:30:00", "1.00:00:00", ErrorMessage = "Backup Codes Cooldown must be between 30 minutes and 1 day.")]
+        public required TimeSpan BackupCodeCooldown
+        {
+            get;
+            init;
+        }
+
+        /// <summary>
         /// Master secret key used as a base for generating user-specific 2FA secrets.
         /// </summary>
         [Required]

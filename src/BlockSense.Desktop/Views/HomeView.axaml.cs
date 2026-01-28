@@ -6,6 +6,7 @@ using Avalonia.Styling;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Setup;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
+using Microsoft.Extensions.DependencyInjection;
 using Org.BouncyCastle.Asn1.Ocsp;
 using Serilog;
 using System;
@@ -16,16 +17,14 @@ namespace BlockSense.Desktop;
 public partial class HomeView : UserControl
 {
     private readonly NavigationManager _navigationManager;
-    private readonly IApiClient _apiClient;
 
-    private CancellationTokenSource? _cancellationTokenSource;
-
-    public HomeView(NavigationManager navigationManager, IApiClient apiClient)
+    public HomeView()
     {
-        _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
-        _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+        _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
+            ?? throw new ArgumentNullException(nameof(NavigationManager));
 
         InitializeComponent();
+
         FadeInText();
 
         UserDashboardButton.Click += ToUserDashboardViewClick;
@@ -39,7 +38,7 @@ public partial class HomeView : UserControl
 
     private async void ToUserWalletViewClick(object? sender, RoutedEventArgs e)
     {
-
+        throw new NotImplementedException();
     }
 
     private async void FadeInText()

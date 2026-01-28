@@ -6,11 +6,6 @@
     public enum UserType
     {
         /// <summary>
-        /// No user type has been assigned.
-        /// </summary>
-        None,
-
-        /// <summary>
         /// A standard user with normal application access.
         /// </summary>
         Standard,
@@ -19,6 +14,11 @@
         /// A user with administrative privileges.
         /// </summary>
         Administrator,
+
+        /// <summary>
+        /// A user with all possible privileges.
+        /// </summary>
+        Founder,
 
         /// <summary>
         /// A user account that has been banned and is restricted from accessing the system.

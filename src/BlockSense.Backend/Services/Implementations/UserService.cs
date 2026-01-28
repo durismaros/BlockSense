@@ -145,7 +145,7 @@ namespace BlockSense.Backend.Services.Implementations
             }
 
             var invitedBy =
-                await _invitationRepository.GetGenerationUsernameByUsedUser(userId, cancellationToken);
+                await _invitationRepository.GetUsernameByUsedUser(userId, cancellationToken);
 
             var twoFaEnabled =
                 await _twoFactorAuthRepository.IsEnabledAsync(userId);
