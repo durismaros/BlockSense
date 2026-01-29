@@ -473,7 +473,7 @@
 								<StackPanel>
 
 									<!-- 2FA Disabled Content -->
-									<StackPanel x:Name="TwoFaDisabledContent"
+									<StackPanel x:Name="TwoFactorDisabledContent"
 												IsVisible="False">
 
 										<TextBlock Text="2FA is currently disabled. Enable it to increase your account security."
@@ -500,7 +500,7 @@
 														BorderBrush="#E6DDD1"
 														BorderThickness="1"
 														Margin="0 0 0 10">
-													<Image x:Name="TwoFaQRCodeImage"
+													<Image x:Name="TwoFactorQRCodeImage"
 														   Width="190"
 														   Height="190"
 														   HorizontalAlignment="Center"
@@ -542,7 +542,7 @@
 										</StackPanel>
 
 										<!-- Enable Button -->
-										<Border x:Name="EnableTwoFaButton"
+										<Border x:Name="EnableTwoFactorButton"
 												Classes="DefaultDarkBrown"
 												Width="140"
 												Height="36"
@@ -558,7 +558,7 @@
 									</StackPanel>
 
 									<!-- 2FA Enabled Content -->
-									<StackPanel x:Name="TwoFaEnabledContent"
+									<StackPanel x:Name="TwoFactorEnabledContent"
 												IsVisible="False">
 
 										<TextBlock HorizontalAlignment="Center"
@@ -612,7 +612,8 @@
 															   Opacity="0.8"/>
 													
 													<Panel>
-														<Button Classes="DefaultDarkBrown"
+														<Button x:Name="GenerateBackupCodesButton"
+																Classes="DefaultDarkBrown"
 																Width="120"
 																Height="32"
 																HorizontalAlignment="Left">
@@ -625,7 +626,7 @@
 																	   FontWeight="Medium"/>
 														</Button>
 
-														<Button x:Name="BackupCodesDownloadButton"
+														<Button x:Name="DownloadBackupCodesButton"
 																Classes="DefaultLightBrown"
 																Width="160"
 																Height="32"
@@ -673,7 +674,8 @@
 															   Opacity="0.9"/>
 
 													<Panel>
-														<Button Classes="DefaultDisable"
+														<Button x:Name="DisableTwoFactorCheckButton"
+																Classes="DefaultDisable"
 																Width="120"
 																Height="32"
 																HorizontalAlignment="Left">
@@ -686,7 +688,7 @@
 																	   FontWeight="Medium"/>
 														</Button>
 
-														<Button x:Name="DisableTwoFaButton"
+														<Button x:Name="DisableTwoFactorButton"
 																Classes="ConfirmDisable"
 																Width="160"
 																Height="32"

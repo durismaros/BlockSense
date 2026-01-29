@@ -32,7 +32,7 @@ public partial class AuthenticationView : UserControl
         _twoFactorSlidingPanel = MainWindow.Instance.TwoFactorSlidingPanel
             ?? throw new ArgumentNullException(nameof(MainWindow.Instance.TwoFactorSlidingPanel));
 
-        _twoFactorSlidingPanel.TwoFactorCodeSubmitted += async code =>
+        _twoFactorSlidingPanel.TwoFactorCodeSubmitted += code =>
         {
             _twoFactorCode = code;
             AuthenticateClick();
@@ -99,7 +99,7 @@ public partial class AuthenticationView : UserControl
                 break;
 
             case ApiProblemTypes.Authentication.TwoFactorRequired:
-                _twoFactorSlidingPanel.ShowPanel();
+                _twoFactorSlidingPanel.ShowPanel(TwoFactorPurpose.Verify);
                 break;
 
             case ApiProblemTypes.TwoFactorAuthentication.InvalidCode:

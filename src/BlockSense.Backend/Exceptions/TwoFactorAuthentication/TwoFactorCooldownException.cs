@@ -29,6 +29,20 @@ namespace BlockSense.Backend.Exceptions.TwoFactorAuthentication
         }
 
         public TwoFactorCooldownException(TimeSpan remainingTime)
-            : base($"Backup codes cannot be generated yet. Please wait {remainingTime} before trying again.") { }
+            : base($"Backup codes cannot be generated yet. Please wait {FormatTime(remainingTime)} before trying again.") { }
+
+        private static string FormatTime(TimeSpan timeSpan)
+        {
+            if (timeSpan.TotalHours >= 1)
+            {
+                int hours = (int)timeSpan.TotalHours;
+                return hours == 1 ? "1 hour" : $"{hours} hours";
+            }
+            else
+            {
+                int minutes = (int)timeSpan.TotalMinutes;
+                return minutes == 1 ? "1 minute" : $"{minutes} minutes";
+            }
+        }
     }
 }

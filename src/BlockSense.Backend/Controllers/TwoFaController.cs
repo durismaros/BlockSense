@@ -14,10 +14,12 @@ namespace BlockSense.Backend.Controllers
     public class TwoFaController : ControllerBase
     {
         private readonly ITwoFactorAuthService _twoFactorAuthService;
+        private readonly IUserService _userService;
 
-        public TwoFaController(ITwoFactorAuthService twoFactorAuthService)
+        public TwoFaController(ITwoFactorAuthService twoFactorAuthService, IUserService userService)
         {
             _twoFactorAuthService = twoFactorAuthService ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
+            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
         }
 
         [HttpGet("setup")]
@@ -39,9 +41,11 @@ namespace BlockSense.Backend.Controllers
             if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
                 throw new AuthenticationRequiredException();
 
-            var response = await _twoFactorAuthService.CompleteSetupAsync(userId, request, cancellationToken);
+            await _twoFactorAuthService.CompleteSetupAsync(userId, request, cancellationToken);
 
-            return Ok(response);
+            var userSummary = await _userService.GetUserSummaryAsync(userId, cancellationToken);
+
+            return Ok(userSummary);
         }
 
         [HttpPost("disable")]
@@ -51,12 +55,14 @@ namespace BlockSense.Backend.Controllers
             if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
                 throw new AuthenticationRequiredException();
 
-            var response = await _twoFactorAuthService.DisableAsync(userId, request, cancellationToken);
+            await _twoFactorAuthService.DisableAsync(userId, request, cancellationToken);
 
-            return Ok(response);
+            var userSummary = await _userService.GetUserSummaryAsync(userId, cancellationToken);
+
+            return Ok(userSummary);
         }
 
-        [HttpPost("backup-codes")]
+        [HttpGet("backup-codes")]
         [Authorize]
         public async Task<IActionResult> GenerateBackupCodesAsync(CancellationToken cancellationToken)
         {

@@ -26,7 +26,12 @@ public partial class TwoFactorSlidingPanel : UserControl
     private bool _isBackupMode = false;
 
     // Code Submission Event
-    public event Func<string, Task>? TwoFactorCodeSubmitted;
+    public event Action<string>? TwoFactorCodeSubmitted;
+    public TwoFactorPurpose Purpose
+    {
+        get;
+        private set;
+    }
 
     /// <summary>
     /// Indicates whether the two-factor authentication sliding panel is currently visible on screen.
@@ -48,20 +53,27 @@ public partial class TwoFactorSlidingPanel : UserControl
         // Initialize sliding panel position
         this.RenderTransform = new TranslateTransform(0, -450);
 
+        this.Focusable = true;
+        this.KeyDown += OnKeyDown;
+
         DragBorder.PointerPressed += DragWindow;
         CancelCodeButton.Click += HidePanel;
         BackUpToggleButton.Click += ToggleBackupCodeModeClick;
-
-        this.Focusable = true;
-        this.KeyDown += OnKeyDown;
-        this.Loaded += (s, e) => this.Focus();
+        VerifyCodeButton.Click += VerifyCodeClick;
     }
 
     /// <summary>
     /// Displays the sliding panel, resets code entry, and shows the default instructions state.
     /// </summary>
-    public async void ShowPanel(object? sender = default, RoutedEventArgs? e = default)
+    public async void ShowPanel(TwoFactorPurpose purpose, object? sender = default, RoutedEventArgs? e = default)
     {
+        Purpose = purpose;
+
+        if (purpose is TwoFactorPurpose.Enable)
+            BackUpToggleButton.IsVisible = false;
+        else
+            BackUpToggleButton.IsVisible = true;
+
         await ShowDefaultState();
         await ResetCodeEntry();
         await AnimatePanel(true);
@@ -77,48 +89,6 @@ public partial class TwoFactorSlidingPanel : UserControl
         await AnimatePanel(false);
 
         IsPanelVisible = false;
-    }
-
-    /// <summary>
-    /// Shows the verified state UI after successful code entry, waits briefly, then resets and hides the panel.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task ShowVerifiedState()
-    {
-        if (VerifiedStatePanel.IsVisible)
-        {
-            return;
-        }
-
-        VerifiedStatePanel.IsVisible = true;
-        await Animations.FadeOutAnimation.RunAsync(InstructionsPanel);
-        await Animations.FadeInAnimation.RunAsync(VerifiedStatePanel);
-        InstructionsPanel.IsVisible = false;
-
-        await Task.Delay(2000);
-        await ResetCodeEntry();
-        HidePanel();
-    }
-
-    /// <summary>
-    /// Shows the error state UI when code verification fails, waits briefly, then resets to default state.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task ShowErrorState()
-    {
-        if (ErrorStatePanel.IsVisible)
-        {
-            return;
-        }
-
-        ErrorStatePanel.IsVisible = true;
-        await Animations.FadeOutAnimation.RunAsync(InstructionsPanel);
-        await Animations.FadeInAnimation.RunAsync(ErrorStatePanel);
-        InstructionsPanel.IsVisible = false;
-
-        await Task.Delay(1000);
-        await ResetCodeEntry();
-        await ShowDefaultState();
     }
 
     /// <summary>
@@ -180,7 +150,7 @@ public partial class TwoFactorSlidingPanel : UserControl
 
         if (TwoFactorCodeSubmitted is not null)
         {
-            await TwoFactorCodeSubmitted.Invoke(codeToVerify);
+            TwoFactorCodeSubmitted.Invoke(codeToVerify);
         }
     }
 
@@ -227,6 +197,52 @@ public partial class TwoFactorSlidingPanel : UserControl
     }
 
     /// <summary>
+    /// Shows the verified state UI after successful code entry, waits briefly, then resets and hides the panel.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task ShowVerifiedState()
+    {
+        if (VerifiedStatePanel.IsVisible)
+            return;
+
+        VerifiedStatePanel.IsVisible = true;
+
+        await Task.WhenAll(
+            Animations.FadeOutAnimation.RunAsync(TitleText),
+            Animations.FadeOutAnimation.RunAsync(SubtitleText)
+        );
+
+        await Animations.FadeInAnimation.RunAsync(VerifiedStatePanel);
+
+        await Task.Delay(2000);
+        await ResetCodeEntry();
+        HidePanel();
+    }
+
+    /// <summary>
+    /// Shows the error state UI when code verification fails, waits briefly, then resets to default state.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task ShowErrorState()
+    {
+        if (ErrorStatePanel.IsVisible)
+            return;
+
+        ErrorStatePanel.IsVisible = true;
+
+        await Task.WhenAll(
+            Animations.FadeOutAnimation.RunAsync(TitleText),
+            Animations.FadeOutAnimation.RunAsync(SubtitleText)
+        );
+
+        await Animations.FadeInAnimation.RunAsync(ErrorStatePanel);
+
+        await Task.Delay(1000);
+        await ResetCodeEntry();
+        await ShowDefaultState();
+    }
+
+    /// <summary>
     /// Resets the entered code and clears all displayed digit UI elements.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
@@ -257,19 +273,24 @@ public partial class TwoFactorSlidingPanel : UserControl
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     private async Task ShowDefaultState()
     {
-        if (!ErrorStatePanel.IsVisible && !VerifiedStatePanel.IsVisible)
+        if (ErrorStatePanel.IsVisible)
         {
-            return;
+            await Animations.FadeOutAnimation.RunAsync(ErrorStatePanel);
+            ErrorStatePanel.IsVisible = false;
         }
 
-        await Animations.FadeOutAnimation.RunAsync(ErrorStatePanel);
-        await Animations.FadeOutAnimation.RunAsync(VerifiedStatePanel);
+        if (VerifiedStatePanel.IsVisible)
+        {
+            await Animations.FadeOutAnimation.RunAsync(VerifiedStatePanel);
+            VerifiedStatePanel.IsVisible = false;
+        }
 
-        InstructionsPanel.IsVisible = true;
-        await Animations.FadeInAnimation.RunAsync(InstructionsPanel);
+        await Task.WhenAll(
+            Animations.FadeInAnimation.RunAsync(TitleText),
+            Animations.FadeInAnimation.RunAsync(SubtitleText)
+            );
 
-        ErrorStatePanel.IsVisible = false;
-        VerifiedStatePanel.IsVisible = false;
+        this.Focus();
     }
 
     /// <summary>
@@ -498,4 +519,11 @@ public partial class TwoFactorSlidingPanel : UserControl
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed && VisualRoot is Window window)
             window.BeginMoveDrag(e);
     }
+}
+
+public enum TwoFactorPurpose
+{
+    Verify,
+    Enable,
+    Disable
 }

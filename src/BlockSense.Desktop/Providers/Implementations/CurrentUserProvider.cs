@@ -25,22 +25,54 @@ namespace BlockSense.Desktop.Providers.Implementations
             private set;
         }
 
-        public event Action? Changed;
+        public IReadOnlyList<string>? TwoFactorBackupCodes
+        {
+            get;
+            private set;
+        }
+
+        public event Action? OnCurrentUserChanged
+        {
+            add
+            {
+                _onCurrentUserChanged += value;
+                value?.Invoke();
+            }
+            remove
+            {
+                _onCurrentUserChanged -= value;
+            }
+        }
+
+        private Action? _onCurrentUserChanged;
 
         public CurrentUserProvider()
         {
             Profile = default!;
             ActiveDevices = Array.Empty<UserTokenSessionDto>();
             Invitations = Array.Empty<InvitationCodeDto>();
+            TwoFactorBackupCodes = null;
         }
 
-        public void Set(UserDashboardDto dto)
+        public void Set(UserDashboardDto userDashboardDto)
         {
-            Profile = dto.Profile;
-            ActiveDevices = dto.ActiveTokens;
-            Invitations = dto.UserInvitations;
+            Profile = userDashboardDto.Profile;
+            ActiveDevices = userDashboardDto.ActiveTokens;
+            Invitations = userDashboardDto.UserInvitations;
 
-            Changed?.Invoke();
+            _onCurrentUserChanged?.Invoke();
+        }
+
+        public void SetProfile(UserSummaryDto userSummaryDto)
+        {
+            Profile = userSummaryDto;
+
+            _onCurrentUserChanged?.Invoke();
+        }
+
+        public void SetTwoFactorBackupCodes(IReadOnlyList<string>? backupCodes)
+        {
+            TwoFactorBackupCodes = backupCodes;
         }
 
         public void Clear()
@@ -49,7 +81,7 @@ namespace BlockSense.Desktop.Providers.Implementations
             ActiveDevices = Array.Empty<UserTokenSessionDto>();
             Invitations = Array.Empty<InvitationCodeDto>();
 
-            Changed?.Invoke();
+            _onCurrentUserChanged?.Invoke();
         }
     }
 }

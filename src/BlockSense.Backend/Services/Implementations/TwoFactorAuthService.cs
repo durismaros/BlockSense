@@ -61,7 +61,7 @@ namespace BlockSense.Backend.Services.Implementations
             };
         }
 
-        public async Task<bool> CompleteSetupAsync(uint userId, TwoFactorSetupRequest request, CancellationToken cancellationToken = default)
+        public async Task CompleteSetupAsync(uint userId, TwoFactorSetupRequest request, CancellationToken cancellationToken = default)
         {
             if (await _twoFactorAuthRepository.IsEnabledAsync(userId, cancellationToken))
             {
@@ -101,8 +101,6 @@ namespace BlockSense.Backend.Services.Implementations
             };
 
             await _twoFactorAuthRepository.CreateAsync(twoFaAuthEntity, cancellationToken);
-
-            return true;
         }
 
         public async Task VerifyAsync(uint userId, TwoFactorVerificationRequest request, CancellationToken cancellationToken = default)
@@ -162,17 +160,20 @@ namespace BlockSense.Backend.Services.Implementations
             }
 
             var backupCodes = GenerateBackupCodes();
+            var hashedBackupCodes = backupCodes
+                .Select(code => Sha256Hasher.ComputeBase64(Encoding.UTF8.GetBytes(code)))
+                .ToList();
 
             await _twoFactorAuthRepository.InsertBackupCodesAsync(
                 userId,
-                backupCodes,
+                hashedBackupCodes,
                 now,
                 cancellationToken);
 
             return backupCodes;
         }
 
-        public async Task<bool> DisableAsync(uint userId, TwoFactorVerificationRequest request, CancellationToken cancellationToken = default)
+        public async Task DisableAsync(uint userId, TwoFactorVerificationRequest request, CancellationToken cancellationToken = default)
         {
             if (!await _twoFactorAuthRepository.IsEnabledAsync(userId, cancellationToken))
             {
@@ -182,8 +183,6 @@ namespace BlockSense.Backend.Services.Implementations
             await VerifyAsync(userId, request);
 
             await _twoFactorAuthRepository.DisableAsync(userId, cancellationToken);
-
-            return true;
         }
 
         private bool VerifyCode(byte[] secretKey, string code)
@@ -232,18 +231,16 @@ namespace BlockSense.Backend.Services.Implementations
                         bytes.Select((b, i) =>
                             (i == 4 ? "-" : "") + chars[b % chars.Length]));
 
-                    return Sha256Hasher.ComputeBase64(
-                        Encoding.UTF8.GetBytes(code));
+                    return code;
                 })
                 .ToList();
         }
-
 
         private string GenerateAuthUri(string userEmail, string secretKey)
         {
             return $"otpauth://totp/{Uri.EscapeDataString(_twoFactorAuthConfig.Issuer)}:{Uri.EscapeDataString(userEmail)}?" +
                    $"secret={secretKey}&issuer={Uri.EscapeDataString(_twoFactorAuthConfig.Issuer)}" +
-                   $"&algorithm=SHA1&digits={_twoFactorAuthConfig.CodeLength}&period={_twoFactorAuthConfig.CodeLifetime}";
+                   $"&algorithm=SHA1&digits={_twoFactorAuthConfig.CodeLength}&period={_twoFactorAuthConfig.CodeLifetime.TotalSeconds}";
         }
 
         private byte[] GenerateQRCodeData(string authUri)

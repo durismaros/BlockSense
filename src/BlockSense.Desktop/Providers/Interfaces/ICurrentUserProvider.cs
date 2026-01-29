@@ -21,16 +21,33 @@ namespace BlockSense.Desktop.Providers.Interfaces
             get;
         }
 
+        IReadOnlyList<string>? TwoFactorBackupCodes
+        {
+            get;
+        }
+
         /// <summary>
         /// Raised whenever any dashboard data changes.
         /// </summary>
-        event Action? Changed;
+        event Action? OnCurrentUserChanged;
 
         /// <summary>
         /// Sets the dashboard data from backend response.
         /// </summary>
-        /// <param name="dto"></param>
-        void Set(UserDashboardDto dto);
+        /// <param name="userDashboardDto"></param>
+        void Set(UserDashboardDto userDashboardDto);
+
+        /// <summary>
+        /// Sets the user summary data from backend response.
+        /// </summary>
+        /// <param name="userSummaryDto"></param>
+        void SetProfile(UserSummaryDto userSummaryDto);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="backupCodes"></param>
+        void SetTwoFactorBackupCodes(IReadOnlyList<string>? backupCodes);
 
         /// <summary>
         /// Clears all stored user data (e.g. on logout).

@@ -61,6 +61,7 @@
 									   TextAlignment="Center"
 									   TextWrapping="Wrap"
 									   FontSize="14"
+									   FontStyle="Italic"
 									   Opacity="0.8"/>
 						</StackPanel>
 
@@ -72,18 +73,19 @@
 									Opacity="0"
 									IsVisible="False">
 
-							<TextBlock Text="Successfully verified."
+							<TextBlock Text="Successfully verified"
 									   HorizontalAlignment="Center"
 									   Foreground="#7BBA5D"
 									   FontSize="26"
 									   FontWeight="SemiBold"/>
 
-							<TextBlock Text="Don't forget to download backup codes in Security section"
+							<TextBlock Text="Your identity has been verified successfully."
 									   HorizontalAlignment="Center"
 									   Foreground="#7BBA5D"
 									   TextAlignment="Center"
 									   TextWrapping="Wrap"
 									   FontSize="14"
+									   FontStyle="Italic"
 									   Opacity="0.9"/>
 						</StackPanel>
 
@@ -95,18 +97,19 @@
 									Opacity="0"
 									IsVisible="False">
 
-							<TextBlock Text="Invalid Code"
+							<TextBlock Text="Incorrect authentication code"
 									   HorizontalAlignment="Center"
 									   Foreground="#CC2D4D"
 									   FontSize="26"
 									   FontWeight="SemiBold"/>
 
-							<TextBlock Text="The code you entered is incorrect. Please try again."
+							<TextBlock Text="That code doesn't look right. Please try again."
 									   HorizontalAlignment="Center"
 									   Foreground="#CC2D4D"
 									   TextAlignment="Center"
 									   TextWrapping="Wrap"
 									   FontSize="14"
+									   FontStyle="Italic"
 									   Opacity="0.9"/>
 						</StackPanel>
 					</Panel>
@@ -179,14 +182,20 @@
 						Width="120"
 						Height="40"
 						HorizontalAlignment="Center"
-						VerticalAlignment="Center"
-						IsEnabled="False">
+						VerticalAlignment="Center">
 
 					<TextBlock Text="Verify"
 							   HorizontalAlignment="Center"
 							   VerticalAlignment="Center"
 							   Foreground="#E6C8A0"
 							   FontWeight="Medium"/>
+
+					<Button.Styles>
+						<Style Selector="Button.DefaultDarkBrown:disabled ContentPresenter">
+							<Setter Property="Background" Value="#6D4C41"/>
+							<Setter Property="Opacity" Value="0.5"/>
+						</Style>
+					</Button.Styles>
 				</Button>
 			</StackPanel>
 		</StackPanel>
