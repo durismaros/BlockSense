@@ -1,6 +1,7 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Entities;
 using BlockSense.Backend.Repositories.Interfaces;
+using BlockSense.Contracts.DTOs.Session;
 using Dapper;
 using MySql.Data.MySqlClient;
 
@@ -20,7 +21,8 @@ namespace BlockSense.Backend.Repositories.Implementations
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="databaseContext"/> is <c>null</c>.</exception>
         public RefreshTokenRepository(DatabaseContext databaseContext)
         {
-            _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
+            _databaseContext = databaseContext
+                ?? throw new ArgumentNullException(nameof(databaseContext));
         }
 
         /// <inheritdoc/>
@@ -108,7 +110,7 @@ namespace BlockSense.Backend.Repositories.Implementations
                 FROM refresh_tokens
                 WHERE user_id = @UserId
                   AND is_revoked = 0
-                  AND expires_at > UTC_TIMESTAMP();
+                  AND expires_at > UTC_TIMESTAMP(6);
                 """;
 
             var parameters = new[]
@@ -124,9 +126,38 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             return SqlMapper.Parse<RefreshTokenEntity>(dbReader).ToList();
         }
+        
+        /// <inheritdoc/>
+        public async Task<IReadOnlyList<UserSessionDto>> GetActiveSessionsByUserAsync(uint userId, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                SELECT
+                    token_hash              AS TokenHash,
+                    ip_address              AS IpAddress,
+                    issued_at               AS IssuedAt,
+                    expires_at              AS ExpiresAt
+                FROM refresh_tokens
+                WHERE user_id = @UserId
+                  AND is_revoked = 0
+                  AND expires_at > UTC_TIMESTAMP(6);
+                """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@UserId", MySqlDbType.UInt32)
+                {
+                    Value = userId
+                }
+            };
+
+            await using var dbReader =
+                await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
+
+            return SqlMapper.Parse<UserSessionDto>(dbReader).ToList();
+        }
 
         /// <inheritdoc/>
-        public async Task CreateAsync(RefreshTokenEntity refreshToken, CancellationToken cancellationToken = default)
+        public async Task CreateOrUpdateAsync(RefreshTokenEntity refreshToken, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
                 INSERT INTO refresh_tokens (

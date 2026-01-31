@@ -35,7 +35,7 @@ namespace BlockSense.Backend.Repositories.Interfaces
         /// <param name="backupCodes"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task ConsumeBackupCodeAsync(uint userId, IReadOnlyList<string> backupCodes, CancellationToken cancellationToken = default);
+        Task UpdateBackupCodesAsync(uint userId, IReadOnlyList<string> backupCodes, CancellationToken cancellationToken = default);
         /// <summary>
         /// 
         /// </summary>

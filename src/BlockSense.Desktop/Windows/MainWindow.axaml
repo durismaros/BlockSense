@@ -7,8 +7,9 @@
         x:Class="BlockSense.Desktop.MainWindow"
         Title="BlockSense"
 		Icon="\Assets\Icons\icon_app_taskbar.ico"
-        Width="800" Height="450"
-		CanResize="False"
+		MinWidth="800" MinHeight="450"
+		Width="800" Height="450"
+		CanMaximize="False"
 		TransparencyLevelHint="AcrylicBlur"
 		Background="Transparent"
 		ExtendClientAreaToDecorationsHint="True">
@@ -25,7 +26,8 @@
 		
 		<ContentControl x:Name="ContentContainer"/>
 
-		<local:TwoFactorSlidingPanel x:Name="TwoFactorSlidingPanel"/>
+		<local:TwoFactorSlidingPanel x:Name="TwoFactorSlidingPanel"
+									 IsVisible="False"/>
 
 	</Panel>
 

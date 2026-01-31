@@ -17,12 +17,13 @@ namespace BlockSense.Backend.Controllers
 
         public UsersController(IUserService userService)
         {
-            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _userService = userService
+                ?? throw new ArgumentNullException(nameof(userService));
         }
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> RegisterUserAsync([FromBody] RegistrationRequest request, CancellationToken cancellationToken)
+        public async Task<IActionResult> Post([FromBody] RegistrationRequest request, CancellationToken cancellationToken)
         {
             var response = await _userService.RegisterAsync(request, cancellationToken);
 
@@ -32,16 +33,17 @@ namespace BlockSense.Backend.Controllers
                 response);
         }
 
+        /*
         [HttpGet]
         [Authorize(Policy = "AdministratorPolicy")]
-        public async Task<IActionResult> GetAllUsersSummaryAsync(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
         [HttpGet("{id:int}")]
         [Authorize(Policy = "AdministratorPolicy")]
-        public async Task<IActionResult> GetUserSummaryByIdAsync([FromRoute] int userId, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetById([FromRoute] int userId, CancellationToken cancellationToken)
         {
             if (userId <= 0)
                 throw new UserNotFoundException();
@@ -50,10 +52,11 @@ namespace BlockSense.Backend.Controllers
 
             return Ok(response);
         }
+        */
 
         [HttpGet("me")]
         [Authorize]
-        public async Task<IActionResult> GetUserSummaryAsync(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetCurrent(CancellationToken cancellationToken)
         {
             if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
                 throw new AuthenticationRequiredException();
@@ -65,7 +68,7 @@ namespace BlockSense.Backend.Controllers
 
         [HttpGet("me/dashboard")]
         [Authorize]
-        public async Task<IActionResult> GetUserDashboardAsync(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken)
         {
             if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
                 throw new AuthenticationRequiredException();

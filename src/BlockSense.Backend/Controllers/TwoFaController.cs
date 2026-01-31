@@ -18,13 +18,16 @@ namespace BlockSense.Backend.Controllers
 
         public TwoFaController(ITwoFactorAuthService twoFactorAuthService, IUserService userService)
         {
-            _twoFactorAuthService = twoFactorAuthService ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
-            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _twoFactorAuthService = twoFactorAuthService
+                ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
+
+            _userService = userService
+                ?? throw new ArgumentNullException(nameof(userService));
         }
 
-        [HttpGet("setup")]
+        [HttpGet]
         [Authorize]
-        public async Task<IActionResult> SetupInitAsync(CancellationToken cancellationToken)
+        public async Task<IActionResult> Get(CancellationToken cancellationToken)
         {
             if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
                 throw new AuthenticationRequiredException();
@@ -34,9 +37,9 @@ namespace BlockSense.Backend.Controllers
             return Ok(response);
         }
 
-        [HttpPost("enable")]
+        [HttpPost]
         [Authorize]
-        public async Task<IActionResult> EnableAsync([FromBody] TwoFactorSetupRequest request, CancellationToken cancellationToken)
+        public async Task<IActionResult> Post([FromBody] TwoFactorSetupRequest request, CancellationToken cancellationToken)
         {
             if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
                 throw new AuthenticationRequiredException();
@@ -48,9 +51,9 @@ namespace BlockSense.Backend.Controllers
             return Ok(userSummary);
         }
 
-        [HttpPost("disable")]
+        [HttpDelete]
         [Authorize]
-        public async Task<IActionResult> DisableAsync([FromBody] TwoFactorVerificationRequest request, CancellationToken cancellationToken)
+        public async Task<IActionResult> Delete([FromBody] TwoFactorVerificationRequest request, CancellationToken cancellationToken)
         {
             if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
                 throw new AuthenticationRequiredException();
@@ -62,9 +65,9 @@ namespace BlockSense.Backend.Controllers
             return Ok(userSummary);
         }
 
-        [HttpGet("backup-codes")]
+        [HttpGet("backup")]
         [Authorize]
-        public async Task<IActionResult> GenerateBackupCodesAsync(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetBackup(CancellationToken cancellationToken)
         {
             if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
                 throw new AuthenticationRequiredException();

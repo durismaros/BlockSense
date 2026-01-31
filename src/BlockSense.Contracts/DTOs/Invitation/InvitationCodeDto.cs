@@ -1,6 +1,6 @@
 ﻿using BlockSense.Contracts.Enums.User;
 
-namespace BlockSense.Contracts.DTOs.User
+namespace BlockSense.Contracts.DTOs.Invitation
 {
     /// <summary>
     /// Represents an invitation code and its current state.

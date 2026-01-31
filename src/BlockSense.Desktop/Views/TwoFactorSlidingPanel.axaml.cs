@@ -33,25 +33,11 @@ public partial class TwoFactorSlidingPanel : UserControl
         private set;
     }
 
-    /// <summary>
-    /// Indicates whether the two-factor authentication sliding panel is currently visible on screen.
-    /// </summary>
-    public bool IsPanelVisible
-    {
-        get;
-        private set;
-    }
-
     public TwoFactorSlidingPanel()
     {
         InitializeComponent();
 
         SetupCodeDigits();
-
-        IsPanelVisible = false;
-
-        // Initialize sliding panel position
-        this.RenderTransform = new TranslateTransform(0, -450);
 
         this.Focusable = true;
         this.KeyDown += OnKeyDown;
@@ -67,18 +53,46 @@ public partial class TwoFactorSlidingPanel : UserControl
     /// </summary>
     public async void ShowPanel(TwoFactorPurpose purpose, object? sender = default, RoutedEventArgs? e = default)
     {
+        if (this.IsVisible)
+        {
+            return;
+        }
+
+        // Initialize sliding panel position
+        this.RenderTransform = new TranslateTransform(0, -MainWindow.Instance.Height);
+
         Purpose = purpose;
 
-        if (purpose is TwoFactorPurpose.Enable)
+        if (Purpose is TwoFactorPurpose.Enable)
+        {
             BackUpToggleButton.IsVisible = false;
+        }
         else
+        {
             BackUpToggleButton.IsVisible = true;
-
+        }
+        
         await ShowDefaultState();
         await ResetCodeEntry();
-        await AnimatePanel(true);
 
-        IsPanelVisible = true;
+        var animation = new Animation
+        {
+            Duration = TimeSpan.FromSeconds(0.3),
+            FillMode = FillMode.Forward,
+            Easing = new CubicEaseOut(),
+            Children =
+            {
+                new KeyFrame
+                {
+                    Cue = new Cue(1.0),
+                    Setters = { new Setter(TranslateTransform.YProperty, 0.0) }
+                }
+            }
+        };
+
+        this.IsVisible = true;
+
+        await animation.RunAsync(this);
     }
 
     /// <summary>
@@ -86,9 +100,29 @@ public partial class TwoFactorSlidingPanel : UserControl
     /// </summary>
     public async void HidePanel(object? sender = default, RoutedEventArgs? e = default)
     {
-        await AnimatePanel(false);
+        if (!this.IsVisible)
+        {
+            return;
+        }
 
-        IsPanelVisible = false;
+        var animation = new Animation
+        {
+            Duration = TimeSpan.FromSeconds(0.3),
+            FillMode = FillMode.Forward,
+            Easing = new CubicEaseOut(),
+            Children =
+            {
+                new KeyFrame
+                {
+                    Cue = new Cue(1.0),
+                    Setters = { new Setter(TranslateTransform.YProperty, -this.Bounds.Height) }
+                }
+            }
+        };
+
+        await animation.RunAsync(this);
+
+        this.IsVisible = false;
     }
 
     /// <summary>
@@ -159,7 +193,7 @@ public partial class TwoFactorSlidingPanel : UserControl
     /// </summary>
     private async void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (!IsPanelVisible)
+        if (!this.IsVisible)
         {
             return;
         }
@@ -291,34 +325,6 @@ public partial class TwoFactorSlidingPanel : UserControl
             );
 
         this.Focus();
-    }
-
-    /// <summary>
-    /// Animates the sliding panel into view (show) or out of view (hide) using a translate transform.
-    /// </summary>
-    /// <param name="show">If true, the panel slides into view; if false, it slides out of view.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    private async Task AnimatePanel(bool show)
-    {
-        if ((show && IsPanelVisible) || (!show && !IsPanelVisible))
-            return;
-
-        var animation = new Animation
-        {
-            Duration = TimeSpan.FromSeconds(0.3),
-            FillMode = FillMode.Forward,
-            Easing = new CubicEaseOut(),
-            Children =
-            {
-                new KeyFrame
-                {
-                    Cue = new Cue(1.0),
-                    Setters = { new Setter(TranslateTransform.YProperty, show ? 0.0 : -this.Bounds.Height) }
-                }
-            }
-        };
-
-        await animation.RunAsync(this);
     }
 
     /// <summary>

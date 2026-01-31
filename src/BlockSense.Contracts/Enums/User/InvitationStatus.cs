@@ -6,11 +6,6 @@
     public enum InvitationStatus
     {
         /// <summary>
-        /// The status of the invitation is unknown or has not been determined.
-        /// </summary>
-        Unknown,
-
-        /// <summary>
         /// The invitation is active and can be used to register a new account.
         /// </summary>
         Active,

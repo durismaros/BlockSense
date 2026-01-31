@@ -1,6 +1,7 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Entities;
 using BlockSense.Backend.Repositories.Interfaces;
+using BlockSense.Contracts.DTOs.Invitation;
 using Dapper;
 using MySql.Data.MySqlClient;
 
@@ -20,7 +21,8 @@ namespace BlockSense.Backend.Repositories.Implementations
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="databaseContext"/> is <c>null</c>.</exception>
         public InvitationRepository(DatabaseContext databaseContext)
         {
-            _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
+            _databaseContext = databaseContext
+                ?? throw new ArgumentNullException(nameof(databaseContext));
         }
 
         /// <inheritdoc/>
@@ -125,14 +127,49 @@ namespace BlockSense.Backend.Repositories.Implementations
         {
             const string sqlQuery = """
                 SELECT
-                    ic.invitation_id        AS InvitationId,
-                    ic.invitation_code      AS InvitationCode,
-                    ic.generated_by         AS GeneratedBy,
-                    ic.used_by              AS UsedBy,
-                    u.username              AS UserByUsername,
-                    ic.created_at           AS CreatedAt,
-                    ic.expires_at           AS ExpiresAt,
-                    ic.is_revoked           AS IsRevoked
+                    invitation_id        AS InvitationId,
+                    invitation_code      AS InvitationCode,
+                    generated_by         AS GeneratedBy,
+                    used_by              AS UsedBy,
+                    created_at           AS CreatedAt,
+                    expires_at           AS ExpiresAt,
+                    is_revoked           AS IsRevoked
+                FROM invitation_codes
+                WHERE generated_by = @UserId
+                ORDER BY
+                    used_by IS NULL DESC,
+                    invitation_id ASC;
+            """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@UserId", MySqlDbType.UInt32)
+                {
+                    Value = userId
+                }
+            };
+
+            await using MySqlDataReader dbReader =
+                await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
+
+            return SqlMapper.Parse<InvitationCodeEntity>(dbReader).ToList();
+        }
+
+        /// <inheritdoc/>
+        public async Task<IReadOnlyList<InvitationCodeDto>> GetDtoByUserAsync(uint userId, CancellationToken cancellationToken = default)
+        {
+            const string sqlQuery = """
+                SELECT
+                    ic.invitation_code AS InvitationCode,
+                    ic.created_at      AS CreatedAt,
+                    ic.expires_at      AS ExpiresAt,
+                    u.username         AS InvitedUser,
+                CASE
+                    WHEN ic.is_revoked = 1 THEN 'Revoked'
+                    WHEN ic.used_by IS NOT NULL THEN 'Used'
+                    WHEN ic.expires_at < UTC_TIMESTAMP(6) THEN 'Expired'
+                    ELSE 'Active'
+                END AS Status
                 FROM invitation_codes ic
                 LEFT JOIN users u
                     ON ic.used_by = u.user_id
@@ -153,18 +190,18 @@ namespace BlockSense.Backend.Repositories.Implementations
             await using MySqlDataReader dbReader =
                 await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
 
-            return SqlMapper.Parse<InvitationCodeEntity>(dbReader).ToList();
+            return SqlMapper.Parse<InvitationCodeDto>(dbReader).ToList();
         }
 
         /// <inheritdoc/>
-        public async Task<string?> GetUsernameByUsedUser(uint userId, CancellationToken cancellationToken = default)
+        public async Task<string?> GetInviterUsernameByUser(uint userId, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
                 SELECT
-                    users.username AS GeneratedByUsername
+                    users.username
                 FROM invitation_codes
                 JOIN users
-                ON invitation_codes.generated_by = users.user_id
+                    ON invitation_codes.generated_by = users.user_id
                 WHERE used_by = @UserId
             """;
 
@@ -202,7 +239,7 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<bool> IsCodeActiveAsync(string invitationCode, CancellationToken cancellationToken = default)
+        public async Task<bool> IsActiveAsync(string invitationCode, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
                 SELECT COUNT(1)
@@ -276,13 +313,13 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32)
-                {
-                    Value = userId
-                },
                 new MySqlParameter("@InvitationId", MySqlDbType.VarChar, 32)
                 {
                     Value = invitationCodeId
+                },
+                new MySqlParameter("@UserId", MySqlDbType.UInt32)
+                {
+                    Value = userId
                 }
             };
 

@@ -1,4 +1,7 @@
-﻿namespace BlockSense.Contracts.DTOs.User
+﻿using BlockSense.Contracts.DTOs.Invitation;
+using BlockSense.Contracts.DTOs.TokenSession;
+
+namespace BlockSense.Contracts.DTOs.User
 {
     /// <summary>
     /// Represents a consolidated view of a user's profile, statistics, active devices, and invitations.
@@ -17,7 +20,7 @@
         /// <summary>
         /// List of currently active devices/sessions for the user.
         /// </summary>
-        public required IReadOnlyList<UserTokenSessionDto> ActiveTokens
+        public required IReadOnlyList<UserSessionDto> ActiveTokens
         {
             get;
             init;

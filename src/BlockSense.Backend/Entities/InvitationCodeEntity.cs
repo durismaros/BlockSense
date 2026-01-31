@@ -44,15 +44,6 @@ namespace BlockSense.Backend.Entities
         }
 
         /// <summary>
-        /// The Username of the user who used the invitation code.
-        /// </summary>
-        public string? UsedByUsername
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
         /// UTC timestamp when the invitation code was created.
         /// </summary>
         public required DateTime CreatedAt

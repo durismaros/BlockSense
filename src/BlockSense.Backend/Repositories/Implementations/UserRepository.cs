@@ -21,7 +21,8 @@ namespace BlockSense.Backend.Repositories.Implementations
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="databaseContext"/> is <c>null</c>.</exception>
         public UserRepository(DatabaseContext databaseContext)
         {
-            _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
+            _databaseContext = databaseContext
+                ?? throw new ArgumentNullException(nameof(databaseContext));
         }
 
         /// <inheritdoc/>
@@ -178,7 +179,7 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task UpdateUserTypeAsync(uint userId, UserType newType, CancellationToken cancellationToken = default)
+        public async Task UpdateUserTypeAsync(uint userId, UserType userType, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
                 UPDATE users
@@ -189,8 +190,14 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserType", MySqlDbType.Enum) { Value = newType },
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
+                new MySqlParameter("@UserId", MySqlDbType.UInt32)
+                {
+                    Value = userId
+                },
+                new MySqlParameter("@UserType", MySqlDbType.Enum)
+                {
+                    Value = userType,
+                }
             };
 
             await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
@@ -201,15 +208,17 @@ namespace BlockSense.Backend.Repositories.Implementations
         {
             const string sqlQuery = """
                 UPDATE users
-                SET deleted_at = @DeletedAt
+                SET deleted_at = CURRENT_TIMESTAMP(6)
                 WHERE user_id = @UserId
                   AND deleted_at IS NULL;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@DeletedAt", MySqlDbType.DateTime) { Value = DateTime.UtcNow},
-                new MySqlParameter("@UserId", userId) { Value =  userId },
+                new MySqlParameter("@UserId", MySqlDbType.UInt32)
+                {
+                    Value = userId
+                }
             };
 
             await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
@@ -227,7 +236,7 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", userId)
+                new MySqlParameter("@UserId", MySqlDbType.UInt32)
                 {
                     Value = userId
                 }

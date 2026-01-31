@@ -1,18 +1,18 @@
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-	
-	
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+
 	<Design.PreviewWith>
 		<Border Padding="20">
 			<!-- Add Controls for Previewer Here -->
 		</Border>
 	</Design.PreviewWith>
-	
+
 	<!-- Default TextBlock style -->
-    <Style Selector="TextBlock">
-        <Setter Property="FontFamily" Value="{DynamicResource Montserrat}"/>
-    </Style>
-	
+	<Style Selector="TextBlock">
+		<Setter Property="FontFamily" Value="{DynamicResource Montserrat}"/>
+	</Style>
+
 	<!-- Default light brown Separator line -->
 	<Style Selector="Border.DefaultSeparator">
 		<Setter Property="Height" Value="1"/>
@@ -20,7 +20,7 @@
 		<Setter Property="CornerRadius" Value="100"/>
 		<Setter Property="BoxShadow" Value="5 5 10 0 Black"/>
 	</Style>
-	
+
 	<!-- 2FA Code Entry Styles -->
 	<Style Selector="Border.CodeDigit">
 		<Setter Property="Width" Value="50"/>
@@ -31,7 +31,7 @@
 		<Setter Property="BorderThickness" Value="2"/>
 		<Setter Property="BorderBrush" Value="#E6DDD1"/>
 	</Style>
-	
+
 	<Style Selector="TextBlock.DigitText">
 		<Setter Property="FontSize" Value="28"/>
 		<Setter Property="FontWeight" Value="SemiBold"/>
@@ -39,13 +39,13 @@
 		<Setter Property="HorizontalAlignment" Value="Center"/>
 		<Setter Property="VerticalAlignment" Value="Center"/>
 	</Style>
-	
+
 	<Style Selector="TextBlock.DigitSeparator">
-			<Setter Property="FontSize" Value="20"/>
-			<Setter Property="FontWeight" Value="Medium"/>
-			<Setter Property="Foreground" Value="#8B6B4A"/>
-			<Setter Property="VerticalAlignment" Value="Center"/>
-			<Setter Property="Margin" Value="6 0"/>
+		<Setter Property="FontSize" Value="20"/>
+		<Setter Property="FontWeight" Value="Medium"/>
+		<Setter Property="Foreground" Value="#8B6B4A"/>
+		<Setter Property="VerticalAlignment" Value="Center"/>
+		<Setter Property="Margin" Value="6 0"/>
 	</Style>
 
 	<!-- Default Button Styles -->
@@ -59,16 +59,16 @@
 			</Transitions>
 		</Setter>
 	</Style>
-	
+
 	<!-- Scale up transition -->
 	<Style Selector="Button:not(#PART_CloseButton):not(#PART_MinimizeButton):pointerover">
 		<Setter Property="RenderTransform" Value="scale(1.02)"/>
 	</Style>
-	
+
 	<Style Selector="Button:pressed">
 		<Setter Property="RenderTransform" Value="scale(1)"/>
 	</Style>
-	
+
 	<!-- Default dark brown button -->
 	<Style Selector="Button.DefaultDarkBrown">
 		<Setter Property="Width" Value="280"/>
@@ -77,11 +77,11 @@
 		<Setter Property="CornerRadius" Value="20"/>
 		<Setter Property="Background" Value="#6D4C41"/>
 	</Style>
-	
+
 	<Style Selector="Button.DefaultDarkBrown:pointerover ContentPresenter, Button.DefaultDarkBrown:pressed ContentPresenter">
 		<Setter Property="Background" Value="#5D3F36"/>
 	</Style>
-	
+
 	<!-- Default light brown button -->
 	<Style Selector="Button.DefaultLightBrown">
 		<Setter Property="Width" Value="280"/>
@@ -90,19 +90,20 @@
 		<Setter Property="CornerRadius" Value="20"/>
 		<Setter Property="Background" Value="#D9B78A"/>
 	</Style>
-	
+
 	<Style Selector="Button.DefaultLightBrown:pointerover ContentPresenter, Button.DefaultLightBrown:pressed ContentPresenter">
 		<Setter Property="Background" Value="#C29A72"/>
 	</Style>
-	
+
 	<!-- Default white button -->
 	<Style Selector="Button.DefaultWhite">
 		<Setter Property="Width" Value="120"/>
-		<Setter Property="Height" Value="30"/>
+		<Setter Property="Height" Value="32"/>
+		<Setter Property="HorizontalAlignment" Value="Center"/>
+		<Setter Property="VerticalAlignment" Value="Center"/>
 		<Setter Property="Background" Value="#FBF7F1"/>
 		<Setter Property="Foreground" Value="#7A7A7A"/>
 		<Setter Property="CornerRadius" Value="20"/>
-		<Setter Property="HorizontalAlignment" Value="Center"/>
 	</Style>
 
 	<Style Selector="Button.DefaultWhite:pointerover ContentPresenter, Button.DefaultWhite:pressed ContentPresenter">
@@ -112,77 +113,98 @@
 
 
 	<Style Selector="Button.DefaultDisable">
+		<Setter Property="Width" Value="120"/>
+		<Setter Property="Height" Value="32"/>
+		<Setter Property="HorizontalAlignment" Value="Center"/>
+		<Setter Property="VerticalAlignment" Value="Center"/>
 		<Setter Property="Background" Value="Transparent"/>
 		<Setter Property="BorderBrush" Value="#E57373"/>
 		<Setter Property="BorderThickness" Value="1"/>
 		<Setter Property="CornerRadius" Value="20"/>
-		<Setter Property="HorizontalAlignment" Value="Center"/>
 	</Style>
 
 	<Style Selector="Button.DefaultDisable:pointerover ContentPresenter, Button.DefaultDisable:pressed ContentPresenter">
 		<Setter Property="BorderBrush" Value="#E57373"/>
 		<Setter Property="BorderThickness" Value="1"/>
 	</Style>
-	
+
+	<Style Selector="Button.ConfirmDisable">
+		<Setter Property="Width" Value="120"/>
+		<Setter Property="Height" Value="32"/>
+		<Setter Property="HorizontalAlignment" Value="Center"/>
+		<Setter Property="VerticalAlignment" Value="Center"/>
+		<Setter Property="Background" Value="#E57373"/>
+		<Setter Property="BorderBrush" Value="Transparent"/>
+		<Setter Property="CornerRadius" Value="20"/>
+	</Style>
+
+	<Style Selector="Button.ConfirmDisable:pointerover ContentPresenter, Button.ConfirmDisable:pressed ContentPresenter">
+		<Setter Property="Background" Value="#DE4040"/>
+		<Setter Property="Opacity" Value="1"/>
+	</Style>
+
 	<Style Selector="Button.BackupCodeToggle">
-			<Setter Property="Background" Value="Transparent"/>
-			<Setter Property="BorderBrush" Value="Transparent"/>
-			<Setter Property="Padding" Value="8 4"/>
-			<Setter Property="CornerRadius" Value="6"/>
+		<Setter Property="Background" Value="Transparent"/>
+		<Setter Property="BorderBrush" Value="Transparent"/>
+		<Setter Property="Padding" Value="8 4"/>
+		<Setter Property="CornerRadius" Value="6"/>
 	</Style>
-	
+
 	<Style Selector="Button.ForgotPassword">
-			<Setter Property="Background" Value="Transparent"/>
-			<Setter Property="BorderBrush" Value="Transparent"/>
-			<Setter Property="Padding" Value="8 4"/>
-			<Setter Property="CornerRadius" Value="6"/>
+		<Setter Property="Background" Value="Transparent"/>
+		<Setter Property="BorderBrush" Value="Transparent"/>
+		<Setter Property="Padding" Value="8 4"/>
+		<Setter Property="CornerRadius" Value="6"/>
 	</Style>
-	
+
 	<Style Selector="Button.ForgotPassword:pointerover ContentPresenter, Button.ForgotPassword:pressed ContentPresenter">
 		<Setter Property="Background" Value="Transparent"/>
 	</Style>
 
-	<!-- Red circular close button with Mac design -->
-	<Style Selector="Button.MacButton">
-		<Setter Property="Width" Value="14"/>
-		<Setter Property="Height" Value="14"/>
-		<Setter Property="HorizontalAlignment" Value="Right"/>
-		<Setter Property="CornerRadius" Value="7"/>
-		<Setter Property="Background" Value="Red"/>
+	<Style Selector="Button.MacOsCloseButton">
+		<Setter Property="Width" Value="16"/>
+		<Setter Property="Height" Value="16"/>
+		<Setter Property="HorizontalContentAlignment" Value="Right"/>
+		<Setter Property="VerticalContentAlignment" Value="Center"/>
+		<Setter Property="Background" Value="Transparent"/>
+		<Setter Property="BorderThickness" Value="0"/>
 		<Setter Property="Padding" Value="0"/>
+
 		<Setter Property="Template">
 			<ControlTemplate>
-				<Grid>
-					<!-- Button Background (visible circle) -->
-					<Border
-						Background="{TemplateBinding Background}"
-						CornerRadius="{TemplateBinding CornerRadius}"
-						Width="{TemplateBinding Width}"
-						Height="{TemplateBinding Height}"/>
-					
-					<!-- X Icon -->
-					<Path
-						 Width="6"
-						 Height="6"
-						 HorizontalAlignment="Center"
-						 VerticalAlignment="Center"
-						 Stretch="Uniform"
-						 Stroke="Black"
-						 StrokeThickness="1.25"
-						 Margin="0.5 0 0 0"
-						 Data="M 0,0 L 6,6 M 6,0 L 0,6"
-						 IsVisible="False"/>
+				<Grid Width="16" Height="16">
+
+					<!-- Red circle -->
+					<Ellipse x:Name="Circle"
+							 Fill="#FF5F57"
+							 Stroke="#E0443E"
+							 StrokeThickness="1"/>
+
+					<!-- X (hidden by default, macOS-style) -->
+					<Path x:Name="CloseIcon"
+						  Data="M5,5 L11,11 M11,5 L5,11"
+						  Stroke="#4C0000"
+						  StrokeThickness="1.4"
+						  StrokeLineCap="Round"
+						  Opacity="0"/>
 				</Grid>
 			</ControlTemplate>
 		</Setter>
 	</Style>
 
-	<Style Selector="Button.MacButton:pointerover Path">
-		<Setter Property="IsVisible" Value="True"/>
+	<!-- Hover behavior -->
+	<Style Selector="Button.MacOsCloseButton:pointerover Path#CloseIcon">
+		<Setter Property="Opacity" Value="0.85"/>
 	</Style>
-	
+
+	<!-- Pressed state (subtle darkening) -->
+	<Style Selector="Button.MacOsCloseButton:pressed Ellipse#Circle">
+		<Setter Property="Fill" Value="#E0443E"/>
+	</Style>
+
 	<Style Selector="TextBox">
 		<Setter Property="Background" Value="Transparent"/>
+		<Setter Property="Foreground" Value="#3E2723"/>
 		<Setter Property="VerticalContentAlignment" Value="Center"/>
 		<Setter Property="LetterSpacing" Value="1"/>
 		<Setter Property="BorderBrush" Value="#5D4037"/>
@@ -199,7 +221,7 @@
 			</Transitions>
 		</Setter>
 	</Style>
-	
+
 	<Style Selector="TextBox /template/ TextBlock#PART_Watermark">
 		<Setter Property="Opacity" Value="0.6"/>
 		<Setter Property="Transitions">
@@ -208,7 +230,7 @@
 			</Transitions>
 		</Setter>
 	</Style>
-	
+
 	<Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
 		<Setter Property="Background" Value="Transparent"/>
 		<Setter Property="BorderBrush" Value="#4E342E"/>
@@ -219,7 +241,11 @@
 			</Transitions>
 		</Setter>
 	</Style>
-	
+
+	<Style Selector="TextBox:pointerover ContentPresenter, TextBox:focus ContentPresenter">
+		<Setter Property="Foreground" Value="#3E2723"/>
+	</Style>
+
 	<Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
 		<Setter Property="Background" Value="Transparent"/>
 		<Setter Property="BorderBrush" Value="#4E342E"/>
@@ -231,6 +257,7 @@
 		</Setter>
 	</Style>
 
+
 	<!-- CheckBox style with fade in/out transition -->
 	<Style Selector="CheckBox">
 		<Setter Property="Foreground" Value="#5C5C5C"/>
@@ -238,9 +265,9 @@
 		<Setter Property="Template">
 			<ControlTemplate>
 				<Grid
-                    Background="Transparent"
-                    VerticalAlignment="Center"
-                    ColumnDefinitions="Auto,*">
+				Background="Transparent"
+				VerticalAlignment="Center"
+				ColumnDefinitions="Auto,*">
 					<Border Name="PART_CheckBoxBorder"
 							Width="18" Height="18"
 							Margin="0,0,8,0"
@@ -256,17 +283,17 @@
 								<Path.Transitions>
 									<Transitions>
 										<DoubleTransition
-											Property="Opacity" Duration="0:0:0.2"/>
+										Property="Opacity" Duration="0:0:0.2"/>
 										<TransformOperationsTransition
-											Property="RenderTransform" Duration="0:0:0.2"/>
+										Property="RenderTransform" Duration="0:0:0.2"/>
 									</Transitions>
 								</Path.Transitions>
 							</Path>
 						</Canvas>
 					</Border>
 					<ContentPresenter Name="PART_ContentPresenter"
-                                    Grid.Column="1"
-                                    Content="{TemplateBinding Content}"/>
+									  Grid.Column="1"
+									  Content="{TemplateBinding Content}"/>
 				</Grid>
 			</ControlTemplate>
 		</Setter>
@@ -291,7 +318,7 @@
 	<Style Selector="CheckBox:checked /template/ Border#PART_CheckBoxBorder">
 		<Setter Property="BorderThickness" Value="0"/>
 	</Style>
-	
+
 	<Style Selector="CheckBox:checked /template/ Path#PART_CheckMark">
 		<Setter Property="Opacity" Value="1"/>
 		<Setter Property="RenderTransform">
@@ -304,15 +331,14 @@
 		<Setter Property="Background" Value="Transparent"/>
 		<Setter Property="MinWidth" Value="4"/>
 	</Style>
-	
-	
+
+
 	<Style Selector="ScrollBar:vertical">
 		<Setter Property="Width" Value="4"/>
 		<Setter Property="Template">
 			<ControlTemplate>
 				<Border Background="Transparent"
-						Padding="0"
-						Margin="0 0 0 20">
+						Margin="0 28">
 					<Track IsDirectionReversed="True"
 						   Maximum="{TemplateBinding Maximum}"
 						   Minimum="{TemplateBinding Minimum}"

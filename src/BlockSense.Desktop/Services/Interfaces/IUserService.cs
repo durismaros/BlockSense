@@ -18,6 +18,8 @@ namespace BlockSense.Desktop.Services.Interfaces
         /// <returns>A <see cref="ServiceResponse"/> indicating the result of the registration attempt.</returns>
         Task<ServiceResponse> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken = default);
 
+        Task LoadCurrentUserAsync(CancellationToken cancellationToken = default);
+
         Task InitializeAsync(CancellationToken cancellationToken = default);
     }
 }

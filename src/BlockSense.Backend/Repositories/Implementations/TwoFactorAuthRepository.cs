@@ -103,7 +103,8 @@ namespace BlockSense.Backend.Repositories.Implementations
             await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
         }
 
-        public async Task ConsumeBackupCodeAsync(uint userId, IReadOnlyList<string> backupCodes, CancellationToken cancellationToken = default)
+        /// <inheritdoc/>
+        public async Task UpdateBackupCodesAsync(uint userId, IReadOnlyList<string> backupCodes, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
                 UPDATE two_factor_auth
@@ -128,6 +129,7 @@ namespace BlockSense.Backend.Repositories.Implementations
             await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
         }
 
+        /// <inheritdoc/>
         public async Task InsertBackupCodesAsync(uint userId, IReadOnlyList<string> backupCodes, DateTime updatedAt, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """

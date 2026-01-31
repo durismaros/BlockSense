@@ -21,23 +21,28 @@ namespace BlockSense.Backend.Controllers
 
         public AuthController(IAuthService authService, ITokenService tokenService, ITwoFactorAuthService twoFactorAuthService)
         {
-            _authService = authService ?? throw new ArgumentNullException(nameof(authService));
-            _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
-            _twoFactorAuthService = twoFactorAuthService ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
+            _authService = authService
+                ?? throw new ArgumentNullException(nameof(authService));
+
+            _tokenService = tokenService
+                ?? throw new ArgumentNullException(nameof(tokenService));
+
+            _twoFactorAuthService = twoFactorAuthService
+                ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
         }
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> AuthenticateAsync([FromBody] AuthRequest request, [FromDeviceContext] DeviceContext deviceContext, CancellationToken cancellationToken)
+        public async Task<IActionResult> Post([FromBody] AuthRequest request, [FromDeviceContext] DeviceContext deviceContext, CancellationToken cancellationToken)
         {
             var response = await _authService.AuthenticateAsync(request, deviceContext, cancellationToken);
 
             return Ok(response);
         }
 
-        [HttpPost("refresh")]
+        [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> RefreshTokenAsync([FromBody] AuthRefreshRequest request, [FromDeviceContext] DeviceContext deviceContext, CancellationToken cancellationToken)
+        public async Task<IActionResult> PostRefresh([FromBody] AuthRefreshRequest request, [FromDeviceContext] DeviceContext deviceContext, CancellationToken cancellationToken)
         {
             var response = await _tokenService.RefreshAccessTokenAsync(request, deviceContext, cancellationToken);
 
@@ -46,7 +51,7 @@ namespace BlockSense.Backend.Controllers
 
         [HttpPost("2fa")]
         [Authorize]
-        public async Task<IActionResult> VerifyTwoFaAsync([FromBody] TwoFactorVerificationRequest request, CancellationToken cancellationToken)
+        public async Task<IActionResult> PostTwoFa([FromBody] TwoFactorVerificationRequest request, CancellationToken cancellationToken)
         {
             if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
                 throw new AuthenticationRequiredException();

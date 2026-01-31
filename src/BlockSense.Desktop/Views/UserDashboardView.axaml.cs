@@ -1,23 +1,22 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using BlockSense.Contracts.Definitions;
+using BlockSense.Contracts.DTOs.TokenSession;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Setup;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
 using BlockSense.Contracts.Enums.User;
-using BlockSense.Desktop.Providers.Implementations;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
+using BlockSense.Desktop.Utilities.Formatting;
 using BlockSense.Desktop.Utilities.UIComponents;
-using Humanizer;
 using Microsoft.Extensions.DependencyInjection;
-using Org.BouncyCastle.X509;
 using System;
-using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
-using Tmds.DBus.Protocol;
 
 namespace BlockSense.Desktop;
 
@@ -27,6 +26,7 @@ public partial class UserDashboardView : UserControl
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly NavigationManager _navigationManager;
     private readonly TwoFactorSlidingPanel _twoFactorSlidingPanel;
+    private readonly InvitationManagerWindow _invitationManagerWindow;
 
     public UserDashboardView()
     {
@@ -42,11 +42,16 @@ public partial class UserDashboardView : UserControl
         _twoFactorSlidingPanel = MainWindow.Instance.TwoFactorSlidingPanel
             ?? throw new ArgumentNullException(nameof(MainWindow.Instance.TwoFactorSlidingPanel));
 
+        _invitationManagerWindow = App.ServiceProvider.GetRequiredService<InvitationManagerWindow>()
+            ?? throw new ArgumentNullException(nameof(InvitationManagerWindow));
+
         InitializeComponent();
 
         _currentUserProvider.OnCurrentUserChanged += OnCurrentUserChanged;
 
         HomeButton.Click += ToHomeViewClick;
+
+        OpenInvitationManagerButton.Click += OpenInvitationManagerButtonClick;
 
         ManageSecuritySettingsButton.Click += OpenSecurityManagerClick;
         CloseSecuriyManagerButton.Click += CloseSecurityManagerClick;
@@ -56,10 +61,10 @@ public partial class UserDashboardView : UserControl
 
         EnableTwoFactorButton.PointerPressed += EnableTwoFactorClick;
 
-        GenerateBackupCodesButton.Click += GenerateBackupCodesButtonClick;
-        DownloadBackupCodesButton.Click += DownloadBackupCodesButtonClick;
+        GenerateBackupCodesButton.Click += GenerateBackupCodesClick;
+        DownloadBackupCodesButton.Click += DownloadBackupCodesClick;
 
-        DisableTwoFactorCheckButton.Click += DisableTwoFactorCheckButtonClick;
+        DisableTwoFactorCheckButton.Click += DisableTwoFactorCheckClick;
         DisableTwoFactorButton.Click += DisableTwoFactorClick;
 
         _twoFactorSlidingPanel.TwoFactorCodeSubmitted += async code =>
@@ -82,13 +87,13 @@ public partial class UserDashboardView : UserControl
         SetAccountBadges(_currentUserProvider.Profile.UserType);
 
         CreationDateTextBlock.Text =
-            ToOrdinalDate(_currentUserProvider.Profile.CreatedAt);
+            DateTimeFormatter.ToOrdinalDate(_currentUserProvider.Profile.CreatedAt);
 
         InvitedByTextBlock.Text =
             _currentUserProvider.Profile.InvitedBy;
 
         UpdatedAtTextBlock.Text =
-            $"Updated: {ToOrdinalDate(_currentUserProvider.Profile.UpdatedAt)}";
+            $"Updated: {DateTimeFormatter.ToOrdinalDate(_currentUserProvider.Profile.UpdatedAt)}";
 
         TwoFaStatusTextBlock.Text =
             _currentUserProvider.Profile.TwoFactorEnabled ? "Enabled" : "Disabled";
@@ -100,6 +105,8 @@ public partial class UserDashboardView : UserControl
 
         TotalInvitedUsersTextBlock.Text =
             FormatInvitationCount(_currentUserProvider.Invitations.Count);
+
+        RefreshActiveDevices();
     }
 
     private async void ToHomeViewClick(object? sender, RoutedEventArgs e)
@@ -107,12 +114,21 @@ public partial class UserDashboardView : UserControl
         await _navigationManager.NavigateToAsync<HomeView>();
     }
 
+    private async void OpenInvitationManagerButtonClick(object? sender, RoutedEventArgs e)
+    {
+        if (_invitationManagerWindow.IsVisible)
+            return;
+
+        _invitationManagerWindow.Show();
+        await Animations.FadeInAnimation.RunAsync(_invitationManagerWindow);
+    }
+
     private async void OpenSecurityManagerClick(object? sender, RoutedEventArgs e)
     {
         SecurityManagerCard.IsVisible = true;
         await Animations.FadeInAnimation.RunAsync(SecurityManagerCard);
     }
-        
+
     private async void CloseSecurityManagerClick(object? sender, RoutedEventArgs e)
     {
         await Animations.FadeOutAnimation.RunAsync(SecurityManagerCard);
@@ -131,12 +147,7 @@ public partial class UserDashboardView : UserControl
         DeviceManagerCard.IsVisible = false;
     }
 
-    private void EnableTwoFactorClick(object? sender, RoutedEventArgs e)
-    {
-        _twoFactorSlidingPanel.ShowPanel(TwoFactorPurpose.Enable);
-    }
-
-    private async void GenerateBackupCodesButtonClick(object? sender, RoutedEventArgs e)
+    private async void GenerateBackupCodesClick(object? sender, RoutedEventArgs e)
     {
         if (DownloadBackupCodesButton.IsVisible)
             return;
@@ -163,7 +174,7 @@ public partial class UserDashboardView : UserControl
         await Animations.FadeInAnimation.RunAsync(BackupCodesTextBlock);
     }
 
-    private async void DownloadBackupCodesButtonClick(object? sender, RoutedEventArgs e)
+    private async void DownloadBackupCodesClick(object? sender, RoutedEventArgs e)
     {
         var backupCodes = _currentUserProvider.TwoFactorBackupCodes;
 
@@ -203,7 +214,7 @@ public partial class UserDashboardView : UserControl
         await writer.WriteAsync(content);
     }
 
-    private async void DisableTwoFactorCheckButtonClick(object? sender, RoutedEventArgs e)
+    private async void DisableTwoFactorCheckClick(object? sender, RoutedEventArgs e)
     {
         if (DisableTwoFactorButton.IsVisible)
             return;
@@ -212,9 +223,29 @@ public partial class UserDashboardView : UserControl
         await Animations.FadeInAnimation.RunAsync(DisableTwoFactorButton);
     }
 
+    private async void ConfirmRevokeDeviceClick(object? sender, RoutedEventArgs e)
+    {
+        throw new NotImplementedException();
+    }
+
+    private void EnableTwoFactorClick(object? sender, RoutedEventArgs e)
+    {
+        _twoFactorSlidingPanel.ShowPanel(TwoFactorPurpose.Enable);
+    }
+
     private void DisableTwoFactorClick(object? sender, RoutedEventArgs e)
     {
         _twoFactorSlidingPanel.ShowPanel(TwoFactorPurpose.Disable);
+    }
+
+    private void RefreshActiveDevices()
+    {
+        DevicesPanel.Children.Clear();
+
+        foreach (var device in _currentUserProvider.ActiveDevices)
+        {
+            DevicesPanel.Children.Add(CreateDeviceCard(device));
+        }
     }
 
     private async Task OnTwoFactorCodeSubmitted(string code)
@@ -312,8 +343,113 @@ public partial class UserDashboardView : UserControl
         }
     }
 
-    private static string ToOrdinalDate(DateTime date)
-        => $"{date.ToString("MMM", CultureInfo.InvariantCulture)} {date.Day.Ordinalize()}, {date:yyyy}";
+    private Control CreateDeviceCard(UserSessionDto device) 
+    {
+        // Left content: IP and dates
+        var leftStack = new StackPanel
+        {
+            Spacing = 10,
+            Children =
+            {
+                new ContentControl
+                {
+                    Classes = { "deviceIp" },
+                    Tag = device.IpAddress
+                }
+            }
+        };
+
+        // Dates grid
+        var datesGrid = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("* *"),
+        };
+
+        var issuedAt = new ContentControl
+        {
+            Classes = { "deviceIssuedAt" },
+            Tag = DateTimeFormatter.ToOrdinalDate(device.IssuedAt)
+        };
+        Grid.SetColumn(issuedAt, 0);
+
+        var expiresAt = new ContentControl
+        {
+            Classes = { "deviceExpiresAt" },
+            Tag = DateTimeFormatter.ToOrdinalDate(device.ExpiresAt)
+        };
+        Grid.SetColumn(expiresAt, 1);
+
+        datesGrid.Children.Add(issuedAt);
+        datesGrid.Children.Add(expiresAt);
+
+        leftStack.Children.Add(datesGrid);
+
+        // Main grid
+        var grid = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("* Auto")
+        };
+
+        grid.Children.Add(leftStack);
+
+        // Revoke button
+        var revokeButton = new Button
+        {
+            Classes = { "DefaultDisable" },
+            Content = new TextBlock
+            {
+                Text = "Revoke",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = new SolidColorBrush(Color.Parse("#FF5733")),
+                FontSize = 12,
+                FontWeight = FontWeight.Medium
+            }
+        };
+        Grid.SetColumn(revokeButton, 1);
+
+        // Confirm button (initially hidden)
+        var confirmButton = new Button
+        {
+            Classes = { "ConfirmDisable" },
+            IsVisible = false,
+            ZIndex = 1,
+            Content = new TextBlock
+            {
+                Text = "Confirm",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = new SolidColorBrush(Color.Parse("#F5E1DA")),
+                FontSize = 12,
+                FontWeight = FontWeight.Medium
+            }
+        };
+        Grid.SetColumn(confirmButton, 1);
+
+        revokeButton.Click += async (s, e) =>
+        {
+            confirmButton.IsVisible = true;
+            await Animations.FadeInAnimation.RunAsync(confirmButton);
+
+            await Task.Delay(3000);
+
+            await Animations.FadeOutAnimation.RunAsync(confirmButton);
+            confirmButton.IsVisible = false;
+        };
+
+
+        confirmButton.Click += ConfirmRevokeDeviceClick;
+
+        grid.Children.Add(revokeButton);
+        grid.Children.Add(confirmButton);
+
+        // Root border
+        return new Border
+        {
+            Classes = { "deviceCard" },
+            Child = grid
+        };
+    }
 
     private static string FormatDeviceCount(int count)
         => $"{count} {(count == 1 ? "Device" : "Devices")}";

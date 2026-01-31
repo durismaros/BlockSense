@@ -1,7 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
 using BlockSense.Contracts.DTOs.Registration;
-using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
 using BlockSense.Desktop.Utilities.Validation;

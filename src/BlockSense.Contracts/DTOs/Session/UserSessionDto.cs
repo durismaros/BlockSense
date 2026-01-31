@@ -1,25 +1,14 @@
-﻿using BlockSense.Contracts.Enums.User;
-
-namespace BlockSense.Contracts.DTOs.User
+﻿namespace BlockSense.Contracts.DTOs.Session
 {
     /// <summary>
     /// Represents a device session associated with a user account.
     /// </summary>
-    public sealed record UserTokenSessionDto
+    public sealed record UserSessionDto
     {
         /// <summary>
         /// Unique identifier of the device session (Hashed value of the refresh token).
         /// </summary>
         public required string TokenHash
-        {
-            get;
-            init;
-        }
-
-        /// <summary>
-        /// Name or label of the device associated with the token.
-        /// </summary>
-        public required string DeviceName
         {
             get;
             init;

@@ -104,6 +104,7 @@ public partial class AuthenticationView : UserControl
 
             case ApiProblemTypes.TwoFactorAuthentication.InvalidCode:
                 await _twoFactorSlidingPanel.ShowErrorState();
+                _twoFactorCode = null;
                 break;
 
             default:

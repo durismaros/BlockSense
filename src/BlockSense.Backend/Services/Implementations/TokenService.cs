@@ -1,6 +1,7 @@
 ﻿using BlockSense.Backend.Data.Configurations;
 using BlockSense.Backend.Entities;
 using BlockSense.Backend.Exceptions.Authentication;
+using BlockSense.Backend.Exceptions.TwoFactorAuthentication;
 using BlockSense.Backend.Exceptions.User;
 using BlockSense.Backend.Models.DeviceContext;
 using BlockSense.Backend.Repositories.Interfaces;
@@ -8,7 +9,9 @@ using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
 using BlockSense.Contracts.Cryptography.Utilities;
 using BlockSense.Contracts.DTOs.Authentication;
+using BlockSense.Contracts.DTOs.Session;
 using BlockSense.Contracts.DTOs.Token;
+using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -25,6 +28,7 @@ namespace BlockSense.Backend.Services.Implementations
         private readonly JwtTokenConfig _jwtTokenConfig;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IUserRepository _userRepository;
+        private readonly ITwoFactorAuthService _twoFactorAuthService;
 
         /// <summary>       
         /// Initializes a new instance of <see cref="TokenService"/> with required configurations and dependencies.
@@ -38,12 +42,53 @@ namespace BlockSense.Backend.Services.Implementations
             IOptions<RefreshTokenConfig> refreshTokenConfig,
             IOptions<JwtTokenConfig> jwtTokenConfig,
             IRefreshTokenRepository refreshTokenRepository,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            ITwoFactorAuthService twoFactorAuthService)
         {
-            _refreshTokenConfig = refreshTokenConfig.Value ?? throw new ArgumentNullException(nameof(refreshTokenConfig));
-            _jwtTokenConfig = jwtTokenConfig.Value ?? throw new ArgumentNullException(nameof(jwtTokenConfig));
-            _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
-            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _refreshTokenConfig = refreshTokenConfig.Value
+                ?? throw new ArgumentNullException(nameof(refreshTokenConfig));
+
+            _jwtTokenConfig = jwtTokenConfig.Value
+                ?? throw new ArgumentNullException(nameof(jwtTokenConfig));
+
+            _refreshTokenRepository = refreshTokenRepository
+                ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
+
+            _userRepository = userRepository
+                ?? throw new ArgumentNullException(nameof(userRepository));
+
+            _twoFactorAuthService = twoFactorAuthService
+                ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
+        }
+
+        /// <inheritdoc/>
+        public async Task<AuthRefreshResponse> RefreshAccessTokenAsync(AuthRefreshRequest request, DeviceContext deviceContext, CancellationToken cancellationToken = default)
+        {
+            string tokenHash =
+                Sha256Hasher.ComputeBase64(Convert.FromBase64String(request.RefreshToken));
+
+            var tokenEntity =
+                await _refreshTokenRepository.GetByTokenAsync(tokenHash, cancellationToken);
+
+            if (tokenEntity is null ||
+                tokenEntity.TokenHash != tokenHash ||
+                !tokenEntity.IsActive)
+            {
+                throw new AuthenticationRequiredException();
+            }
+
+            if (deviceContext.HardwareFingerprint != tokenEntity.HardwareFingerprint)
+            {
+                throw new InvalidClientContextException();
+            }
+
+            var accessToken =
+                await CreateAccessTokenAsync(tokenEntity.UserId, cancellationToken);
+
+            return new AuthRefreshResponse
+            {
+                AccessToken = accessToken
+            };
         }
 
         /// <inheritdoc/>
@@ -72,7 +117,7 @@ namespace BlockSense.Backend.Services.Implementations
                 IsRevoked = false
             };
 
-            await _refreshTokenRepository.CreateAsync(refreshTokenEntity, cancellationToken);
+            await _refreshTokenRepository.CreateOrUpdateAsync(refreshTokenEntity, cancellationToken);
 
             return new RefreshTokenDto
             {
@@ -127,38 +172,42 @@ namespace BlockSense.Backend.Services.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<AuthResponse> RefreshAccessTokenAsync(AuthRefreshRequest request, DeviceContext deviceContext, CancellationToken cancellationToken = default)
+        public async Task RevokeSessionAsync(uint userId, SessionRevokeRequest request, CancellationToken cancellationToken = default)
         {
-            string tokenHash =
-                Sha256Hasher.ComputeBase64(Convert.FromBase64String(request.RefreshToken));
-
-            var tokenEntity =
-                await _refreshTokenRepository.GetByTokenAsync(tokenHash, cancellationToken);
-
-            if (tokenEntity is null ||
-                tokenEntity.TokenHash != tokenHash ||
-                tokenEntity.ExpiresAt < DateTime.UtcNow ||
-                tokenEntity.IsRevoked)
+            try
             {
-                throw new AuthenticationRequiredException();
+                await _twoFactorAuthService.VerifyAsync(
+                    userId,
+                    new TwoFactorVerificationRequest
+                    {
+                        TwoFactorCode = request.TwoFactorCode
+                    },
+                    cancellationToken);
+            }
+            catch (TwoFactorNotConfiguredException) { }
+
+            var token =
+                await _refreshTokenRepository.GetByTokenAsync(request.TokenHash, cancellationToken);
+
+            if (token is null || token.UserId != userId)
+            {
+                throw new AccessProhibitedException();
             }
 
-            if (deviceContext.HardwareFingerprint != tokenEntity.HardwareFingerprint)
+            await _refreshTokenRepository.RevokeAsync(request.TokenHash, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task RevokeAllSessionsAsync(uint userId, TwoFactorVerificationRequest request, CancellationToken cancellationToken = default)
+        {
+            try
             {
-                throw new InvalidClientContextException();
+                await _twoFactorAuthService.VerifyAsync(userId, request, cancellationToken);
             }
+            catch (TwoFactorNotConfiguredException) { }
+            
 
-            var accessToken =
-                await CreateAccessTokenAsync(tokenEntity.UserId, cancellationToken);
-
-            var newRefreshToken =
-                await CreateRefreshTokenAsync(tokenEntity.UserId, deviceContext, cancellationToken);
-
-            return new AuthResponse
-            {
-                AccessToken = accessToken,
-                RefreshToken = newRefreshToken
-            };
+            await _refreshTokenRepository.RevokeAllForUserAsync(userId, cancellationToken);
         }
     }
 }

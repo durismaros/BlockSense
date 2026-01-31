@@ -89,6 +89,7 @@ namespace BlockSense.Desktop
 
             // --- Windows ---
             services.AddSingleton<MainWindow>();
+            services.AddSingleton<InvitationManagerWindow>();
 
             ServiceProvider = services.BuildServiceProvider();
         }

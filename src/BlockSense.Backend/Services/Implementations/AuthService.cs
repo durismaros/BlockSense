@@ -37,11 +37,20 @@ namespace BlockSense.Backend.Services.Implementations
             ITwoFactorAuthService twoFactorAuthService,
             DatabaseContext databaseContext)
         {
-            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-            _twoFactorAuthRepository = twoFactorAuthRepository ?? throw new ArgumentNullException(nameof(twoFactorAuthRepository));
-            _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
-            _twoFactorAuthService = twoFactorAuthService ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
-            _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
+            _userRepository = userRepository
+                ?? throw new ArgumentNullException(nameof(userRepository));
+
+            _twoFactorAuthRepository = twoFactorAuthRepository
+                ?? throw new ArgumentNullException(nameof(twoFactorAuthRepository));
+
+            _tokenService = tokenService
+                ?? throw new ArgumentNullException(nameof(tokenService));
+
+            _twoFactorAuthService = twoFactorAuthService
+                ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
+
+            _databaseContext = databaseContext
+                ?? throw new ArgumentNullException(nameof(databaseContext));
         }
 
         /// <inheritdoc/>
@@ -60,7 +69,7 @@ namespace BlockSense.Backend.Services.Implementations
                 var user =
                     await _userRepository.GetByUsernameOrEmailAsync(request.Login, cancellationToken);
 
-                if (user is null || user.DeletedAt.HasValue)
+                if (user is null || user.IsDeleted)
                 {
                     throw new InvalidCredentialsException();
                 }
@@ -72,11 +81,10 @@ namespace BlockSense.Backend.Services.Implementations
 
                 var argon2idHasher = new Argon2idHasher();
 
-                var computedHash =
-                    argon2idHasher.Derive(
-                        Encoding.UTF8.GetBytes(request.Password),
-                        out _,
-                        user.PasswordSalt);
+                var computedHash = argon2idHasher.Derive(
+                    Encoding.UTF8.GetBytes(request.Password),
+                    out _,
+                    user.PasswordSalt);
 
                 if (!Arrays.FixedTimeEquals(user.PasswordHash, computedHash))
                 {

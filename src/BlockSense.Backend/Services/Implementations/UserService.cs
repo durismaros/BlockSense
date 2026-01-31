@@ -9,6 +9,8 @@ using BlockSense.Contracts.DTOs.Registration;
 using BlockSense.Contracts.DTOs.User;
 using BlockSense.Contracts.Enums.User;
 using MySql.Data.MySqlClient;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 
 namespace BlockSense.Backend.Services.Implementations
@@ -38,11 +40,20 @@ namespace BlockSense.Backend.Services.Implementations
             ITwoFactorAuthRepository twoFactorAuthRepository,
             DatabaseContext databaseContext)
         {
-            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-            _invitationRepository = invitationRepository ?? throw new ArgumentNullException(nameof(invitationRepository));
-            _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
-            _twoFactorAuthRepository = twoFactorAuthRepository ?? throw new ArgumentNullException(nameof(twoFactorAuthRepository));
-            _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
+            _userRepository = userRepository
+                ?? throw new ArgumentNullException(nameof(userRepository));
+
+            _invitationRepository = invitationRepository
+                ?? throw new ArgumentNullException(nameof(invitationRepository));
+
+            _refreshTokenRepository = refreshTokenRepository
+                ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
+
+            _twoFactorAuthRepository = twoFactorAuthRepository
+                ?? throw new ArgumentNullException(nameof(twoFactorAuthRepository));
+
+            _databaseContext = databaseContext
+                ?? throw new ArgumentNullException(nameof(databaseContext));
         }
 
         /// <inheritdoc/>
@@ -62,14 +73,10 @@ namespace BlockSense.Backend.Services.Implementations
                 var invitation =
                     await _invitationRepository.GetByCodeForUpdateAsync(
                         request.InvitationCode,
-                        cancellationToken);
-
-                if (invitation is null)
-                {
-                    throw new InvalidInvitationCodeException();
-                }
+                        cancellationToken) ?? throw new InvalidInvitationCodeException();
 
                 var argon2idHasher = new Argon2idHasher();
+
                 var computedHash = argon2idHasher.Derive(
                     Encoding.UTF8.GetBytes(request.Password),
                     out byte[] computedSalt);
@@ -137,15 +144,10 @@ namespace BlockSense.Backend.Services.Implementations
         public async Task<UserSummaryDto> GetUserSummaryAsync(uint userId, CancellationToken cancellationToken = default)
         {
             var user =
-                await _userRepository.GetByIdAsync(userId, cancellationToken);
-
-            if (user is null)
-            {
-                throw new UserNotFoundException();
-            }
+                await _userRepository.GetByIdAsync(userId, cancellationToken) ?? throw new UserNotFoundException();
 
             var invitedBy =
-                await _invitationRepository.GetUsernameByUsedUser(userId, cancellationToken);
+                await _invitationRepository.GetInviterUsernameByUser(userId, cancellationToken) ?? "Unknown";
 
             var twoFaEnabled =
                 await _twoFactorAuthRepository.IsEnabledAsync(userId);
@@ -158,7 +160,7 @@ namespace BlockSense.Backend.Services.Implementations
                 UserType = user.UserType,
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt,
-                InvitedBy = invitedBy ?? "Unknown",
+                InvitedBy = invitedBy,
                 TwoFactorEnabled = twoFaEnabled
             };
         }
@@ -169,46 +171,60 @@ namespace BlockSense.Backend.Services.Implementations
                 await GetUserSummaryAsync(userId, cancellationToken);
 
             var activeTokens =
-                await _refreshTokenRepository.GetActiveByUserAsync(userId, cancellationToken);
+                await _refreshTokenRepository.GetActiveSessionsByUserAsync(userId, cancellationToken);
 
             var invitationCodes =
-                await _invitationRepository.GetByUserAsync(userId, cancellationToken);
+                await _invitationRepository.GetDtoByUserAsync(userId, cancellationToken);
 
             return new UserDashboardDto
             {
                 Profile = userSummary,
-                ActiveTokens = ToActiveUserTokens(activeTokens),
-                UserInvitations = ToUserInvitations(invitationCodes)
+                ActiveTokens = activeTokens.Select(token => token with
+                {
+                    IpAddress = MaskIp(token.IpAddress)
+                })
+                .ToList(),
+                UserInvitations = invitationCodes
             };
         }
 
-        private static IReadOnlyList<UserTokenSessionDto> ToActiveUserTokens(IReadOnlyList<RefreshTokenEntity> tokens)
+        private static string MaskIp(string ipString)
         {
-            return tokens
-                .Select(token => new UserTokenSessionDto
-                {
-                    TokenHash = token.TokenHash,
-                    DeviceName = token.DeviceIdentifier,
-                    IpAddress = token.IpAddress,
-                    IssuedAt = token.IssuedAt,
-                    ExpiresAt = token.ExpiresAt
-                })
-                .ToList();
-        }
+            if (!IPAddress.TryParse(ipString, out var ip))
+            {
+                return ipString;
+            }
 
-        private static IReadOnlyList<InvitationCodeDto> ToUserInvitations(IReadOnlyList<InvitationCodeEntity> invitations)
-        {
-            return invitations
-                .Select(invitation => new InvitationCodeDto
-                {
-                    InvitationCode = invitation.InvitationCode,
-                    CreatedAt = invitation.CreatedAt,
-                    ExpiresAt = invitation.ExpiresAt,
-                    InvitedUser = invitation.UsedByUsername,
-                    Status = invitation.Status
-                })
-                .ToList();
-        }
+            // Normalize IPv4-mapped IPv6
+            if (ip.IsIPv4MappedToIPv6)
+            {
+                ip = ip.MapToIPv4();
+            }
 
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            {
+                var parts = ip.ToString().Split('.');
+                return $"{parts[0]}.{parts[1]}.{parts[2]}.*";
+            }
+
+            if (ip.AddressFamily == AddressFamily.InterNetworkV6)
+            {
+                var full = ip.ToString();
+
+                var hextets = full.Split(':');
+
+                // Keep first 4 hextets, mask the rest
+                var visible = hextets.Take(4).ToList();
+
+                while (visible.Count < 4)
+                {
+                    visible.Add("0");
+                }
+
+                return string.Join(':', visible) + ":*:*:*:*";
+            }
+
+            return ipString;
+        }
     }
 }

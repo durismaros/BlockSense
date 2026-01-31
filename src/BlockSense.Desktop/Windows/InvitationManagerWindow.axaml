@@ -1,0 +1,331 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="BlockSense.Desktop.InvitationManagerWindow"
+        Title="InvitationManager"
+        Width="600" Height="350"
+        CanResize="False"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
+		ExtendClientAreaToDecorationsHint="True"
+		WindowStartupLocation="CenterOwner"
+        SystemDecorations="None"
+		ShowInTaskbar="False">
+
+    	<Window.Styles>
+			<Style Selector="TextBox#InvitationSearchTextBox">
+				<Setter Property="Background" Value="Transparent"/>
+				<Setter Property="Foreground" Value="#383838"/>
+				<Setter Property="BorderThickness" Value="0 0 0 1"/>
+				<Setter Property="BorderBrush" Value="#9c9c91"/>
+				<Setter Property="CaretBrush" Value="#2A2118"/>
+				<Setter Property="Padding" Value="8 4"/>
+				<Setter Property="CornerRadius" Value="0"/>
+				<Setter Property="FontSize" Value="14"/>
+				<Setter Property="FontWeight" Value="Normal"/>
+				<Setter Property="LetterSpacing" Value="1.2"/>
+				<Setter Property="FontFamily" Value="{DynamicResource Montserrat}"/>
+				
+				<Setter Property="Transitions">
+					<Transitions>
+						<BrushTransition Property="BorderBrush" Duration="0:0:0.25"/>
+					</Transitions>
+				</Setter>
+			</Style>
+			
+			<!-- Watermark style -->
+			<Style Selector="TextBox#InvitationSearchTextBox /template/ TextBlock#PART_Watermark">
+				<Setter Property="Foreground" Value="#9c9c91"/>
+				<Setter Property="FontSize" Value="14"/>
+				<Setter Property="FontStyle" Value="Italic"/>
+			</Style>
+			
+			<!-- Additional overrides to maintain consistent styling -->
+			<Style Selector="TextBox#InvitationSearchTextBox:pointerover">
+				<Setter Property="Foreground" Value="#383838"/>
+				<Setter Property="Opacity" Value="0.95"/>
+			</Style>
+			
+			<!-- Override default TextBox hover state -->
+			<Style Selector="TextBox#InvitationSearchTextBox:pointerover /template/ Border#PART_BorderElement">
+				<Setter Property="Background" Value="Transparent"/>
+				<Setter Property="BorderBrush" Value="#a39c91"/>
+				<Setter Property="BorderThickness" Value="0 0 0 1"/>
+				
+				<Setter Property="Transitions">
+					<Transitions>
+						<BrushTransition Property="BorderBrush" Duration="0:0:0.25"/>
+					</Transitions>
+				</Setter>
+			</Style>
+			
+			<Style Selector="TextBox#InvitationSearchTextBox:focus">
+				<Setter Property="Foreground" Value="#2A2118"/>
+				<Setter Property="Opacity" Value="1"/>
+				<Setter Property="FontWeight" Value="Medium"/>
+			</Style>
+			
+			<!-- Override default TextBox focus state -->
+			<Style Selector="TextBox#InvitationSearchTextBox:focus /template/ Border#PART_BorderElement">
+				<Setter Property="Background" Value="Transparent"/>
+				<Setter Property="BorderBrush" Value="#2A2118"/>
+				<Setter Property="BorderThickness" Value="0 0 0 1.2"/>
+
+				
+				<Setter Property="Transitions">
+					<Transitions>
+						<BrushTransition Property="BorderBrush" Duration="0:0:0.25"/>
+					</Transitions>
+				</Setter>
+			</Style>
+			
+			<Style Selector="TextBox#InvitationSearchTextBox:pointerover /template/ TextBlock#PART_Watermark, TextBox#InvitationSearchTextBox:focus /template/ TextBlock#PART_Watermark">
+				<Setter Property="Foreground" Value="#3f352b"/>
+				<Setter Property="FontSize" Value="14"/>
+				<Setter Property="FontStyle" Value="Italic"/>
+			</Style>
+
+			<!-- Column Definition -->
+			<Style Selector="TextBlock.ColumnDefinitionTextBlock">
+				<Setter Property="Foreground" Value="#3f352b"/>
+				<Setter Property="FontWeight" Value="SemiBold"/>
+				<Setter Property="Opacity" Value="0.7"/>
+			</Style>
+			
+			<!-- Invitation Border -->
+			<Style Selector="Border.InvitationBorder">
+				<Setter Property="Grid.ColumnSpan" Value="5"/>
+				<Setter Property="Height" Value="40"/>
+				<Setter Property="VerticalAlignment" Value="Stretch"/>
+				<Setter Property="Background" Value="#4b4742"/>
+				<Setter Property="CornerRadius" Value="18"/>
+				<Setter Property="Margin" Value="0 4"/>
+			</Style>
+
+			<!-- Creation Date -->
+			<Style Selector="TextBlock.CreationTextBlock">
+				<Setter Property="HorizontalAlignment" Value="Center"/>
+				<Setter Property="VerticalAlignment" Value="Center"/>
+				<Setter Property="Foreground" Value="#f5e8d8"/>
+				<Setter Property="FontSize" Value="12"/>
+				<Setter Property="FontWeight" Value="Medium"/>
+				<Setter Property="FontStyle" Value="Italic"/>
+			</Style>
+
+			<!-- Expiration Date -->
+			<Style Selector="TextBlock.ExpirationTextBlock">
+				<Setter Property="HorizontalAlignment" Value="Center"/>
+				<Setter Property="VerticalAlignment" Value="Center"/>
+				<Setter Property="Foreground" Value="#f5e8d8"/>
+				<Setter Property="FontSize" Value="12"/>
+				<Setter Property="FontWeight" Value="Medium"/>
+				<Setter Property="FontStyle" Value="Italic"/>
+			</Style>
+
+			<!-- Invitation Code -->
+			<Style Selector="Border.ExpandInvitationCodeBorder">
+				<Setter Property="Height" Value="24"/>
+				<Setter Property="HorizontalAlignment" Value="Center"/>
+				<Setter Property="VerticalAlignment" Value="Center"/>
+				<Setter Property="Background" Value="#f5e8d8"/>
+				<Setter Property="CornerRadius" Value="12"/>
+				<Setter Property="Padding" Value="8 4"/>
+				
+				<Setter Property="Transitions">
+					<Transitions>
+						<DoubleTransition Property="Height" Duration="0:0:0.5" Easing="CubicEaseInOut"/>
+						<BrushTransition Property="Background" Duration="0:0:0.25"/>
+						<DoubleTransition Property="Opacity" Duration="0:0:0.4" Easing="CubicEaseInOut"/>
+						<CornerRadiusTransition Property="CornerRadius" Duration="0:0:0.5" Easing="CubicEaseInOut"/>
+					</Transitions>
+				</Setter>
+			</Style>
+			
+			<Style Selector="Border.ExpandInvitationCodeBorder:pointerover">
+				<Setter Property="Background" Value="#aaa399"/>
+				<Setter Property="Cursor" Value="Hand"/>
+			</Style>
+			
+			<Style Selector="TextBlock.InvitationCodeTextBlock">
+				<Setter Property="HorizontalAlignment" Value="Center"/>
+				<Setter Property="VerticalAlignment" Value="Center"/>
+				<Setter Property="Foreground" Value="#3f352b"/>
+				<Setter Property="FontSize" Value="12"/>
+				<Setter Property="FontWeight" Value="Medium"/>
+			</Style>
+
+			<!-- Expanded Invitation Code -->
+			<Style Selector="Border.InviteCodeExpandedBorder">
+				<Setter Property="Height" Value="40"/>
+				<Setter Property="Background" Value="#f5e8d8"/>
+				<Setter Property="CornerRadius" Value="16"/>
+				
+				<Setter Property="Transitions">
+					<Transitions>
+						<DoubleTransition Property="Height" Duration="0:0:0.5" Easing="CubicEaseInOut"/>
+						<BrushTransition Property="Background" Duration="0:0:0.25"/>
+						<DoubleTransition Property="Opacity" Duration="0:0:0.4" Easing="CubicEaseInOut"/>
+						<CornerRadiusTransition Property="CornerRadius" Duration="0:0:0.5" Easing="CubicEaseInOut"/>
+					</Transitions>
+				</Setter>
+			</Style>
+			
+			<Style Selector="Border.InviteCodeExpandedBorder:pointerover">
+				<Setter Property="Background" Value="#aaa399"/>
+				<Setter Property="Cursor" Value="Hand"/>
+			</Style>
+			
+			<Style Selector="TextBlock.InviteCodeExpandedTextBlock">
+				<Setter Property="HorizontalAlignment" Value="Center"/>
+				<Setter Property="VerticalAlignment" Value="Center"/>
+				<Setter Property="Foreground" Value="#3f352b"/>
+				<Setter Property="FontSize" Value="12"/>
+				<Setter Property="FontWeight" Value="SemiBold"/>
+				<Setter Property="LetterSpacing" Value="4"/>
+			</Style>
+
+			<!-- Invited User -->
+			<Style Selector="TextBlock.InvitedUser">
+				<Setter Property="HorizontalAlignment" Value="Center"/>
+				<Setter Property="VerticalAlignment" Value="Center"/>
+				<Setter Property="Foreground" Value="#f5e8d8"/>
+				<Setter Property="FontSize" Value="12"/>
+				<Setter Property="FontStyle" Value="Italic"/>
+				<Setter Property="Opacity" Value="0.7"/>
+			</Style>
+
+			<!-- Status -->
+			<Style Selector="TextBlock.StatusTextBlock">
+				<Setter Property="HorizontalAlignment" Value="Center"/>
+				<Setter Property="VerticalAlignment" Value="Center"/>
+				<Setter Property="Foreground" Value="#383838"/>
+				<Setter Property="FontSize" Value="12"/>
+				<Setter Property="FontWeight" Value="SemiBold"/>
+				
+			</Style>
+
+			<Style Selector="Border.ActiveStatusBorder">
+				<Setter Property="HorizontalAlignment" Value="Center"/>
+				<Setter Property="VerticalAlignment" Value="Center"/>
+				<Setter Property="Background" Value="#85a47d"/>
+				<Setter Property="Padding" Value="8 4"/>
+				<Setter Property="CornerRadius" Value="24"/>
+			</Style>
+			
+			<Style Selector="Border.UsedStatusBorder">
+				<Setter Property="HorizontalAlignment" Value="Center"/>
+				<Setter Property="VerticalAlignment" Value="Center"/>
+				<Setter Property="Background" Value="#c4b982"/>
+				<Setter Property="Padding" Value="8 4"/>
+				<Setter Property="CornerRadius" Value="24"/>
+			</Style>
+			
+			<Style Selector="Border.ExpiredStatusBorder">
+				<Setter Property="HorizontalAlignment" Value="Center"/>
+				<Setter Property="VerticalAlignment" Value="Center"/>
+				<Setter Property="Background" Value="#b88475"/>
+				<Setter Property="Padding" Value="8 4"/>
+				<Setter Property="CornerRadius" Value="24"/>
+			</Style>
+
+			<Style Selector="Border.RevokedStatusBorder">
+				<Setter Property="HorizontalAlignment" Value="Center"/>
+				<Setter Property="VerticalAlignment" Value="Center"/>
+				<Setter Property="Background" Value="#d31840"/>
+				<Setter Property="Padding" Value="8 4"/>
+				<Setter Property="CornerRadius" Value="24"/>
+			</Style>
+	</Window.Styles>
+
+	<Border Width="600"
+			Height="350"
+			Background="#F5E9D8"
+			CornerRadius="24"
+			Opacity="0.95">
+		<StackPanel>
+
+			<!-- Window Header with Drag Area -->
+			<Border x:Name="DraggableArea"
+					Height="28"
+					VerticalAlignment="Top"
+					Background="#E7CAA2"
+					CornerRadius="24 0"
+					Opacity="0.8">
+				<Panel>
+
+					<TextBlock Text="Invitation Manager"
+							   HorizontalAlignment="Center"
+							   VerticalAlignment="Center"
+							   Foreground="#3b342a"
+							   FontWeight="SemiBold"
+							   FontStyle="Italic"/>
+					
+					<Button x:Name="CloseWindowButton"
+							Classes="MacOsCloseButton"
+							HorizontalAlignment="Right"
+							VerticalAlignment="Center"
+							Margin="0 0 14 0"/>
+				</Panel>
+			</Border>
+
+			<!-- Content Area -->
+			<StackPanel Margin="12">
+
+				<!-- Search Bar -->
+				<TextBox x:Name="InvitationSearchTextBox"
+						 Classes=""
+						 Watermark="Search invites..."
+						 Height="32"
+						 Margin="0 0 0 18"/>
+				
+				<!-- Headers -->
+				<Grid ColumnDefinitions="1.2* 1.2* 1.8* 1* 0.8*">
+					
+					<TextBlock Grid.Column="0"
+							   HorizontalAlignment="Center"
+							   Classes="ColumnDefinitionTextBlock"
+							   Text="Created"/>
+					
+					<TextBlock Grid.Column="1"
+							   HorizontalAlignment="Center"
+							   Classes="ColumnDefinitionTextBlock"
+							   Text="Expires"/>
+					
+					<TextBlock Grid.Column="2"
+							   HorizontalAlignment="Center"
+							   Classes="ColumnDefinitionTextBlock"
+							   Text="Invitation Code"/>
+					
+					<TextBlock Grid.Column="3"
+							   HorizontalAlignment="Center"
+							   Classes="ColumnDefinitionTextBlock"
+							   Text="Used By"/>
+					
+					<TextBlock Grid.Column="4"
+							   HorizontalAlignment="Center"
+							   Classes="ColumnDefinitionTextBlock"
+							   Text="Status"/>
+				</Grid>
+				
+				<!-- Divider -->
+				<Separator Height="1"
+						   Background="#9c9c91"
+						   Opacity="0.6"
+						   Margin="10"/>
+				
+				<!-- Invitation Items -->
+				<ScrollViewer Height="160"
+							  HorizontalScrollBarVisibility="Disabled"
+							  VerticalScrollBarVisibility="Auto">
+					
+					<Grid x:Name="InviteCodesGrid"
+						  ColumnDefinitions="1.2* 1.2* 1.8* 1* 0.8*"
+						  VerticalAlignment="Top"/>
+				</ScrollViewer>
+			</StackPanel>
+		</StackPanel>
+	</Border>
+
+</Window>
