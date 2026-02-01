@@ -5,10 +5,10 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using BlockSense.Contracts.Definitions;
-using BlockSense.Contracts.DTOs.TokenSession;
+using BlockSense.Contracts.DTOs.Session;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Setup;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
-using BlockSense.Contracts.Enums.User;
+using BlockSense.Contracts.Enums;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.Formatting;
@@ -23,6 +23,7 @@ namespace BlockSense.Desktop;
 public partial class UserDashboardView : UserControl
 {
     private readonly ITwoFactorAuthService _twoFactorAuthService;
+    private readonly ITokenService _tokenService;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly NavigationManager _navigationManager;
     private readonly TwoFactorSlidingPanel _twoFactorSlidingPanel;
@@ -32,6 +33,9 @@ public partial class UserDashboardView : UserControl
     {
         _twoFactorAuthService = App.ServiceProvider.GetRequiredService<ITwoFactorAuthService>()
             ?? throw new ArgumentNullException(nameof(ITwoFactorAuthService));
+
+        _tokenService = App.ServiceProvider.GetRequiredService<ITokenService>()
+            ?? throw new ArgumentNullException(nameof(ITokenService));
 
         _currentUserProvider = App.ServiceProvider.GetRequiredService<ICurrentUserProvider>()
             ?? throw new ArgumentNullException(nameof(ICurrentUserProvider));
@@ -60,17 +64,11 @@ public partial class UserDashboardView : UserControl
         CloseDeviceManagerButton.Click += CloseDeviceManagerClick;
 
         EnableTwoFactorButton.PointerPressed += EnableTwoFactorClick;
-
         GenerateBackupCodesButton.Click += GenerateBackupCodesClick;
         DownloadBackupCodesButton.Click += DownloadBackupCodesClick;
 
         DisableTwoFactorCheckButton.Click += DisableTwoFactorCheckClick;
         DisableTwoFactorButton.Click += DisableTwoFactorClick;
-
-        _twoFactorSlidingPanel.TwoFactorCodeSubmitted += async code =>
-        {
-            await OnTwoFactorCodeSubmitted(code);
-        };
     }
 
     private void OnCurrentUserChanged()
@@ -106,7 +104,7 @@ public partial class UserDashboardView : UserControl
         TotalInvitedUsersTextBlock.Text =
             FormatInvitationCount(_currentUserProvider.Invitations.Count);
 
-        RefreshActiveDevices();
+        AddActiveDevices();
     }
 
     private async void ToHomeViewClick(object? sender, RoutedEventArgs e)
@@ -117,7 +115,10 @@ public partial class UserDashboardView : UserControl
     private async void OpenInvitationManagerButtonClick(object? sender, RoutedEventArgs e)
     {
         if (_invitationManagerWindow.IsVisible)
+        {
+            _invitationManagerWindow.Activate();
             return;
+        }
 
         _invitationManagerWindow.Show();
         await Animations.FadeInAnimation.RunAsync(_invitationManagerWindow);
@@ -150,7 +151,9 @@ public partial class UserDashboardView : UserControl
     private async void GenerateBackupCodesClick(object? sender, RoutedEventArgs e)
     {
         if (DownloadBackupCodesButton.IsVisible)
+        {
             return;
+        }
 
         string defaultText = BackupCodesTextBlock.Text ?? string.Empty;
 
@@ -217,66 +220,77 @@ public partial class UserDashboardView : UserControl
     private async void DisableTwoFactorCheckClick(object? sender, RoutedEventArgs e)
     {
         if (DisableTwoFactorButton.IsVisible)
+        {
             return;
+        }
 
         DisableTwoFactorButton.IsVisible = true;
         await Animations.FadeInAnimation.RunAsync(DisableTwoFactorButton);
     }
 
-    private async void ConfirmRevokeDeviceClick(object? sender, RoutedEventArgs e)
+    private async void ConfirmRevokeDeviceClick(string tokenHash)
     {
-        throw new NotImplementedException();
+        _twoFactorSlidingPanel.ShowPanel(async code =>
+        {
+            var request = new SessionRevokeRequest
+            {
+                TokenHash = tokenHash,
+                TwoFactorCode = code
+            };
+
+            bool success = await _tokenService.RevokeAsync(request);
+        });
     }
 
     private void EnableTwoFactorClick(object? sender, RoutedEventArgs e)
     {
-        _twoFactorSlidingPanel.ShowPanel(TwoFactorPurpose.Enable);
+        _twoFactorSlidingPanel.ShowPanel(async code =>
+        {
+            bool success = await _twoFactorAuthService.EnableAsync(new TwoFactorSetupRequest
+            {
+                SecretKey = SetupKeyTextBlock.Text ?? string.Empty,
+                TwoFactorCode = code
+            });
+
+            if (success)
+            {
+                await _twoFactorSlidingPanel.ShowVerifiedState();
+                return;
+            }
+
+            await _twoFactorSlidingPanel.ShowErrorState();
+        });
     }
 
     private void DisableTwoFactorClick(object? sender, RoutedEventArgs e)
     {
-        _twoFactorSlidingPanel.ShowPanel(TwoFactorPurpose.Disable);
+        _twoFactorSlidingPanel.BackUpToggleButton.IsVisible = false;
+
+        _twoFactorSlidingPanel.ShowPanel(async code =>
+        {
+            bool success = await _twoFactorAuthService.DisableAsync(new TwoFactorVerificationRequest
+            {
+                TwoFactorCode = code
+            });
+
+            if (success)
+            {
+                await _twoFactorSlidingPanel.ShowVerifiedState();
+                return;
+            }
+
+            await _twoFactorSlidingPanel.ShowErrorState();
+        });
+
     }
 
-    private void RefreshActiveDevices()
+    private void AddActiveDevices()
     {
         DevicesPanel.Children.Clear();
 
         foreach (var device in _currentUserProvider.ActiveDevices)
         {
             DevicesPanel.Children.Add(CreateDeviceCard(device));
-        }
-    }
-
-    private async Task OnTwoFactorCodeSubmitted(string code)
-    {
-        try
-        {
-            bool success = _twoFactorSlidingPanel.Purpose switch
-            {
-                TwoFactorPurpose.Enable => await _twoFactorAuthService.EnableAsync(new TwoFactorSetupRequest
-                {
-                    SecretKey = SetupKeyTextBlock.Text ?? string.Empty,
-                    TwoFactorCode = code
-                }),
-                TwoFactorPurpose.Disable => await _twoFactorAuthService.DisableAsync(new TwoFactorVerificationRequest
-                {
-                    TwoFactorCode = code
-                }),
-                _ => false
-            };
-
-            if (!success)
-            {
-                await _twoFactorSlidingPanel.ShowErrorState();
-                return;
-            }
-
-            await _twoFactorSlidingPanel.ShowVerifiedState();
-        }
-        catch
-        {
-            await _twoFactorSlidingPanel.ShowErrorState();
         }
     }
 
@@ -438,7 +452,10 @@ public partial class UserDashboardView : UserControl
         };
 
 
-        confirmButton.Click += ConfirmRevokeDeviceClick;
+        confirmButton.Click += (s, e) =>
+        {
+            ConfirmRevokeDeviceClick(device.TokenHash);
+        };
 
         grid.Children.Add(revokeButton);
         grid.Children.Add(confirmButton);

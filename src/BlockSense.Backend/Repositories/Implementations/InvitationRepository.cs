@@ -156,7 +156,7 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<IReadOnlyList<InvitationCodeDto>> GetDtoByUserAsync(uint userId, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<InvitationDto>> GetDtoByUserAsync(uint userId, CancellationToken cancellationToken = default)
         {
             const string sqlQuery = """
                 SELECT
@@ -190,7 +190,7 @@ namespace BlockSense.Backend.Repositories.Implementations
             await using MySqlDataReader dbReader =
                 await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
 
-            return SqlMapper.Parse<InvitationCodeDto>(dbReader).ToList();
+            return SqlMapper.Parse<InvitationDto>(dbReader).ToList();
         }
 
         /// <inheritdoc/>

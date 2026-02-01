@@ -121,7 +121,7 @@
                                             <Path Classes="ReavealPasswordEyeIcon"/>                                    
                                             
                                             <!-- Cross Line (hidden by default) -->
-                                            <Path x:Name="EyeCrossLine1"
+                                            <Path x:Name="EyeCrossLine"
                                                   Classes="ReavealPasswordCrossIcon"/>
                                         </Panel>
                                     </Viewbox>
@@ -161,7 +161,7 @@
                                             <Path Classes="ReavealPasswordEyeIcon"/>
                                             
                                             <!-- Cross Line (hidden by default) -->
-                                            <Path x:Name="EyeCrossLine2"
+                                            <Path x:Name="RepeatedEyeCrossLine"
                                                   Classes="ReavealPasswordCrossIcon"/>
                                         </Panel>
                                     </Viewbox>
@@ -206,24 +206,6 @@
                                Foreground="#5D3F36"
                                FontWeight="Medium"/>
                 </Button>
-                
-                <!-- System Output -->
-                <Border x:Name="OutputBorder"
-                        Width="280"
-                        Height="20"
-                        Background="#C29A72"
-                        CornerRadius="0 0 24 24"
-                        Margin="0 -24 0 0"
-                        IsVisible="False">
-                    
-                    <TextBlock x:Name="OutputTextBlock"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               Foreground="#4E342E"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               FontStyle="Italic"/>
-                </Border>
             </StackPanel>
         </Panel>
     </Panel>

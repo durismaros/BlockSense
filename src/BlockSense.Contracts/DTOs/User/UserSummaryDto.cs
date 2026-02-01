@@ -1,4 +1,4 @@
-﻿using BlockSense.Contracts.Enums.User;
+﻿using BlockSense.Contracts.Enums;
 
 namespace BlockSense.Contracts.DTOs.User
 {

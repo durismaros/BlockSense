@@ -1,5 +1,5 @@
 ﻿using BlockSense.Contracts.DTOs.Invitation;
-using BlockSense.Contracts.DTOs.TokenSession;
+using BlockSense.Contracts.DTOs.Session;
 using BlockSense.Contracts.DTOs.User;
 using System;
 using System.Collections.Generic;
@@ -18,7 +18,7 @@ namespace BlockSense.Desktop.Providers.Interfaces
             get;
         }
 
-        IReadOnlyList<InvitationCodeDto> Invitations
+        IReadOnlyList<InvitationDto> Invitations
         {
             get;
         }

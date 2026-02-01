@@ -1,4 +1,4 @@
-﻿namespace BlockSense.Contracts.Enums.User
+﻿namespace BlockSense.Contracts.Enums
 {
     /// <summary>
     /// Represents the current status of an invitation code.

@@ -1,5 +1,4 @@
 ﻿using BlockSense.Contracts.DTOs.Authentication;
-using BlockSense.Contracts.DTOs.Token;
 using BlockSense.Desktop.Models.Services;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,7 +16,7 @@ namespace BlockSense.Desktop.Services.Interfaces
         /// <param name="request">The authentication request with username/email and password.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>A <see cref="ServiceResponse"/> indicating the result of the authentication attempt.</returns>
-        Task<ServiceResponse> AuthAsync(AuthRequest request, CancellationToken cancellationToken = default);
+        Task AuthAsync(AuthRequest request, CancellationToken cancellationToken = default);
         Task AuthRefreshAsync(CancellationToken cancellationToken = default);
     }
 }

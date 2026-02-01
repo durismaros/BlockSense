@@ -1,11 +1,11 @@
+using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Styling;
 using BlockSense.Desktop.Utilities.UIComponents;
-using Microsoft.Extensions.DependencyInjection;
-using Org.BouncyCastle.Operators.Utilities;
 using System;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace BlockSense.Desktop;
@@ -51,5 +51,15 @@ public partial class MainWindow : Window
         ContentContainer.Content = newView;
 
         await Animations.FadeInAnimation.RunAsync(newView);
+    }
+
+    public async void ShowNotification(string title, string message)
+    {
+        var toast = new ToastNotification(title, message);
+
+        NotificationStackPanel.Children.Add(toast);
+        await Animations.FadeInAnimation.RunAsync(toast);
+
+        await toast.ShowAsync();
     }
 }

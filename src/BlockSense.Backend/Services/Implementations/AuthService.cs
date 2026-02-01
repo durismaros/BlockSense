@@ -6,7 +6,7 @@ using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
 using BlockSense.Contracts.DTOs.Authentication;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
-using BlockSense.Contracts.Enums.User;
+using BlockSense.Contracts.Enums;
 using Org.BouncyCastle.Utilities;
 using System.Text;
 

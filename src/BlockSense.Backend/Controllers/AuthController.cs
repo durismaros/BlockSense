@@ -40,7 +40,7 @@ namespace BlockSense.Backend.Controllers
             return Ok(response);
         }
 
-        [HttpPost]
+        [HttpPost("refresh")]
         [AllowAnonymous]
         public async Task<IActionResult> PostRefresh([FromBody] AuthRefreshRequest request, [FromDeviceContext] DeviceContext deviceContext, CancellationToken cancellationToken)
         {

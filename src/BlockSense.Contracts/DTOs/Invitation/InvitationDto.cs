@@ -1,4 +1,4 @@
-﻿using BlockSense.Contracts.Enums.User;
+﻿using BlockSense.Contracts.Enums;
 
 namespace BlockSense.Contracts.DTOs.Invitation
 {
@@ -6,7 +6,7 @@ namespace BlockSense.Contracts.DTOs.Invitation
     /// Represents an invitation code and its current state.
     /// Used to display invitation information to clients and for administrative purposes.
     /// </summary>
-    public sealed record InvitationCodeDto
+    public sealed record InvitationDto
     {
         /// <summary>
         /// The unique invitation code string.

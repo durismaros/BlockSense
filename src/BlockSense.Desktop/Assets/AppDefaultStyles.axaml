@@ -193,7 +193,7 @@
 	</Style>
 
 	<!-- Hover behavior -->
-	<Style Selector="Button.MacOsCloseButton:pointerover Path#CloseIcon">
+	<Style Selector="Button.MacOsCloseButton:pointerover Path#CloseIcon, Button.MacOsCloseButton:pressed Path#CloseIcon">
 		<Setter Property="Opacity" Value="0.85"/>
 	</Style>
 

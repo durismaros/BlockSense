@@ -1,7 +1,9 @@
 ﻿using BlockSense.Contracts.Definitions;
+using BlockSense.Contracts.DTOs.Authentication;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Setup;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
 using BlockSense.Contracts.DTOs.User;
+using BlockSense.Desktop.Models.Api;
 using BlockSense.Desktop.Models.Services;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
@@ -28,16 +30,19 @@ namespace BlockSense.Desktop.Services.Implementations
             var response = await _apiClient
                 .AddBearerToken()
                 .GetAsync<TwoFactorSetupInit>(
-                requestUri: "/api/users/me/2fa/setup",
-                cancellationToken: cancellationToken);
+                    requestUri: "/api/users/me/2fa",
+                    cancellationToken: cancellationToken);
 
-            if (response.IsSuccess && response.Data is not null)
+            if (response is ApiResult<TwoFactorSetupInit>.Success success)
             {
-                return response.Data;
+                return success.Data;
             }
 
-            throw new InvalidOperationException(
-                response.ProblemDetails?.Title ?? "Failed to load User Two-Factor Setup data.");
+            MainWindow.Instance.ShowNotification(
+                "Two-Factor Setup Error",
+                "Unable to load your Two-Factor Authentication setup data.");
+
+            throw new InvalidOperationException();
         }
 
         public async Task<bool> EnableAsync(TwoFactorSetupRequest request, CancellationToken cancellationToken = default)
@@ -45,9 +50,9 @@ namespace BlockSense.Desktop.Services.Implementations
             var response = await _apiClient
                 .AddBearerToken()
                 .PostAsync<TwoFactorSetupRequest, UserSummaryDto>(
-                request: request,
-                requestUri: "/api/users/me/2fa/enable",
-                cancellationToken: cancellationToken);
+                    request: request,
+                    requestUri: "/api/users/me/2fa",
+                    cancellationToken: cancellationToken);
 
             if (response.IsSuccess &&
                 response.Data is not null)
@@ -71,9 +76,9 @@ namespace BlockSense.Desktop.Services.Implementations
         {
             var response = await _apiClient
                 .AddBearerToken()
-                .PostAsync<TwoFactorVerificationRequest, UserSummaryDto>(
+                .DeleteAsync<TwoFactorVerificationRequest, UserSummaryDto>(
                 request: request,
-                requestUri: "/api/users/me/2fa/disable",
+                requestUri: "/api/users/me/2fa",
                 cancellationToken: cancellationToken);
 
             if (response.IsSuccess &&
@@ -100,7 +105,7 @@ namespace BlockSense.Desktop.Services.Implementations
             var response = await _apiClient
                 .AddBearerToken()
                 .GetAsync<IReadOnlyList<string>>(
-                requestUri: "/api/users/me/2fa/backup-codes",
+                requestUri: "/api/users/me/2fa/backup",
                 cancellationToken: cancellationToken);
 
             if (response.IsSuccess && response.Data is not null)

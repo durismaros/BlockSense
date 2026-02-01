@@ -28,7 +28,7 @@ namespace BlockSense.Backend.Controllers
             var response = await _userService.RegisterAsync(request, cancellationToken);
 
             return CreatedAtAction(
-                nameof(RegisterUserAsync),
+                nameof( Post ),
                 new { response.UserId },
                 response);
         }

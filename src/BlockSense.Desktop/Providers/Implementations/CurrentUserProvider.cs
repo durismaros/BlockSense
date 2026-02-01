@@ -1,5 +1,5 @@
 ﻿using BlockSense.Contracts.DTOs.Invitation;
-using BlockSense.Contracts.DTOs.TokenSession;
+using BlockSense.Contracts.DTOs.Session;
 using BlockSense.Contracts.DTOs.User;
 using BlockSense.Desktop.Providers.Interfaces;
 using System;
@@ -21,7 +21,7 @@ namespace BlockSense.Desktop.Providers.Implementations
             private set; 
         }
 
-        public IReadOnlyList<InvitationCodeDto> Invitations
+        public IReadOnlyList<InvitationDto> Invitations
         {
             get;
             private set;
@@ -52,7 +52,7 @@ namespace BlockSense.Desktop.Providers.Implementations
         {
             Profile = default!;
             ActiveDevices = Array.Empty<UserSessionDto>();
-            Invitations = Array.Empty<InvitationCodeDto>();
+            Invitations = Array.Empty<InvitationDto>();
             TwoFactorBackupCodes = null;
         }
 
@@ -81,7 +81,7 @@ namespace BlockSense.Desktop.Providers.Implementations
         {
             Profile = default!;
             ActiveDevices = Array.Empty<UserSessionDto>();
-            Invitations = Array.Empty<InvitationCodeDto>();
+            Invitations = Array.Empty<InvitationDto>();
 
             _onCurrentUserChanged?.Invoke();
         }

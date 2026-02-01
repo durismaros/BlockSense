@@ -7,7 +7,7 @@ using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
 using BlockSense.Contracts.DTOs.Registration;
 using BlockSense.Contracts.DTOs.User;
-using BlockSense.Contracts.Enums.User;
+using BlockSense.Contracts.Enums;
 using MySql.Data.MySqlClient;
 using System.Net;
 using System.Net.Sockets;

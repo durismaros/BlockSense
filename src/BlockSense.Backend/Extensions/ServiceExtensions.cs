@@ -7,7 +7,7 @@ using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Implementations;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Definitions;
-using BlockSense.Contracts.Enums.User;
+using BlockSense.Contracts.Enums;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;

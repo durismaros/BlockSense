@@ -1,5 +1,5 @@
 ﻿using BlockSense.Backend.Entities;
-using BlockSense.Contracts.Enums.User;
+using BlockSense.Contracts.Enums;
 
 namespace BlockSense.Backend.Repositories.Interfaces
 {

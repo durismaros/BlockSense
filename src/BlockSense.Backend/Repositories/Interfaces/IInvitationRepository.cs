@@ -43,8 +43,8 @@ namespace BlockSense.Backend.Repositories.Interfaces
         /// </summary>
         /// <param name="userId">The unique identifier of the user.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>A collection of <see cref="InvitationCodeDto"/> instances.</returns>
-        Task<IReadOnlyList<InvitationCodeDto>> GetDtoByUserAsync(uint userId, CancellationToken cancellationToken = default);
+        /// <returns>A collection of <see cref="InvitationDto"/> instances.</returns>
+        Task<IReadOnlyList<InvitationDto>> GetDtoByUserAsync(uint userId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Retrieves a username of user who generated the invitation code.

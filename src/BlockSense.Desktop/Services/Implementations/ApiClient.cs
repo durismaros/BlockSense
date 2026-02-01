@@ -5,6 +5,7 @@ using BlockSense.Desktop.Utilities.ApiHandling;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
@@ -46,50 +47,6 @@ namespace BlockSense.Desktop.Services.Implementations
             _requestOptions = apiRequestOptions ?? throw new ArgumentNullException(nameof(apiRequestOptions));
         }
 
-        public IApiClient AddBearerToken()
-        {
-            return new ApiClient(
-                _logger,
-                _httpClient,
-                _navigationManager,
-                _requestOptions with
-                {
-                    AddBearerToken = true
-                });
-        }
-
-        public IApiClient AddDeviceHeaders()
-        {
-            return new ApiClient(
-                _logger,
-                _httpClient,
-                _navigationManager,
-                _requestOptions with
-                {
-                    AddDeviceHeaders = true
-                });
-        }
-
-        /// <inheritdoc/>
-        public async Task<ApiResult<TResponse>> PostAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
-        {
-            return await SendAsync<TRequest, TResponse>(
-                HttpMethod.Post,
-                requestUri,
-                request,
-                cancellationToken);
-        }
-
-        /// <inheritdoc/>
-        public async Task<ApiResult<TResponse>> GetAsync<TResponse>(string requestUri, CancellationToken cancellationToken)
-        {
-            return await SendAsync<object, TResponse>(
-                HttpMethod.Get,
-                requestUri,
-                default,
-                cancellationToken);
-        }
-
         /// <summary>
         /// Sends an HTTP request with the specified method and payload, handling serialization, deserialization, and error mapping to <see cref="ApiResult{TResponse}"/>.
         /// </summary>
@@ -103,7 +60,6 @@ namespace BlockSense.Desktop.Services.Implementations
         private async Task<ApiResult<TResponse>> SendAsync<TRequest, TResponse>(HttpMethod method, string requestUri, TRequest? request, CancellationToken cancellationToken)
         {
             using var httpRequest = new HttpRequestMessage(method, requestUri);
-
             _requestOptions.ApplyTo(httpRequest);
 
             if (request is not null)
@@ -118,26 +74,19 @@ namespace BlockSense.Desktop.Services.Implementations
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var data = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken)
-                        ?? Activator.CreateInstance<TResponse>();
+                    var data = await response.Content
+                        .ReadFromJsonAsync<TResponse>(cancellationToken) ?? Activator.CreateInstance<TResponse>();
 
-                    return ApiResult<TResponse>.Success(data);
+                    return new ApiResult<TResponse>.Success(data);
                 }
 
-
-                _logger.LogWarning(
-                    "HTTP {Method} {Uri} failed with status {StatusCode}",
-                    method,
-                    requestUri,
-                    response.StatusCode);
-
-                var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>()
-                    ?? new ProblemDetails
+                var problemDetails = await response.Content
+                    .ReadFromJsonAsync<ProblemDetails>() ?? new ProblemDetails
                     {
                         Type = ApiProblemTypes.Client.UnknownError,
                         Title = "Unknown Error",
                         Status = (int)response.StatusCode,
-                        Detail = "The server returned an unknown error.",
+                        Detail = "The server returned an unexpected error.",
                         Instance = requestUri
                     };
 
@@ -146,34 +95,60 @@ namespace BlockSense.Desktop.Services.Implementations
                     throw new AuthenticationRequiredException();
                 }
 
-                return ApiResult<TResponse>.Failure(problemDetails);
+                return new ApiResult<TResponse>.Failure(problemDetails);
             }
             catch (AuthenticationRequiredException)
             {
                 await _navigationManager.NavigateToAsync<AuthenticationView>();
 
-                return ApiResult<TResponse>.Failure(new ProblemDetails
+                var problemDetails = new ProblemDetails
                 {
                     Type = ApiProblemTypes.Authentication.AuthenticationRequired,
                     Title = "Reauthentication Required",
                     Status = 401,
-                    Detail = "Authentication is required to continue.",
+                    Detail = "For security purposes, please reauthenticate.",
                     Instance = requestUri
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
+                };
 
-                return ApiResult<TResponse>.Failure(new ProblemDetails
+                return new ApiResult<TResponse>.Failure(problemDetails);
+            }
+            catch (Exception)
+            {
+                var problemDetails = new ProblemDetails
                 {
                     Type = ApiProblemTypes.Client.NetworkError,
                     Title = "Network Error",
                     Status = 503,
-                    Detail = "A network or connectivity error occurred while sending the request.",
+                    Detail = "A network or connectivity issue occurred while sending your request.",
                     Instance = requestUri
-                });
+                };
+
+                return new ApiResult<TResponse>.Failure(problemDetails);
             }
         }
+
+        /// <inheritdoc/>
+        public Task<ApiResult<TResponse>> PostAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
+            => SendAsync<TRequest, TResponse>(HttpMethod.Post, requestUri, request, cancellationToken);
+
+        /// <inheritdoc/>
+        public Task<ApiResult<TResponse>> GetAsync<TResponse>(string requestUri, CancellationToken cancellationToken)
+            => SendAsync<object, TResponse>(HttpMethod.Get, requestUri, null, cancellationToken);
+
+        /// <inheritdoc/>
+        public Task<ApiResult<TResponse>> PutAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
+            => SendAsync<TRequest, TResponse>(HttpMethod.Put, requestUri, request, cancellationToken);
+
+        /// <inheritdoc/>
+        public Task<ApiResult<TResponse>> DeleteAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
+            => SendAsync<TRequest, TResponse>(HttpMethod.Delete, requestUri, request, cancellationToken);
+
+        /// <inheritdoc/>
+        public IApiClient AddBearerToken()
+            => new ApiClient(_logger, _httpClient, _navigationManager, _requestOptions with { AddBearerToken = true });
+
+        /// <inheritdoc/>
+        public IApiClient AddDeviceHeaders()
+            => new ApiClient(_logger, _httpClient, _navigationManager, _requestOptions with { AddDeviceHeaders = true });
     }
 }

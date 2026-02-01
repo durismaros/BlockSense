@@ -3,7 +3,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using BlockSense.Contracts.DTOs.Invitation;
-using BlockSense.Contracts.Enums.User;
+using BlockSense.Contracts.Enums;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Utilities.Formatting;
 using BlockSense.Desktop.Utilities.UIComponents;
@@ -37,7 +37,7 @@ public partial class InvitationManagerWindow : Window
         MainWindow.Instance.Closing += (s, e) => this.Close();
     }
 
-    private void DisplayInvites(IReadOnlyList<InvitationCodeDto> invites)
+    private void DisplayInvites(IReadOnlyList<InvitationDto> invites)
     {
         InviteCodesGrid.Children.Clear();
         InviteCodesGrid.RowDefinitions.Clear();
@@ -101,7 +101,7 @@ public partial class InvitationManagerWindow : Window
     {
         if (sender is not Border border ||
             border.Child is not TextBlock text ||
-            border.Tag is not InvitationCodeDto invite)
+            border.Tag is not InvitationDto invite)
         {
             return;
         }
@@ -167,7 +167,7 @@ public partial class InvitationManagerWindow : Window
         InviteCodesGrid.Children.Add(border);
     }
 
-    private void AddCreationDate(InvitationCodeDto invitation, int row)
+    private void AddCreationDate(InvitationDto invitation, int row)
     {
         var text = new TextBlock
         {
@@ -180,7 +180,7 @@ public partial class InvitationManagerWindow : Window
         InviteCodesGrid.Children.Add(text);
     }
 
-    private void AddExpirationDate(InvitationCodeDto invitation, int row)
+    private void AddExpirationDate(InvitationDto invitation, int row)
     {
         var text = new TextBlock
         {
@@ -192,7 +192,7 @@ public partial class InvitationManagerWindow : Window
         InviteCodesGrid.Children.Add(text);
     }
 
-    private void AddInviteCode(InvitationCodeDto invitation, int row)
+    private void AddInviteCode(InvitationDto invitation, int row)
     {
         var border = new Border
         {
@@ -215,7 +215,7 @@ public partial class InvitationManagerWindow : Window
         InviteCodesGrid.Children.Add(border);
     }
 
-    private void AddInvitedUser(InvitationCodeDto invitation, int row)
+    private void AddInvitedUser(InvitationDto invitation, int row)
     {
         bool hasUser = !string.IsNullOrWhiteSpace(invitation.InvitedUser);
 
@@ -230,7 +230,7 @@ public partial class InvitationManagerWindow : Window
         InviteCodesGrid.Children.Add(text);
     }
 
-    private void AddStatus(InvitationCodeDto invitation, int row)
+    private void AddStatus(InvitationDto invitation, int row)
     {
         var border = new Border
         {
@@ -251,7 +251,7 @@ public partial class InvitationManagerWindow : Window
         InviteCodesGrid.Children.Add(border);
     }
 
-    private static bool InviteMatchesSearch(InvitationCodeDto invite, string searchText)
+    private static bool InviteMatchesSearch(InvitationDto invite, string searchText)
     {
         if (invite is null || string.IsNullOrWhiteSpace(searchText))
             return false;

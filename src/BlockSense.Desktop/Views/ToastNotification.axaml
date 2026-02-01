@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 x:Class="BlockSense.Desktop.ToastNotification">
+
+	<Border Background="#2A1F1A"
+			CornerRadius="24"
+			BoxShadow="0 8 24 0 #80000000"
+			ClipToBounds="True"
+			Opacity="0.9">
+
+		<Grid RowDefinitions="*,3">
+
+			<!-- Content -->
+			<StackPanel Margin="16 14"
+						Spacing="6">
+
+				<TextBlock x:Name="TitleText"
+						   FontSize="14"
+						   FontWeight="SemiBold"
+						   Foreground="#F2E8E4"/>
+
+				<TextBlock x:Name="MessageText"
+						   FontSize="12"
+						   Foreground="#CBB8AF"
+						   TextWrapping="Wrap"/>
+			</StackPanel>
+
+			<!-- Progress bar (slimmer, with corner radius) -->
+			<Border x:Name="ProgressBar"
+					Grid.Row="1"
+					Background="#C89B6D"
+					Height="2"
+					Margin="12 0"
+					RenderTransformOrigin="1,0.5">
+
+				<Border.RenderTransform>
+					<ScaleTransform ScaleX="1"/>
+				</Border.RenderTransform>
+			</Border>
+
+		</Grid>
+	</Border>
+
+
+</UserControl>

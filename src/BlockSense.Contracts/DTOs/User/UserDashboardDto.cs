@@ -1,5 +1,5 @@
 ﻿using BlockSense.Contracts.DTOs.Invitation;
-using BlockSense.Contracts.DTOs.TokenSession;
+using BlockSense.Contracts.DTOs.Session;
 
 namespace BlockSense.Contracts.DTOs.User
 {
@@ -29,7 +29,7 @@ namespace BlockSense.Contracts.DTOs.User
         /// <summary>
         /// List of invitation codes created by the user.
         /// </summary>
-        public required IReadOnlyList<InvitationCodeDto> UserInvitations
+        public required IReadOnlyList<InvitationDto> UserInvitations
         {
             get;
             init;

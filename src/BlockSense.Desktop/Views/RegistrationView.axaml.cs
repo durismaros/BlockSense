@@ -1,12 +1,15 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Interactivity;
 using BlockSense.Contracts.DTOs.Registration;
+using BlockSense.Desktop.Services.Implementations;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
 using BlockSense.Desktop.Utilities.Validation;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace BlockSense.Desktop;
 
@@ -27,10 +30,8 @@ public partial class RegistrationView : UserControl
 
         InitializeComponent();
 
-        HomeButton.Click += ToWelcomeViewClick;
-        RegisterButton.Click += RegisterClick;
-        RevealPasswordButton.Click += RevealPasswordClick;
-        RevealRepeatedPasswordButton.Click += RevealRepeatedPasswordClick;
+        this.AttachedToVisualTree += OnAttachedToVisualTree;
+        this.DetachedFromVisualTree += OnDetachedFromVisualTree;
     }
 
     private async void ToWelcomeViewClick(object? sender, RoutedEventArgs e)
@@ -52,80 +53,78 @@ public partial class RegistrationView : UserControl
             InvitationCode = InvitationCodeTextBox.Text?.Trim() ?? string.Empty
         };
 
-
         if (!DataAnnotationsValidator.TryValidate(request, out var validationError))
         {
-            ShowOutput(validationError);
+            MainWindow.Instance.ShowNotification("Registration", validationError);
             return;
         }
 
-        if (request.Password != RepeatPasswordTextBox.Text)
+        if (PasswordTextBox.Text != RepeatPasswordTextBox.Text)
         {
-            ShowOutput("Passwords Do Not Match");
+            MainWindow.Instance.ShowNotification("Registration", "Oops! Passwords do not match.");
             return;
         }
 
-        ShowOutput("Registering . . .");
-        var response = await _userService.RegisterAsync(request, cancellationToken);
-
-        ShowOutput(response.Message);
+        await _userService.RegisterAsync(request, cancellationToken);
     }
 
     private async void RevealPasswordClick(object? sender, RoutedEventArgs e)
     {
-        PasswordTextBox.PasswordChar = EyeCrossLine1.IsVisible ? '●' : '\0';
+        PasswordTextBox.PasswordChar = EyeCrossLine.IsVisible ? '●' : '\0';
 
-        if (EyeCrossLine1.IsVisible)
+        if (EyeCrossLine.IsVisible)
         {
-            // Password revealed → remove the cross line
-            await Animations.FadeOutAnimation.RunAsync(EyeCrossLine1);
-            EyeCrossLine1.IsVisible = false;
+            await Animations.FadeOutAnimation.RunAsync(EyeCrossLine);
+            EyeCrossLine.IsVisible = false;
         }
         else
         {
-            // Password hidden → show the cross line
-            EyeCrossLine1.IsVisible = true;
-            await Animations.FadeInAnimation.RunAsync(EyeCrossLine1);
+            EyeCrossLine.IsVisible = true;
+            await Animations.FadeInAnimation.RunAsync(EyeCrossLine);
         }
     }
 
     private async void RevealRepeatedPasswordClick(object? sender, RoutedEventArgs e)
     {
-        RepeatPasswordTextBox.PasswordChar = EyeCrossLine2.IsVisible ? '●' : '\0';
+        RepeatPasswordTextBox.PasswordChar = RepeatedEyeCrossLine.IsVisible ? '●' : '\0';
 
-        if (EyeCrossLine2.IsVisible)
+        if (RepeatedEyeCrossLine.IsVisible)
         {
-            // Password revealed → remove the cross line
-            await Animations.FadeOutAnimation.RunAsync(EyeCrossLine2);
-            EyeCrossLine2.IsVisible = false;
+            await Animations.FadeOutAnimation.RunAsync(RepeatedEyeCrossLine);
+            RepeatedEyeCrossLine.IsVisible = false;
         }
         else
         {
-            // Password hidden → show the cross line
-            EyeCrossLine2.IsVisible = true;
-            await Animations.FadeInAnimation.RunAsync(EyeCrossLine2);
+            RepeatedEyeCrossLine.IsVisible = true;
+            await Animations.FadeInAnimation.RunAsync(RepeatedEyeCrossLine);
         }
     }
 
-    /// <summary>
-    /// Displays a message to the user in the output panel with a fade-in animation.
-    /// </summary>
-    /// <param name="message">The message text to display.</param>
-    private async void ShowOutput(string message)
+    private void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
     {
-        if (string.IsNullOrEmpty(message))
-            return;
+        _cancellationTokenSource?.Cancel();
 
-        if (OutputTextBlock.Text == message)
-            return;
+        HomeButton.Click += ToWelcomeViewClick;
+        RegisterButton.Click += RegisterClick;
+        RevealPasswordButton.Click += RevealPasswordClick;
+        RevealRepeatedPasswordButton.Click += RevealRepeatedPasswordClick;
+    }
 
-        OutputTextBlock.Text = message;
-        await Animations.FadeInAnimation.RunAsync(OutputTextBlock);
+    private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    {
+        UsernameTextBox.Text = string.Empty;
+        EmailTextBox.Text = string.Empty;
+        PasswordTextBox.Text = string.Empty;
+        RepeatPasswordTextBox.Text = string.Empty;
+        InvitationCodeTextBox.Text = string.Empty;
+        EyeCrossLine.IsVisible = false;
+        RepeatedEyeCrossLine.IsVisible = false;
 
-        if (OutputBorder.IsVisible)
-            return;
+        HomeButton.Click -= ToWelcomeViewClick;
+        RegisterButton.Click -= RegisterClick;
+        RevealPasswordButton.Click -= RevealPasswordClick;
+        RevealRepeatedPasswordButton.Click -= RevealRepeatedPasswordClick;
 
-        OutputBorder.IsVisible = true;
-        await Animations.FadeInAnimation.RunAsync(OutputBorder);
+        _cancellationTokenSource?.Cancel();
     }
 }

@@ -26,8 +26,7 @@ public partial class TwoFactorSlidingPanel : UserControl
     private bool _isBackupMode = false;
 
     // Code Submission Event
-    public event Action<string>? TwoFactorCodeSubmitted;
-    public TwoFactorPurpose Purpose
+    public Func<string, Task>? OnSubmitAsync
     {
         get;
         private set;
@@ -51,7 +50,7 @@ public partial class TwoFactorSlidingPanel : UserControl
     /// <summary>
     /// Displays the sliding panel, resets code entry, and shows the default instructions state.
     /// </summary>
-    public async void ShowPanel(TwoFactorPurpose purpose, object? sender = default, RoutedEventArgs? e = default)
+    public async void ShowPanel(Func<string, Task> onSubmitAsync, object? sender = default, RoutedEventArgs? e = default)
     {
         if (this.IsVisible)
         {
@@ -60,17 +59,9 @@ public partial class TwoFactorSlidingPanel : UserControl
 
         // Initialize sliding panel position
         this.RenderTransform = new TranslateTransform(0, -MainWindow.Instance.Height);
+        BackUpToggleButton.IsVisible = true;
 
-        Purpose = purpose;
-
-        if (Purpose is TwoFactorPurpose.Enable)
-        {
-            BackUpToggleButton.IsVisible = false;
-        }
-        else
-        {
-            BackUpToggleButton.IsVisible = true;
-        }
+        OnSubmitAsync = onSubmitAsync;
         
         await ShowDefaultState();
         await ResetCodeEntry();
@@ -182,10 +173,12 @@ public partial class TwoFactorSlidingPanel : UserControl
             $"{_currentCode.Substring(0, 4)}-{_currentCode.Substring(4, 3)}" :
             _currentCode;
 
-        if (TwoFactorCodeSubmitted is not null)
+        if (OnSubmitAsync is null)
         {
-            TwoFactorCodeSubmitted.Invoke(codeToVerify);
+            return;
         }
+
+        await OnSubmitAsync(codeToVerify);
     }
 
     /// <summary>
@@ -525,11 +518,4 @@ public partial class TwoFactorSlidingPanel : UserControl
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed && VisualRoot is Window window)
             window.BeginMoveDrag(e);
     }
-}
-
-public enum TwoFactorPurpose
-{
-    Verify,
-    Enable,
-    Disable
 }

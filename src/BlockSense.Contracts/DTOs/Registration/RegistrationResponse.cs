@@ -1,4 +1,4 @@
-﻿using BlockSense.Contracts.Enums.User;
+﻿using BlockSense.Contracts.Enums;
 using System.Text.Json.Serialization;
 
 namespace BlockSense.Contracts.DTOs.Registration

@@ -1,7 +1,6 @@
-﻿using BlockSense.Contracts.Definitions;
-using BlockSense.Contracts.DTOs.Registration;
+﻿using BlockSense.Contracts.DTOs.Registration;
 using BlockSense.Contracts.DTOs.User;
-using BlockSense.Desktop.Models.Services;
+using BlockSense.Desktop.Models.Api;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,66 +27,84 @@ namespace BlockSense.Desktop.Services.Implementations
         /// <param name="logger">Logger for capturing registration-related events.</param>
         /// <param name="apiClient">The API client used to send registration requests.</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="apiClient"/> or <paramref name="logger"/> is null.</exception>
-        public UserService(ILogger<UserService> logger, IApiClient apiClient, IAuthService authService, ICurrentUserProvider currentUserProvider)
+        public UserService(
+            ILogger<UserService> logger,
+            IApiClient apiClient,
+            IAuthService authService,
+            ICurrentUserProvider currentUserProvider)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
-            _authService = authService ?? throw new ArgumentNullException(nameof(authService));
-            _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
+            _logger = logger
+                ?? throw new ArgumentNullException(nameof(logger));
+
+            _apiClient = apiClient
+                ?? throw new ArgumentNullException(nameof(apiClient));
+
+            _authService = authService
+                ?? throw new ArgumentNullException(nameof(authService));
+
+            _currentUserProvider = currentUserProvider
+                ?? throw new ArgumentNullException(nameof(currentUserProvider));
         }
 
         /// <inheritdoc/>
-        public async Task<ServiceResponse> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken = default)
+        public async Task RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken = default)
         {
-            if (request is null)
-                throw new ArgumentNullException(nameof(request));
+            var delayTask = Task.Delay(1000, cancellationToken);
+            var registerTask = _apiClient
+                .PostAsync<RegistrationRequest, RegistrationResponse>(
+                    requestUri: "/api/users",
+                    request: request,
+                    cancellationToken: cancellationToken);
 
-            var response = await _apiClient.PostAsync<RegistrationRequest, RegistrationResponse>(
-                requestUri: "/api/users",
-                request: request,
-                cancellationToken: cancellationToken);
+            // Wait for whichever finishes first
+            var completedTask = await Task.WhenAny(registerTask, delayTask);
 
-            if (response.IsSuccess && response.Data is not null)
+            if (completedTask == delayTask)
             {
-                return new ServiceResponse
-                {
-                    ProblemType = ApiProblemTypes.Registration.RegistrationSuccess,
-                    Message = "Registration Successful"
-                };
+                MainWindow.Instance.ShowNotification(
+                    "Registration",
+                    "Your request is being processed. Please wait.");
             }
 
-            if (response.ProblemDetails is null)
-            {
-                return new ServiceResponse
-                {
-                    ProblemType = ApiProblemTypes.Client.UnknownError,
-                    Message = "Unexpected Error"
-                };
-            }
+            var response = await registerTask;
 
-            return new ServiceResponse
+            switch (response)
             {
-                ProblemType = response.ProblemDetails.Type,
-                Message = response.ProblemDetails.Title
-            };
+                case ApiResult<RegistrationResponse>.Success:
+                    MainWindow.Instance.ShowNotification(
+                        "Registration",
+                        "You've been successfully registered.");
+                    break;
+
+                case ApiResult<RegistrationResponse>.Failure failure:
+                    MainWindow.Instance.ShowNotification(
+                        failure.ProblemDetails.Title,
+                        failure.ProblemDetails.Detail);
+                    break;
+            }
         }
 
+        /// <inheritdoc/>
         public async Task LoadCurrentUserAsync(CancellationToken cancellationToken = default)
         {
             var response = await _apiClient
                 .AddBearerToken()
                 .GetAsync<UserDashboardDto>(
-                requestUri: "/api/users/me/dashboard",
-                cancellationToken: cancellationToken);
+                    requestUri: "/api/users/me/dashboard",
+                    cancellationToken: cancellationToken);
 
-            if (response.IsSuccess && response.Data is not null)
+            switch (response)
             {
-                _currentUserProvider.Set(response.Data);
-                return;
-            }
+                case ApiResult<UserDashboardDto>.Success success:
+                    _currentUserProvider.Set(success.Data);
+                    break;
 
-            throw new InvalidOperationException(
-                response.ProblemDetails?.Title ?? "Failed to load User Dashboard data.");
+                case ApiResult<UserDashboardDto>.Failure failure:
+                    MainWindow.Instance.ShowNotification(
+                        failure.ProblemDetails.Title,
+                        failure.ProblemDetails.Detail);
+                    break;
+            }
         }
 
         /// <inheritdoc/>

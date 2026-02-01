@@ -33,5 +33,7 @@ namespace BlockSense.Desktop.Services.Interfaces
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>An <see cref="ApiResult{TResponse}"/> representing success or failure.</returns>
         Task<ApiResult<TResponse>> GetAsync<TResponse>(string requestUri, CancellationToken cancellationToken);
+        Task<ApiResult<TResponse>> PutAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken);
+        Task<ApiResult<TResponse>> DeleteAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using BlockSense.Contracts.DTOs.Token;
 using BlockSense.Desktop.Providers.Interfaces;
+using BlockSense.Desktop.Utilities.ApiHandling;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +28,9 @@ namespace BlockSense.Desktop.Providers.Implementations
             }
 
             if (RefreshRequested is null)
-                throw new InvalidOperationException("No service is registered to handle this event.");
+            {
+                throw new AuthenticationRequiredException();
+            }
 
             await RefreshRequested.Invoke(cancellationToken);
             
