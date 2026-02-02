@@ -8,7 +8,7 @@
 		Title="BlockSense"
 		Icon="\Assets\Icons\icon_app_taskbar.ico"
 		MinWidth="800" MinHeight="450"
-		Width="800" Height="450"
+		Width="960" Height="540"
 		CanMaximize="False"
 		TransparencyLevelHint="AcrylicBlur"
 		Background="Transparent"
@@ -27,6 +27,7 @@
 		<ContentControl x:Name="ContentContainer"/>
 
 		<StackPanel x:Name="NotificationStackPanel"
+					Width="320"
 					HorizontalAlignment="Right"
 					VerticalAlignment="Top"
 					Margin="12 32"

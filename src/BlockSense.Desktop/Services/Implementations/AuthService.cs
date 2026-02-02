@@ -98,7 +98,7 @@ namespace BlockSense.Desktop.Services.Implementations
                     await _navigationManager.NavigateToAsync<HomeView>();
                     break;
 
-                case ApiResult<AuthResponse>.Failure failure:
+                case ApiResult.Failure failure:
 
                     // Handle specific 2FA scenarios
                     switch (failure.ProblemDetails.Type)

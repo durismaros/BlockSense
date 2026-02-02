@@ -33,17 +33,10 @@ namespace BlockSense.Desktop.Services.Implementations
             IAuthService authService,
             ICurrentUserProvider currentUserProvider)
         {
-            _logger = logger
-                ?? throw new ArgumentNullException(nameof(logger));
-
-            _apiClient = apiClient
-                ?? throw new ArgumentNullException(nameof(apiClient));
-
-            _authService = authService
-                ?? throw new ArgumentNullException(nameof(authService));
-
-            _currentUserProvider = currentUserProvider
-                ?? throw new ArgumentNullException(nameof(currentUserProvider));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+            _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+            _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         }
 
         /// <inheritdoc/>
@@ -76,7 +69,7 @@ namespace BlockSense.Desktop.Services.Implementations
                         "You've been successfully registered.");
                     break;
 
-                case ApiResult<RegistrationResponse>.Failure failure:
+                case ApiResult.Failure failure:
                     MainWindow.Instance.ShowNotification(
                         failure.ProblemDetails.Title,
                         failure.ProblemDetails.Detail);
@@ -99,7 +92,7 @@ namespace BlockSense.Desktop.Services.Implementations
                     _currentUserProvider.Set(success.Data);
                     break;
 
-                case ApiResult<UserDashboardDto>.Failure failure:
+                case ApiResult.Failure failure:
                     MainWindow.Instance.ShowNotification(
                         failure.ProblemDetails.Title,
                         failure.ProblemDetails.Detail);
@@ -110,18 +103,20 @@ namespace BlockSense.Desktop.Services.Implementations
         /// <inheritdoc/>
         public async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
+            var homeView = App.ServiceProvider.GetRequiredService<HomeView>();
+            var welcomeView = App.ServiceProvider.GetRequiredService<WelcomeView>();
+
             try
             {
                 await _authService.AuthRefreshAsync(cancellationToken);
                 await LoadCurrentUserAsync(cancellationToken);
 
-                MainWindow.Instance.ContentContainer.Content =
-                    App.ServiceProvider.GetRequiredService<HomeView>();
+                await Task.Delay(800);
+                await MainWindow.Instance.SwitchViewAsync(homeView);
             }
             catch
             {
-                MainWindow.Instance.ContentContainer.Content =
-                    App.ServiceProvider.GetRequiredService<WelcomeView>();
+                MainWindow.Instance.ContentContainer.Content = welcomeView;
             }
         }
     }

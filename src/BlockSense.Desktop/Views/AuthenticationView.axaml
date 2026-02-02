@@ -51,7 +51,7 @@
         <!-- Authentication Content -->
         <Panel HorizontalAlignment="Center"
                VerticalAlignment="Center"
-               Margin="30 100 30 30">
+               Margin="0 64 0 0">
             
             <StackPanel Spacing="24">
                 

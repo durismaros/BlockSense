@@ -1,16 +1,15 @@
 ﻿using BlockSense.Contracts.Definitions;
-using BlockSense.Contracts.DTOs.Authentication;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Setup;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
 using BlockSense.Contracts.DTOs.User;
 using BlockSense.Desktop.Models.Api;
-using BlockSense.Desktop.Models.Services;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using static BlockSense.Desktop.Models.Api.ApiResult;
 
 namespace BlockSense.Desktop.Services.Implementations
 {
@@ -18,11 +17,16 @@ namespace BlockSense.Desktop.Services.Implementations
     {
         private readonly IApiClient _apiClient;
         private readonly ICurrentUserProvider _currentUserProvider;
+        private readonly TwoFactorSlidingPanel _twoFactorSlidingPanel;
 
         public TwoFactorAuthService(IApiClient apiClient, ICurrentUserProvider currentUserProvider)
         {
-            _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
-            _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
+            _apiClient = apiClient
+                ?? throw new ArgumentNullException(nameof(apiClient));
+            _currentUserProvider = currentUserProvider
+                ?? throw new ArgumentNullException(nameof(currentUserProvider));
+            _twoFactorSlidingPanel = MainWindow.Instance.TwoFactorSlidingPanel
+                ?? throw new ArgumentNullException(nameof(MainWindow.Instance.TwoFactorSlidingPanel));
         }
 
         public async Task<TwoFactorSetupInit> GetSetupInitAsync(CancellationToken cancellationToken = default)
@@ -45,92 +49,109 @@ namespace BlockSense.Desktop.Services.Implementations
             throw new InvalidOperationException();
         }
 
-        public async Task<bool> EnableAsync(TwoFactorSetupRequest request, CancellationToken cancellationToken = default)
+        public async Task EnableAsync(string setupKey, CancellationToken cancellationToken = default)
         {
-            var response = await _apiClient
-                .AddBearerToken()
-                .PostAsync<TwoFactorSetupRequest, UserSummaryDto>(
-                    request: request,
-                    requestUri: "/api/users/me/2fa",
-                    cancellationToken: cancellationToken);
-
-            if (response.IsSuccess &&
-                response.Data is not null)
+            _twoFactorSlidingPanel.ShowPanel(async code =>
             {
-                _currentUserProvider.SetProfile(response.Data);
+                var request = new TwoFactorSetupRequest
+                {
+                    SetupKey = setupKey,
+                    TwoFactorCode = code
+                };
 
-                return true;
-            }
+                var response = await _apiClient
+                    .AddBearerToken()
+                    .PostAsync<TwoFactorSetupRequest, UserSummaryDto>(
+                        request: request,
+                        requestUri: "/api/users/me/2fa",
+                        cancellationToken: cancellationToken);
 
-            if (response.ProblemDetails is not null &&
-                response.ProblemDetails.Type is ApiProblemTypes.TwoFactorAuthentication.InvalidCode)
-            {
-                return false;
-            }
+                switch (response)
+                {
+                    case ApiResult<UserSummaryDto>.Success success:
+                        _currentUserProvider.SetProfile(success.Data);
 
-            throw new InvalidOperationException(
-                response.ProblemDetails?.Title ?? "Failed to enable Two-Factor Authentication.");
+                        await _twoFactorSlidingPanel.ShowVerifiedState();
+                        return;
+
+                    case ApiResult.Failure failure:
+                        await HandleFailureAsync(failure);
+                        break;
+                }
+            });
         }
 
-        public async Task<bool> DisableAsync(TwoFactorVerificationRequest request, CancellationToken cancellationToken = default)
+        public async Task DisableAsync(CancellationToken cancellationToken = default)
         {
-            var response = await _apiClient
-                .AddBearerToken()
-                .DeleteAsync<TwoFactorVerificationRequest, UserSummaryDto>(
-                request: request,
-                requestUri: "/api/users/me/2fa",
-                cancellationToken: cancellationToken);
-
-            if (response.IsSuccess &&
-                response.Data is not null)
+            _twoFactorSlidingPanel.BackUpToggleButton.IsVisible = false;
+            _twoFactorSlidingPanel.ShowPanel(async code =>
             {
-                _currentUserProvider.SetProfile(response.Data);
-                _currentUserProvider.SetTwoFactorBackupCodes(null);
+                var request = new TwoFactorVerificationRequest
+                {
+                    TwoFactorCode = code
+                };
 
-                return true;
-            }
+                var response = await _apiClient
+                    .AddBearerToken()
+                    .DeleteAsync<TwoFactorVerificationRequest, UserSummaryDto>(
+                        request: request,
+                        requestUri: "/api/users/me/2fa",
+                        cancellationToken: cancellationToken);
 
-            if (response.ProblemDetails is not null &&
-                response.ProblemDetails.Type is ApiProblemTypes.TwoFactorAuthentication.InvalidCode)
-            {
-                return false;
-            }
+                switch (response)
+                {
+                    case ApiResult<UserSummaryDto>.Success success:
+                        _currentUserProvider.SetProfile(success.Data);
+                        _currentUserProvider.SetTwoFactorBackupCodes(null);
 
-            throw new InvalidOperationException(
-                response.ProblemDetails?.Title ?? "Failed to disable Two-Factor Authentication.");
+                        await _twoFactorSlidingPanel.ShowVerifiedState();
+                        return;
+
+                    case ApiResult.Failure failure:
+                        await HandleFailureAsync(failure);
+                        break;
+                }
+            });
         }
 
-        public async Task<ServiceResponse> GenerateBackupCodesAsync(CancellationToken cancellationToken = default)
+        public async Task GenerateBackupCodesAsync(CancellationToken cancellationToken = default)
         {
             var response = await _apiClient
                 .AddBearerToken()
                 .GetAsync<IReadOnlyList<string>>(
-                requestUri: "/api/users/me/2fa/backup",
-                cancellationToken: cancellationToken);
+                    requestUri: "/api/users/me/2fa/backup",
+                    cancellationToken: cancellationToken);
 
-            if (response.IsSuccess && response.Data is not null)
+            switch (response)
             {
-                _currentUserProvider.SetTwoFactorBackupCodes(response.Data);
+                case ApiResult<IReadOnlyList<string>>.Success success:
+                    _currentUserProvider.SetTwoFactorBackupCodes(success.Data);
 
-                return new ServiceResponse
-                {
-                    ProblemType = ApiProblemTypes.TwoFactorAuthentication.TwoFactorAuthenticationSuccess,
-                    Message = "Backup codes have been successfully generated and are now available for download."
-                };
+                    MainWindow.Instance.ShowNotification(
+                        "Two Factor Authentication",
+                        "Backup codes have been successfully generated and are now available for download.");
+
+                    break;
+
+                case ApiResult.Failure failure:
+                    MainWindow.Instance.ShowNotification(
+                        failure.ProblemDetails.Title,
+                        failure.ProblemDetails.Detail);
+                    break;
+            }
+        }
+
+        private async Task HandleFailureAsync(ApiResult.Failure failure)
+        {
+            if (failure.ProblemDetails.Type is ApiProblemTypes.TwoFactorAuthentication.InvalidCode)
+            {
+                await _twoFactorSlidingPanel.ShowErrorState();
+                return;
             }
 
-            if (response.ProblemDetails is not null &&
-                response.ProblemDetails.Type is ApiProblemTypes.TwoFactorAuthentication.BackupCodesCooldown)
-            {
-                return new ServiceResponse
-                {
-                    ProblemType = response.ProblemDetails.Type,
-                    Message = response.ProblemDetails.Detail
-                };
-            }
-
-            throw new InvalidOperationException(
-                response.ProblemDetails?.Title ?? "Failed to generate User Two-Factor backup codes.");
+            MainWindow.Instance.ShowNotification(
+                failure.ProblemDetails.Title,
+                failure.ProblemDetails.Detail);
         }
     }
 }

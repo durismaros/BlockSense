@@ -8,12 +8,12 @@ namespace BlockSense.Contracts.DTOs.TwoFactorAuth.Setup
     public sealed record TwoFactorSetupRequest
     {
         /// <summary>
-        /// The 20-byte (160-bit) Base32-encoded secret key used to configure 2FA in the authenticator app.
+        /// The 20-byte (160-bit) Base32-encoded setup key used to configure 2FA in the authenticator app.
         /// </summary>
-        [Required(ErrorMessage = "Secret key is required.")]
-        [StringLength(32, MinimumLength = 32, ErrorMessage = "The secret key must be exactly 32 characters long.")]
-        [RegularExpression(@"^[A-Z2-7]{32}$", ErrorMessage = "The secret key must be Base32 encoded (A-Z, 2-7).")]
-        public required string SecretKey
+        [Required(ErrorMessage = "Setup key is required.")]
+        [StringLength(32, MinimumLength = 32, ErrorMessage = "The setup key must be exactly 32 characters long.")]
+        [RegularExpression(@"^[A-Z2-7]{32}$", ErrorMessage = "The setup key must be Base32 encoded (A-Z, 2-7).")]
+        public required string SetupKey
         {
             get;
             init;

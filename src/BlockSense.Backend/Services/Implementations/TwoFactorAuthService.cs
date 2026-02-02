@@ -74,11 +74,11 @@ namespace BlockSense.Backend.Services.Implementations
 
             request = request with
             {
-                SecretKey = request.SecretKey.Trim(),
+                SetupKey = request.SetupKey.Trim(),
                 TwoFactorCode = request.TwoFactorCode.Trim().ToUpperInvariant()
             };
 
-            byte[] secretKey = Base32Encoding.ToBytes(request.SecretKey);
+            byte[] secretKey = Base32Encoding.ToBytes(request.SetupKey);
 
             if (!VerifyCode(secretKey, request.TwoFactorCode))
             {

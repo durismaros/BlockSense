@@ -18,14 +18,16 @@
 						Spacing="6">
 
 				<TextBlock x:Name="TitleText"
-						   FontSize="14"
+						   FontSize="12"
 						   FontWeight="SemiBold"
 						   Foreground="#F2E8E4"/>
 
 				<TextBlock x:Name="MessageText"
-						   FontSize="12"
 						   Foreground="#CBB8AF"
-						   TextWrapping="Wrap"/>
+						   FontSize="10"
+						   FontStyle="Italic"
+						   TextWrapping="Wrap"
+						   VerticalAlignment="Center"/>
 			</StackPanel>
 
 			<!-- Progress bar (slimmer, with corner radius) -->

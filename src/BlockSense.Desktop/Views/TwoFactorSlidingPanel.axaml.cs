@@ -50,7 +50,7 @@ public partial class TwoFactorSlidingPanel : UserControl
     /// <summary>
     /// Displays the sliding panel, resets code entry, and shows the default instructions state.
     /// </summary>
-    public async void ShowPanel(Func<string, Task> onSubmitAsync, object? sender = default, RoutedEventArgs? e = default)
+    public async void ShowPanel(Func<string, Task> onSubmitAsync)
     {
         if (this.IsVisible)
         {
@@ -61,10 +61,10 @@ public partial class TwoFactorSlidingPanel : UserControl
         this.RenderTransform = new TranslateTransform(0, -MainWindow.Instance.Height);
         BackUpToggleButton.IsVisible = true;
 
-        OnSubmitAsync = onSubmitAsync;
-        
-        await ShowDefaultState();
-        await ResetCodeEntry();
+        OnSubmitAsync = onSubmitAsync
+            ?? throw new ArgumentNullException(nameof(onSubmitAsync));
+
+        IsVisible = true;
 
         var animation = new Animation
         {
@@ -79,11 +79,12 @@ public partial class TwoFactorSlidingPanel : UserControl
                     Setters = { new Setter(TranslateTransform.YProperty, 0.0) }
                 }
             }
-        };
+        }.RunAsync(this);
 
-        this.IsVisible = true;
+        await ShowDefaultState();
+        await ResetCodeEntry();
 
-        await animation.RunAsync(this);
+        await animation;
     }
 
     /// <summary>
@@ -230,7 +231,9 @@ public partial class TwoFactorSlidingPanel : UserControl
     public async Task ShowVerifiedState()
     {
         if (VerifiedStatePanel.IsVisible)
+        {
             return;
+        }
 
         VerifiedStatePanel.IsVisible = true;
 
@@ -240,9 +243,13 @@ public partial class TwoFactorSlidingPanel : UserControl
         );
 
         await Animations.FadeInAnimation.RunAsync(VerifiedStatePanel);
-
         await Task.Delay(2000);
-        await ResetCodeEntry();
+
+        await Task.WhenAll(
+            ShowDefaultState(),
+            ResetCodeEntry()
+            );
+
         HidePanel();
     }
 
@@ -253,7 +260,9 @@ public partial class TwoFactorSlidingPanel : UserControl
     public async Task ShowErrorState()
     {
         if (ErrorStatePanel.IsVisible)
+        {
             return;
+        }
 
         ErrorStatePanel.IsVisible = true;
 
@@ -263,35 +272,12 @@ public partial class TwoFactorSlidingPanel : UserControl
         );
 
         await Animations.FadeInAnimation.RunAsync(ErrorStatePanel);
-
         await Task.Delay(1000);
-        await ResetCodeEntry();
-        await ShowDefaultState();
-    }
 
-    /// <summary>
-    /// Resets the entered code and clears all displayed digit UI elements.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    private async Task ResetCodeEntry()
-    {
-        _currentCode = string.Empty;
-
-        ClearDigits(_regularCodeDigits);
-        ClearDigits(_backupCodeDigits);
-
-        VerifyCodeButton.IsEnabled = false;
-
-        void ClearDigits(Border[] digits)
-        {
-            foreach (var border in digits)
-            {
-                if (border.Child is TextBlock textBlock)
-                {
-                    textBlock.Text = string.Empty;
-                }
-            }
-        }
+        await Task.WhenAll(
+            ShowDefaultState(),
+            ResetCodeEntry()
+            );
     }
 
     /// <summary>
@@ -318,6 +304,31 @@ public partial class TwoFactorSlidingPanel : UserControl
             );
 
         this.Focus();
+    }
+
+    /// <summary>
+    /// Resets the entered code and clears all displayed digit UI elements.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    private async Task ResetCodeEntry()
+    {
+        _currentCode = string.Empty;
+
+        ClearDigits(_regularCodeDigits);
+        ClearDigits(_backupCodeDigits);
+
+        VerifyCodeButton.IsEnabled = false;
+
+        void ClearDigits(Border[] digits)
+        {
+            foreach (var border in digits)
+            {
+                if (border.Child is TextBlock textBlock)
+                {
+                    textBlock.Text = string.Empty;
+                }
+            }
+        }
     }
 
     /// <summary>

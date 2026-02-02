@@ -78,6 +78,7 @@ namespace BlockSense.Desktop
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITwoFactorAuthService, TwoFactorAuthService>();
+            services.AddScoped<ITokenService, TokenService>();
 
             // --- Views ---
             services.AddSingleton<WelcomeView>();

@@ -1,29 +1,29 @@
 ﻿namespace BlockSense.Desktop.Models.Api
 {
-    /// <summary>
-    /// Represents the result of an API operation, encapsulating either a successful response with data or a failure with standardized problem details.
-    /// </summary>
-    /// <typeparam name="T">The type of the successful response payload.</typeparam>
-    public abstract record ApiResult<T>
+    public abstract record ApiResult<T> : ApiResult
     {
-        /// <summary>
-        /// Indicates whether the API operation completed successfully.
-        /// </summary>
+        protected ApiResult() { }
+
+        public sealed record Success(T Data) : ApiResult<T>
+        {
+            public override bool IsSuccess
+                => true;
+        }
+    }
+
+    public abstract record ApiResult
+    {
         public abstract bool IsSuccess
         {
             get;
         }
 
-        private ApiResult() { }
+        protected ApiResult() { }
 
-        public sealed record Success(T Data) : ApiResult<T>
+        public sealed record Failure(ProblemDetails ProblemDetails) : ApiResult
         {
-            public override bool IsSuccess => true;
-        }
-
-        public sealed record Failure(ProblemDetails ProblemDetails) : ApiResult<T>
-        {
-            public override bool IsSuccess => false;
+            public override bool IsSuccess
+                => false;
         }
     }
 }

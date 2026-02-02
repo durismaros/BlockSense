@@ -57,7 +57,7 @@ namespace BlockSense.Desktop.Services.Implementations
         /// <param name="request">The request payload (can be null for GET requests).</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>An <see cref="ApiResult{TResponse}"/> representing the API response.</returns>
-        private async Task<ApiResult<TResponse>> SendAsync<TRequest, TResponse>(HttpMethod method, string requestUri, TRequest? request, CancellationToken cancellationToken)
+        private async Task<ApiResult> SendAsync<TRequest, TResponse>(HttpMethod method, string requestUri, TRequest? request, CancellationToken cancellationToken)
         {
             using var httpRequest = new HttpRequestMessage(method, requestUri);
             _requestOptions.ApplyTo(httpRequest);
@@ -95,7 +95,8 @@ namespace BlockSense.Desktop.Services.Implementations
                     throw new AuthenticationRequiredException();
                 }
 
-                return new ApiResult<TResponse>.Failure(problemDetails);
+                return new ApiResult.Failure(problemDetails);
+
             }
             catch (AuthenticationRequiredException)
             {
@@ -110,7 +111,7 @@ namespace BlockSense.Desktop.Services.Implementations
                     Instance = requestUri
                 };
 
-                return new ApiResult<TResponse>.Failure(problemDetails);
+                return new ApiResult.Failure(problemDetails);
             }
             catch (Exception)
             {
@@ -123,24 +124,24 @@ namespace BlockSense.Desktop.Services.Implementations
                     Instance = requestUri
                 };
 
-                return new ApiResult<TResponse>.Failure(problemDetails);
+                return new ApiResult.Failure(problemDetails);
             }
         }
 
         /// <inheritdoc/>
-        public Task<ApiResult<TResponse>> PostAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
+        public Task<ApiResult> PostAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
             => SendAsync<TRequest, TResponse>(HttpMethod.Post, requestUri, request, cancellationToken);
 
         /// <inheritdoc/>
-        public Task<ApiResult<TResponse>> GetAsync<TResponse>(string requestUri, CancellationToken cancellationToken)
+        public Task<ApiResult> GetAsync<TResponse>(string requestUri, CancellationToken cancellationToken)
             => SendAsync<object, TResponse>(HttpMethod.Get, requestUri, null, cancellationToken);
 
         /// <inheritdoc/>
-        public Task<ApiResult<TResponse>> PutAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
+        public Task<ApiResult> PutAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
             => SendAsync<TRequest, TResponse>(HttpMethod.Put, requestUri, request, cancellationToken);
 
         /// <inheritdoc/>
-        public Task<ApiResult<TResponse>> DeleteAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
+        public Task<ApiResult> DeleteAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
             => SendAsync<TRequest, TResponse>(HttpMethod.Delete, requestUri, request, cancellationToken);
 
         /// <inheritdoc/>
