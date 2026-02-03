@@ -3,8 +3,8 @@
 <div align="center">
 
 ![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)
+![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)
 ![C#](https://img.shields.io/badge/C%23-12.0-239120?logo=csharp&logoColor=white)
-![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
 ![Avalonia](https://img.shields.io/badge/Avalonia-11.0-8B44AC)
 
 **A secure and reliable desktop cryptocurrency wallet application for managing digital assets.**
