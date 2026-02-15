@@ -83,14 +83,14 @@ namespace BlockSense.Desktop.Services.Implementations
                 var problemDetails = await response.Content
                     .ReadFromJsonAsync<ProblemDetails>() ?? new ProblemDetails
                     {
-                        Type = ApiProblemTypes.Client.UnknownError,
+                        Type = StandardizedCodes.Client.UnknownError,
                         Title = "Unknown Error",
                         Status = (int)response.StatusCode,
                         Detail = "The server returned an unexpected error.",
                         Instance = requestUri
                     };
 
-                if (problemDetails.Type is ApiProblemTypes.Authentication.AuthenticationRequired)
+                if (problemDetails.Type is StandardizedCodes.Authentication.AuthenticationRequired)
                 {
                     throw new AuthenticationRequiredException();
                 }
@@ -104,7 +104,7 @@ namespace BlockSense.Desktop.Services.Implementations
 
                 var problemDetails = new ProblemDetails
                 {
-                    Type = ApiProblemTypes.Authentication.AuthenticationRequired,
+                    Type = StandardizedCodes.Authentication.AuthenticationRequired,
                     Title = "Reauthentication Required",
                     Status = 401,
                     Detail = "For security purposes, please reauthenticate.",
@@ -117,7 +117,7 @@ namespace BlockSense.Desktop.Services.Implementations
             {
                 var problemDetails = new ProblemDetails
                 {
-                    Type = ApiProblemTypes.Client.NetworkError,
+                    Type = StandardizedCodes.Client.NetworkError,
                     Title = "Network Error",
                     Status = 503,
                     Detail = "A network or connectivity issue occurred while sending your request.",

@@ -22,7 +22,7 @@ namespace BlockSense.Backend.Exceptions.Handlers
                 return false;
             }
 
-            httpContext.Response.ContentType = "application/json";
+            httpContext.Response.ContentType = "application/problem+json";
             httpContext.Response.StatusCode = apiException.Status;
 
             var problemDetails = new ProblemDetails

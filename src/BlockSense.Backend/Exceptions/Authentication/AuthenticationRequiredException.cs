@@ -8,7 +8,7 @@ namespace BlockSense.Backend.Exceptions.Authentication
         {
             get
             {
-                return ApiProblemTypes.Authentication.AuthenticationRequired;
+                return StandardizedCodes.Authentication.AuthenticationRequired;
             }
         }
 

@@ -1,14 +1,14 @@
 ﻿using BlockSense.Contracts.Definitions;
 
-namespace BlockSense.Backend.Exceptions.User
+namespace BlockSense.Backend.Exceptions.Generic
 {
-    public sealed class UserNotFoundException : ApiException
+    public sealed class NotFoundException : ApiException
     {
         public override string Type
         {
             get
             {
-                return ApiProblemTypes.Generic.BadRequest;
+                return StandardizedCodes.Generic.NotFound;
             }
         }
 
@@ -16,7 +16,7 @@ namespace BlockSense.Backend.Exceptions.User
         {
             get
             {
-                return "User not Found";
+                return "Not Found";
             }
         }
 
@@ -28,7 +28,7 @@ namespace BlockSense.Backend.Exceptions.User
             }
         }
 
-        public UserNotFoundException()
-            : base("The requested user could not be found.") { }
+        public NotFoundException()
+            : base("The requested resource does not exist or is no longer available.") { }
     }
 }

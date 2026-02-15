@@ -103,14 +103,14 @@ namespace BlockSense.Desktop.Services.Implementations
                     // Handle specific 2FA scenarios
                     switch (failure.ProblemDetails.Type)
                     {
-                        case ApiProblemTypes.Authentication.TwoFactorRequired:
+                        case StandardizedCodes.Authentication.TwoFactorRequired:
                             _twoFactorSlidingPanel.ShowPanel(async code =>
                             {
                                 await AuthAsync(request with { TwoFactorCode = code }, cancellationToken);
                             });
                             break;
 
-                        case ApiProblemTypes.TwoFactorAuthentication.InvalidCode:
+                        case StandardizedCodes.TwoFactorAuthentication.Invalid:
                             await _twoFactorSlidingPanel.ShowErrorState();
                             break;
 

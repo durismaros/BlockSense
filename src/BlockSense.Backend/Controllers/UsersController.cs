@@ -1,5 +1,4 @@
 ﻿using BlockSense.Backend.Exceptions.Authentication;
-using BlockSense.Backend.Exceptions.User;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.DTOs.Registration;
 using Microsoft.AspNetCore.Authorization;

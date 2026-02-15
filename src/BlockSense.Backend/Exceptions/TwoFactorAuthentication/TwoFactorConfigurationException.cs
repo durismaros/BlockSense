@@ -2,13 +2,13 @@
 
 namespace BlockSense.Backend.Exceptions.TwoFactorAuthentication
 {
-    public sealed class TwoFactorAlreadyConfiguredException : ApiException
+    public sealed class TwoFactorConfigurationException : ApiException
     {
         public override string Type
         {
             get
             {
-                return ApiProblemTypes.TwoFactorAuthentication.AlreadyConfigured;
+                return StandardizedCodes.TwoFactorAuthentication.ConfigurationConflict;
             }
         }
 
@@ -16,7 +16,7 @@ namespace BlockSense.Backend.Exceptions.TwoFactorAuthentication
         {
             get
             {
-                return "2FA Already Configured";
+                return "Two-Factor Authentication Configuration Conflict";
             }
         }
 
@@ -28,7 +28,8 @@ namespace BlockSense.Backend.Exceptions.TwoFactorAuthentication
             }
         }
 
-        public TwoFactorAlreadyConfiguredException()
-            : base("Two-factor authentication (2FA) is already enabled for this account. You do not need to set it up again.") { }
+        public TwoFactorConfigurationException()
+            : base("The requested operation conflicts with the current two-factor authentication configuration.")
+        { }
     }
 }

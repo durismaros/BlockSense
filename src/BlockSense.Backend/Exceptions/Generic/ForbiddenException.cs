@@ -1,14 +1,14 @@
 ﻿using BlockSense.Contracts.Definitions;
 
-namespace BlockSense.Backend.Exceptions.Authentication
+namespace BlockSense.Backend.Exceptions.Generic
 {
-    public sealed class AccessProhibitedException : ApiException
+    public sealed class ForbiddenException : ApiException
     {
         public override string Type
         {
             get
             {
-                return ApiProblemTypes.Authentication.AccountBanned;
+                return StandardizedCodes.Generic.Forbidden;
             }
         }
 
@@ -28,7 +28,7 @@ namespace BlockSense.Backend.Exceptions.Authentication
             }
         }
 
-        public AccessProhibitedException()
+        public ForbiddenException()
             : base("Your account is currently restricted and cannot access this service. If you believe this is a mistake or need assistance, please contact support.") { }
     }
 }

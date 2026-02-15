@@ -58,7 +58,7 @@ namespace BlockSense.Desktop
 
             services.AddHttpClient<IApiClient, ApiClient>(client =>
             {
-                client.BaseAddress = new Uri("https://localhost:7262");
+                client.BaseAddress = new Uri("https://unicorn-casual-yeti.ngrok-free.app");
                 client.Timeout = TimeSpan.FromSeconds(30);
                 client.DefaultRequestHeaders.Accept.Add(
                     new MediaTypeWithQualityHeaderValue("application/json"));
@@ -87,6 +87,9 @@ namespace BlockSense.Desktop
             services.AddSingleton<TwoFactorSlidingPanel>();
             services.AddSingleton<HomeView>();
             services.AddSingleton<UserDashboardView>();
+            services.AddSingleton<WalletSelectionView>();
+            services.AddSingleton<RecoveryPhraseView>();
+            services.AddSingleton<RecoveryPhraseImportView>();
 
             // --- Windows ---
             services.AddSingleton<MainWindow>();

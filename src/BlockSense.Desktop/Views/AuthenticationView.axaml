@@ -15,7 +15,7 @@
                 VerticalAlignment="Top"
                 Background="Transparent"
                 CornerRadius="22"
-                Margin="18 32 0 0">
+                Margin="16 32 0 0">
             
             <Viewbox Width="20"
                      Height="20"

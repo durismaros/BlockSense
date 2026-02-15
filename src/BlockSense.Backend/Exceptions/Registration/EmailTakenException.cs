@@ -8,7 +8,7 @@ namespace BlockSense.Backend.Exceptions.Registration
         {
             get
             {
-                return ApiProblemTypes.Registration.EmailTaken;
+                return StandardizedCodes.Registration.EmailTaken;
             }
         }
         public override string Title

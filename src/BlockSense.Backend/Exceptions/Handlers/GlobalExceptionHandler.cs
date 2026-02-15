@@ -35,12 +35,12 @@ namespace BlockSense.Backend.Exceptions.Handlers
                 return false;
             }
 
-            httpContext.Response.ContentType = "application/json";
+            httpContext.Response.ContentType = "application/problem+json";
             httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
             var problemDetails = new ProblemDetails
             {
-                Type = ApiProblemTypes.Generic.InternalServerError,
+                Type = StandardizedCodes.Generic.InternalServerError,
                 Title = "Internal Server Error",
                 Status = StatusCodes.Status500InternalServerError,
                 Detail = "An unexpected server error occurred while processing your request. " +

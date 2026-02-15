@@ -38,7 +38,7 @@ public partial class HomeView : UserControl
 
     private async void ToUserWalletViewClick(object? sender, RoutedEventArgs e)
     {
-        throw new NotImplementedException();
+        await _navigationManager.NavigateToAsync<WalletSelectionView>();
     }
 
     private async void FadeInText()

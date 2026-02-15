@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using BlockSense.Desktop.Utilities.UIComponents;
@@ -17,8 +18,8 @@ public partial class WelcomeView : UserControl
 
         InitializeComponent();
 
-        AuthenticateButton.Click += ToAuthenticationViewClick;
-        RegisterButton.Click += ToRegistrationViewClick;
+        AttachedToVisualTree += OnAttachedToVisualTree;
+        DetachedFromVisualTree += OnDetachedFromVisualTree;
     }
 
     private async void ToAuthenticationViewClick(object? sender, RoutedEventArgs e)
@@ -29,5 +30,17 @@ public partial class WelcomeView : UserControl
     private async void ToRegistrationViewClick(object? sender, RoutedEventArgs e)
     {
         await _navigationManager.NavigateToAsync<RegistrationView>();
+    }
+
+    private void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    {
+        AuthenticateButton.Click += ToAuthenticationViewClick;
+        RegisterButton.Click += ToRegistrationViewClick;
+    }
+
+    private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    {
+        AuthenticateButton.Click -= ToAuthenticationViewClick;
+        RegisterButton.Click -= ToRegistrationViewClick;
     }
 }

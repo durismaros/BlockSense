@@ -8,7 +8,7 @@ namespace BlockSense.Backend.Exceptions.Registration
         {
             get
             {
-                return ApiProblemTypes.Registration.InvalidInvitation;
+                return StandardizedCodes.Registration.InvalidInvitation;
             }
         }
 

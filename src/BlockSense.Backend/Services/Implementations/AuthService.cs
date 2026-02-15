@@ -1,5 +1,6 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Exceptions.Authentication;
+using BlockSense.Backend.Exceptions.Generic;
 using BlockSense.Backend.Models.DeviceContext;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
@@ -76,7 +77,7 @@ namespace BlockSense.Backend.Services.Implementations
 
                 if (user.UserType is UserType.Banned)
                 {
-                    throw new AccessProhibitedException();
+                    throw new ForbiddenException();
                 }
 
                 var argon2idHasher = new Argon2idHasher();

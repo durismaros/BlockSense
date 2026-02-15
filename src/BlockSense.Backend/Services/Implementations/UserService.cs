@@ -1,7 +1,7 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Entities;
+using BlockSense.Backend.Exceptions.Generic;
 using BlockSense.Backend.Exceptions.Registration;
-using BlockSense.Backend.Exceptions.User;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
@@ -40,20 +40,11 @@ namespace BlockSense.Backend.Services.Implementations
             ITwoFactorAuthRepository twoFactorAuthRepository,
             DatabaseContext databaseContext)
         {
-            _userRepository = userRepository
-                ?? throw new ArgumentNullException(nameof(userRepository));
-
-            _invitationRepository = invitationRepository
-                ?? throw new ArgumentNullException(nameof(invitationRepository));
-
-            _refreshTokenRepository = refreshTokenRepository
-                ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
-
-            _twoFactorAuthRepository = twoFactorAuthRepository
-                ?? throw new ArgumentNullException(nameof(twoFactorAuthRepository));
-
-            _databaseContext = databaseContext
-                ?? throw new ArgumentNullException(nameof(databaseContext));
+            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _invitationRepository = invitationRepository ?? throw new ArgumentNullException(nameof(invitationRepository));
+            _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
+            _twoFactorAuthRepository = twoFactorAuthRepository ?? throw new ArgumentNullException(nameof(twoFactorAuthRepository));
+            _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
         }
 
         /// <inheritdoc/>
@@ -144,7 +135,7 @@ namespace BlockSense.Backend.Services.Implementations
         public async Task<UserSummaryDto> GetUserSummaryAsync(uint userId, CancellationToken cancellationToken = default)
         {
             var user =
-                await _userRepository.GetByIdAsync(userId, cancellationToken) ?? throw new UserNotFoundException();
+                await _userRepository.GetByIdAsync(userId, cancellationToken) ?? throw new NotFoundException();
 
             var invitedBy =
                 await _invitationRepository.GetInviterUsernameByUser(userId, cancellationToken) ?? "Unknown";
@@ -182,8 +173,7 @@ namespace BlockSense.Backend.Services.Implementations
                 ActiveTokens = activeTokens.Select(token => token with
                 {
                     IpAddress = MaskIp(token.IpAddress)
-                })
-                .ToList(),
+                }).ToList().AsReadOnly(),
                 UserInvitations = invitationCodes
             };
         }
@@ -221,7 +211,7 @@ namespace BlockSense.Backend.Services.Implementations
                     visible.Add("0");
                 }
 
-                return string.Join(':', visible) + ":*:*:*:*";
+                return string.Join(':', visible) + ":*";
             }
 
             return ipString;

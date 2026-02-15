@@ -35,16 +35,7 @@ namespace BlockSense.Backend.Repositories.Interfaces
         /// <param name="backupCodes"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task UpdateBackupCodesAsync(uint userId, IReadOnlyList<string> backupCodes, CancellationToken cancellationToken = default);
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <param name="backupCodes"></param>
-        /// <param name="updatedAt"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task InsertBackupCodesAsync(uint userId, IReadOnlyList<string> backupCodes, DateTime updatedAt, CancellationToken cancellationToken = default);
+        Task UpdateBackupCodesAsync(uint userId, IEnumerable<string> backupCodes, DateTime updatedAt, CancellationToken cancellationToken = default);
         /// <summary>
         /// Deletes the 2FA data for a specific user.
         /// </summary>

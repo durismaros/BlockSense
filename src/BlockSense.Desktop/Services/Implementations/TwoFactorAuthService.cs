@@ -143,7 +143,7 @@ namespace BlockSense.Desktop.Services.Implementations
 
         private async Task HandleFailureAsync(ApiResult.Failure failure)
         {
-            if (failure.ProblemDetails.Type is ApiProblemTypes.TwoFactorAuthentication.InvalidCode)
+            if (failure.ProblemDetails.Type is StandardizedCodes.TwoFactorAuthentication.Invalid)
             {
                 await _twoFactorSlidingPanel.ShowErrorState();
                 return;

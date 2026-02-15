@@ -147,10 +147,10 @@
 
 			<!-- Back Navigation -->
 			<Button x:Name="HomeButton"
-					Classes="DefaultWhite"
 					Width="44"
 					Height="44"
 					HorizontalAlignment="Left"
+					Background="Transparent"
 					CornerRadius="22">
 
 				<Viewbox Width="20"
@@ -158,9 +158,16 @@
 						 HorizontalAlignment="Center"
 						 VerticalAlignment="Center">
 					<Path Data="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"
-						  Fill="#8B6B4A"
+						  Fill="#28282B"
 						  Stretch="Uniform"/>
 				</Viewbox>
+
+				<Button.Styles>
+					<Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
+						<Setter Property="Background" Value="Transparent"/>
+						<Setter Property="RenderTransform" Value="scale(1.1)" />
+					</Style>
+				</Button.Styles>
 			</Button>
 
 			<!-- Header Content -->
@@ -187,13 +194,13 @@
 				<!-- Title and Subtitle -->
 				<StackPanel>
 					<TextBlock Text="User Profile"
-							   Foreground="#4A3C30"
+							   Foreground="#28282B"
 							   LetterSpacing="0.6"
 							   FontSize="22"
 							   FontWeight="SemiBold"/>
 
 					<TextBlock Text="Manage your account settings"
-							   Foreground="#553B2A"
+							   Foreground="#2E1812"
 							   LetterSpacing="0.4"
 							   FontSize="12"
 							   FontWeight="Normal"

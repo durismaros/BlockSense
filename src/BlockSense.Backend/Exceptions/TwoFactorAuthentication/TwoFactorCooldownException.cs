@@ -8,7 +8,7 @@ namespace BlockSense.Backend.Exceptions.TwoFactorAuthentication
         {
             get
             {
-                return ApiProblemTypes.TwoFactorAuthentication.BackupCodesCooldown;
+                return StandardizedCodes.TwoFactorAuthentication.BackupCodesCooldown;
             }
         }
 

@@ -1,8 +1,8 @@
 ﻿using BlockSense.Backend.Data.Configurations;
 using BlockSense.Backend.Entities;
 using BlockSense.Backend.Exceptions.Authentication;
+using BlockSense.Backend.Exceptions.Generic;
 using BlockSense.Backend.Exceptions.TwoFactorAuthentication;
-using BlockSense.Backend.Exceptions.User;
 using BlockSense.Backend.Models.DeviceContext;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
@@ -130,12 +130,7 @@ namespace BlockSense.Backend.Services.Implementations
         public async Task<AccessTokenDto> CreateAccessTokenAsync(uint userId, CancellationToken cancellationToken = default)
         {
             var user =
-                await _userRepository.GetByIdAsync(userId);
-
-            if (user is null)
-            {
-                throw new UserNotFoundException();
-            }
+                await _userRepository.GetByIdAsync(userId) ?? throw new NotFoundException();
 
             byte[] key =
                 Convert.FromBase64String(_jwtTokenConfig.SigningKey);
@@ -184,14 +179,14 @@ namespace BlockSense.Backend.Services.Implementations
                     },
                     cancellationToken);
             }
-            catch (TwoFactorNotConfiguredException) { }
+            catch (TwoFactorConfigurationException) { }
 
             var token =
                 await _refreshTokenRepository.GetByTokenAsync(request.TokenHash, cancellationToken);
 
             if (token is null || token.UserId != userId)
             {
-                throw new AccessProhibitedException();
+                throw new ForbiddenException();
             }
 
             await _refreshTokenRepository.RevokeAsync(request.TokenHash, cancellationToken);
@@ -204,7 +199,7 @@ namespace BlockSense.Backend.Services.Implementations
             {
                 await _twoFactorAuthService.VerifyAsync(userId, request, cancellationToken);
             }
-            catch (TwoFactorNotConfiguredException) { }
+            catch (TwoFactorConfigurationException) { }
             
 
             await _refreshTokenRepository.RevokeAllForUserAsync(userId, cancellationToken);

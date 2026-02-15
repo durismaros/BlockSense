@@ -1,149 +1,88 @@
 ﻿namespace BlockSense.Contracts.Definitions
 {
-    /// <summary>
-    /// Defines standardized API problem type codes used across the BlockSense system.
-    /// Categorized by authentication, registration, generic, and client-level issues.
-    /// </summary>
-    public static class ApiProblemTypes
+    public static class StandardizedCodes
     {
-        /// <summary>
-        /// Problem types related to authentication and login operations.
-        /// </summary>
         public static class Authentication
         {
-            /// <summary>
-            /// Occurs when provided JWT or Refresh token is invalid, expired, or missing required claims.
-            /// </summary>
-            public const string AuthenticationRequired = "AUTH_REQUIRED";
+            public const string AuthenticationRequired = "auth.required";
 
-            /// <summary>
-            /// Occurs when the user account has been banned.
-            /// </summary>
-            public const string AccountBanned = "AUTH_ACCOUNT_BANNED";
+            public const string InvalidCredentials = "auth.credentials.invalid";
 
-            /// <summary>
-            /// Occurs when the provided credentials are invalid.
-            /// </summary>
-            public const string InvalidCredentials = "AUTH_INVALID_CREDENTIALS";
+            public const string InvalidClientContext = "auth.client.invalid";
 
-            /// <summary>
-            /// Indicates that two-factor authentication is required for login.
-            /// </summary>
-            public const string TwoFactorRequired = "AUTH_2FA_REQUIRED";
-
-            /// <summary>
-            /// Occurs when provided Device context is invalid or does not match.
-            /// </summary>
-            public const string InvalidClientContext = "AUTH_INVALID_CLIENT_CONTEXT";
-
-            /// <summary>
-            /// Indicates that authentication was successful.
-            /// </summary>
-            public const string AuthenticationSuccess = "AUTH_SUCCESS";
+            public const string TwoFactorRequired = "auth.2fa.required";
         }
 
-        /// <summary>
-        /// Problem types related to two-factor authentication (2FA) operations.
-        /// </summary>
         public static class TwoFactorAuthentication
         {
-            /// <summary>
-            /// Indicates that 2FA has not been configured for the current user account.
-            /// </summary>
-            public const string NotConfigured = "2FA_NOT_CONFIGURED";
+            public const string Enabled = "auth.2fa.enabled";
 
-            /// <summary>
-            /// Indicates that 2FA has already been configured for the user.
-            /// </summary>
-            public const string AlreadyConfigured = "2FA_ALREADY_CONFIGURED";
+            public const string Disabled = "auth.2fa.disabled";
 
-            /// <summary>
-            /// Indicates that 2FA setup is required for the current operation.
-            /// </summary>
-            public const string SetupRequired = "2FA_SETUP_REQUIRED";
+            public const string ConfigurationConflict = "auth.2fa.configuration_conflict";
 
-            /// <summary>
-            /// Indicates that backup codes cannot be generated because the cooldown period has not elapsed.
-            /// </summary>
-            public const string BackupCodesCooldown = "2FA_BACKUP_CODES_COOLDOWN";
+            public const string SetupRequired = "auth.2fa.setup_required";
 
-            /// <summary>
-            /// Occurs when the provided two-factor authentication (2FA) code is invalid.
-            /// </summary>
-            public const string InvalidCode = "2FA_INVALID_CODE";
+            public const string Invalid = "auth.2fa.code.invalid";
 
-            /// <summary>
-            /// Indicates that 2FA verification was successful.
-            /// </summary>
-            public const string TwoFactorAuthenticationSuccess = "2FA_SUCCESS";
+            public const string Verified = "auth.2fa.code.verified";
+
+            public const string BackupCodesCooldown = "auth.2fa.backup_codes.cooldown";
+
+            public const string BackupCodesRegenerated = "auth.2fa.backup_codes.regenerated";
         }
 
-        /// <summary>
-        /// Problem types related to user registration processes.
-        /// </summary>
         public static class Registration
         {
-            /// <summary>
-            /// Occurs when an invitation code provided during registration is invalid.
-            /// </summary>
-            public const string InvalidInvitation = "REG_INVALID_INVITATION";
+            public const string InvalidInvitation = "registration.invitation.invalid";
 
-            /// <summary>
-            /// Occurs when the chosen username is already taken.
-            /// </summary>
-            public const string UsernameTaken = "REG_USERNAME_TAKEN";
+            public const string UsernameTaken = "registration.username.taken";
 
-            /// <summary>
-            /// Occurs when the provided email is already associated with another account.
-            /// </summary>
-            public const string EmailTaken = "REG_EMAIL_TAKEN";
+            public const string EmailTaken = "registration.email.taken";
 
-            /// <summary>
-            /// Indicates that registration was successful.
-            /// </summary>
-            public const string RegistrationSuccess = "REG_SUCCESS";
+            public const string UserRegistered = "registration.user.registered";
+
+            public const string InvitationUsed = "registration.invitation.used";
         }
 
-        /// <summary>
-        /// Generic problem types applicable across API endpoints.
-        /// </summary>
+        public static class Device
+        {
+            public const string Authenticated = "device.authenticated";
+
+            public const string Revoked = "device.revoked";
+        }
+
+        public static class Profile
+        {
+            public const string PictureChanged = "profile.picture.changed";
+
+            public const string EmailChanged = "profile.email.changed";
+
+            public const string UsernameChanged = "profile.username.changed";
+
+            public const string PasswordChanged = "profile.password.changed";
+        }
+
         public static class Generic
         {
-            /// <summary>
-            /// Represents a bad request, typically due to invalid input.
-            /// </summary>
-            public const string BadRequest = "GEN_BAD_REQUEST";
+            public const string BadRequest = "generic.bad_request";
 
-            /// <summary>
-            /// Represents an internal server error.
-            /// </summary>
-            public const string InternalServerError = "GEN_INTERNAL_ERROR";
+            public const string InternalServerError = "generic.internal_error";
+
+            public const string Forbidden = "generic.forbidden";
+
+            public const string NotFound = "generic.not_found";
         }
 
-        /// <summary>
-        /// Problem types related to client-side or network issues.
-        /// </summary>
         public static class Client
         {
-            /// <summary>
-            /// Indicates a request timeout on the client side.
-            /// </summary>
-            public const string Timeout = "CLIENT_TIMEOUT";
+            public const string Timeout = "client.timeout";
 
-            /// <summary>
-            /// Indicates a network error occurred while processing the request.
-            /// </summary>
-            public const string NetworkError = "CLIENT_NETWORK_ERROR";
+            public const string NetworkError = "client.network_error";
 
-            /// <summary>
-            /// Indicates that the request was cancelled by the client.
-            /// </summary>
-            public const string RequestCancelled = "CLIENT_REQUEST_CANCELLED";
+            public const string RequestCancelled = "client.request_cancelled";
 
-            /// <summary>
-            /// Represents an unknown or unclassified client error.
-            /// </summary>
-            public const string UnknownError = "CLIENT_UNKNOWN_ERROR";
+            public const string UnknownError = "client.unknown_error";
         }
     }
 }

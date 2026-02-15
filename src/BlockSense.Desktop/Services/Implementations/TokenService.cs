@@ -1,6 +1,5 @@
 ﻿using BlockSense.Contracts.DTOs.Session;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
-using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using System;
 using System.Threading;
@@ -11,7 +10,6 @@ namespace BlockSense.Desktop.Services.Implementations
     public sealed class TokenService : ITokenService
     {
         private readonly IApiClient _apiClient;
-        private readonly ICurrentUserProvider _currentUserProvider;
 
         public TokenService(IApiClient apiClient)
         {

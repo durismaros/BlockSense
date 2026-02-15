@@ -140,7 +140,7 @@ namespace BlockSense.Backend.Extensions
                         
                         var problemDetails = new ProblemDetails
                         {
-                            Type = ApiProblemTypes.Generic.BadRequest,
+                            Type = StandardizedCodes.Generic.BadRequest,
                             Title = "Invalid request",
                             Status = StatusCodes.Status400BadRequest,
                             Detail = "One or more validation errors occurred.",

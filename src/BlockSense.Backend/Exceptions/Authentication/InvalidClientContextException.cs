@@ -8,7 +8,7 @@ namespace BlockSense.Backend.Exceptions.Authentication
         {
             get
             {
-                return ApiProblemTypes.Authentication.InvalidClientContext;
+                return StandardizedCodes.Authentication.InvalidClientContext;
             }
         }
 
