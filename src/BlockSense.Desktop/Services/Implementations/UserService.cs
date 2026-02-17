@@ -3,7 +3,7 @@ using BlockSense.Contracts.DTOs.User;
 using BlockSense.Desktop.Models.Api;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
+using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
@@ -11,37 +11,27 @@ using System.Threading.Tasks;
 
 namespace BlockSense.Desktop.Services.Implementations
 {
-    /// <summary>
-    /// Implements <see cref="IUserService"/> to handle user registration by communicating with the backend API via <see cref="IApiClient"/>.
-    /// </summary>
     public sealed class UserService : IUserService
     {
         private readonly ILogger<UserService> _logger;
         private readonly IApiClient _apiClient;
-        private readonly IAuthService _authService;
         private readonly ICurrentUserProvider _currentUserProvider;
 
-        /// <summary>
-        /// Initializes a new instance of <see cref="UserService"/>.
-        /// </summary>
-        /// <param name="logger">Logger for capturing registration-related events.</param>
-        /// <param name="apiClient">The API client used to send registration requests.</param>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="apiClient"/> or <paramref name="logger"/> is null.</exception>
         public UserService(
             ILogger<UserService> logger,
             IApiClient apiClient,
-            IAuthService authService,
             ICurrentUserProvider currentUserProvider)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
-            _authService = authService ?? throw new ArgumentNullException(nameof(authService));
             _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         }
 
         /// <inheritdoc/>
         public async Task RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken = default)
         {
+            _logger.LogInformation("Starting registration for user: {Username}", request.Username);
+
             var delayTask = Task.Delay(1000, cancellationToken);
             var registerTask = _apiClient
                 .PostAsync<RegistrationRequest, RegistrationResponse>(
@@ -49,7 +39,6 @@ namespace BlockSense.Desktop.Services.Implementations
                     request: request,
                     cancellationToken: cancellationToken);
 
-            // Wait for whichever finishes first
             var completedTask = await Task.WhenAny(registerTask, delayTask);
 
             if (completedTask == delayTask)
@@ -64,15 +53,11 @@ namespace BlockSense.Desktop.Services.Implementations
             switch (response)
             {
                 case ApiResult<RegistrationResponse>.Success:
-                    MainWindow.Instance.ShowNotification(
-                        "Registration",
-                        "You've been successfully registered.");
+                    HandleRegistrationSuccess();
                     break;
 
                 case ApiResult.Failure failure:
-                    MainWindow.Instance.ShowNotification(
-                        failure.ProblemDetails.Title,
-                        failure.ProblemDetails.Detail);
+                    HandleRegistrationFailure(failure);
                     break;
             }
         }
@@ -80,6 +65,8 @@ namespace BlockSense.Desktop.Services.Implementations
         /// <inheritdoc/>
         public async Task LoadCurrentUserAsync(CancellationToken cancellationToken = default)
         {
+            _logger.LogInformation("Loading current user dashboard data");
+
             var response = await _apiClient
                 .AddBearerToken()
                 .GetAsync<UserDashboardDto>(
@@ -89,35 +76,51 @@ namespace BlockSense.Desktop.Services.Implementations
             switch (response)
             {
                 case ApiResult<UserDashboardDto>.Success success:
-                    _currentUserProvider.Set(success.Data);
+                    HandleDashboardLoadSuccess(success.Data);
                     break;
 
-                case ApiResult.Failure failure:
-                    MainWindow.Instance.ShowNotification(
-                        failure.ProblemDetails.Title,
-                        failure.ProblemDetails.Detail);
+                case ApiResult.Failure error:
+                    HandleDashboardLoadFailure(error);
                     break;
             }
         }
 
-        /// <inheritdoc/>
-        public async Task InitializeAsync(CancellationToken cancellationToken = default)
+        #region Private Helper Methods
+
+        private void HandleRegistrationSuccess()
         {
-            var homeView = App.ServiceProvider.GetRequiredService<HomeView>();
-            var welcomeView = App.ServiceProvider.GetRequiredService<WelcomeView>();
+            _logger.LogInformation("Registration successful");
 
-            try
-            {
-                await _authService.AuthRefreshAsync(cancellationToken);
-                await LoadCurrentUserAsync(cancellationToken);
-
-                await Task.Delay(800);
-                await MainWindow.Instance.SwitchViewAsync(homeView);
-            }
-            catch
-            {
-                MainWindow.Instance.ContentContainer.Content = welcomeView;
-            }
+            MainWindow.Instance.ShowNotification(
+                "Registration Successful",
+                "Your account has been created successfully.");
         }
+
+        private void HandleRegistrationFailure(ApiResult.Failure error)
+        {
+            _logger.LogWarning("Registration failed: {ErrorTitle}", error.ProblemDetails.Title);
+
+            MainWindow.Instance.ShowNotification(
+                error.ProblemDetails.Title,
+                error.ProblemDetails.Detail);
+        }
+
+        private void HandleDashboardLoadSuccess(UserDashboardDto dashboardData)
+        {
+            _logger.LogInformation("Dashboard data loaded successfully for user: {UserId}", dashboardData.Profile.UserId);
+
+            _currentUserProvider.Set(dashboardData);
+        }
+
+        private void HandleDashboardLoadFailure(ApiResult.Failure error)
+        {
+            _logger.LogWarning("Failed to load dashboard: {ErrorTitle}", error.ProblemDetails.Title);
+
+            MainWindow.Instance.ShowNotification(
+                error.ProblemDetails.Title,
+                error.ProblemDetails.Detail);
+        }
+
+        #endregion
     }
 }

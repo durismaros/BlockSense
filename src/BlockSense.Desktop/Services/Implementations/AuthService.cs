@@ -1,10 +1,7 @@
 ﻿using BlockSense.Contracts.Definitions;
 using BlockSense.Contracts.DTOs.Authentication;
 using BlockSense.Desktop.Models.Api;
-using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
-using BlockSense.Desktop.Utilities.ApiHandling;
-using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
@@ -19,9 +16,7 @@ namespace BlockSense.Desktop.Services.Implementations
     {
         private readonly ILogger<AuthService> _logger;
         private readonly IApiClient _apiClient;
-        private readonly NavigationManager _navigationManager;
-        private readonly IAccessTokenProvider _accessTokenProvider;
-        private readonly IRefreshTokenProvider _refreshTokenProvider;
+        private readonly ISessionService _sessionService;
         private readonly TwoFactorSlidingPanel _twoFactorSlidingPanel;
 
         /// <summary>
@@ -33,29 +28,20 @@ namespace BlockSense.Desktop.Services.Implementations
         public AuthService(
             ILogger<AuthService> logger,
             IApiClient apiClient,
-            NavigationManager navigationManager,
-            IAccessTokenProvider accessTokenProvider,
-            IRefreshTokenProvider refreshTokenProvider)
+            ISessionService sessionService,
+            TwoFactorSlidingPanel twoFactorSlidingPanel)
         {
-            _logger = logger
-                ?? throw new ArgumentNullException(nameof(logger));
-            _apiClient = apiClient
-                ?? throw new ArgumentNullException(nameof(apiClient));
-            _navigationManager = navigationManager
-                ?? throw new ArgumentNullException(nameof(navigationManager));
-            _accessTokenProvider = accessTokenProvider
-                ?? throw new ArgumentNullException(nameof(accessTokenProvider));
-            _refreshTokenProvider = refreshTokenProvider
-                ?? throw new ArgumentNullException(nameof(refreshTokenProvider));
-            _twoFactorSlidingPanel = MainWindow.Instance.TwoFactorSlidingPanel
-                ?? throw new ArgumentNullException(nameof(MainWindow.Instance.TwoFactorSlidingPanel));
-
-            _accessTokenProvider.RefreshRequested += AuthRefreshAsync;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+            _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
+            _twoFactorSlidingPanel = twoFactorSlidingPanel ?? throw new ArgumentNullException(nameof(twoFactorSlidingPanel));
         }
 
         /// <inheritdoc/>
-        public async Task AuthAsync(AuthRequest request, CancellationToken cancellationToken = default)
+        public async Task AuthenticateAsync(AuthRequest request, CancellationToken cancellationToken = default)
         {
+            _logger.LogInformation("Starting authentication for user: {Login}", request.Login);
+
             var delayTask = Task.Delay(1000, cancellationToken);
             var authTask = _apiClient
                 .AddDeviceHeaders()
@@ -79,78 +65,56 @@ namespace BlockSense.Desktop.Services.Implementations
             switch (response)
             {
                 case ApiResult<AuthResponse>.Success success:
-
-                    // Save tokens
-                    await _refreshTokenProvider.SaveAsync(success.Data.RefreshToken);
-                    _accessTokenProvider.Set(success.Data.AccessToken);
-
-                    // Hide 2FA panel if visible
-                    _twoFactorSlidingPanel.HidePanel();
-
-                    // Notify success
-                    MainWindow.Instance.ShowNotification(
-                        "Authentication",
-                        "You've been successfully authenticated.");
-
-                    await Task.Delay(2000);
-
-                    // Navigate to home
-                    await _navigationManager.NavigateToAsync<HomeView>();
+                    await HandleAuthenticationSuccessAsync(success.Data, cancellationToken);
                     break;
 
-                case ApiResult.Failure failure:
-
-                    // Handle specific 2FA scenarios
-                    switch (failure.ProblemDetails.Type)
-                    {
-                        case StandardizedCodes.Authentication.TwoFactorRequired:
-                            _twoFactorSlidingPanel.ShowPanel(async code =>
-                            {
-                                await AuthAsync(request with { TwoFactorCode = code }, cancellationToken);
-                            });
-                            break;
-
-                        case StandardizedCodes.TwoFactorAuthentication.Invalid:
-                            await _twoFactorSlidingPanel.ShowErrorState();
-                            break;
-
-                        default:
-                            MainWindow.Instance.ShowNotification(
-                                failure.ProblemDetails.Title,
-                                failure.ProblemDetails.Detail);
-                            break;
-                    }
+                case ApiResult.Failure error:
+                    await HandleAuthenticationFailureAsync(error, request, cancellationToken);
                     break;
             }
         }
 
-        public async Task AuthRefreshAsync(CancellationToken cancellationToken = default)
+        #region Private Helper Methods
+
+        private async Task HandleAuthenticationSuccessAsync(AuthResponse response, CancellationToken cancellationToken)
         {
-            var refreshToken = await _refreshTokenProvider.GetAsync(cancellationToken);
+            _logger.LogInformation("Authentication successful");
 
-            var request = new AuthRefreshRequest
-            {
-                RefreshToken = refreshToken
-            };
+            _twoFactorSlidingPanel.HidePanel();
 
-            var response = await _apiClient
-                .AddDeviceHeaders()
-                .PostAsync<AuthRefreshRequest, AuthRefreshResponse>(
-                    requestUri: "/api/auth/refresh",
-                    request: request,
-                    cancellationToken: cancellationToken);
-
-            if (response is ApiResult<AuthRefreshResponse>.Success success)
-            {
-                _accessTokenProvider.Set(success.Data.AccessToken);
-
-                MainWindow.Instance.ShowNotification(
-                    "Authentication Extended",
-                    "Your access token has been successfully refreshed.");
-                return;
-            }
-
-            throw new AuthenticationRequiredException();
+            await _sessionService.EstablishSessionAsync(response, cancellationToken);
         }
+
+        private async Task HandleAuthenticationFailureAsync(
+            ApiResult.Failure error,
+            AuthRequest originalRequest,
+            CancellationToken cancellationToken)
+        {
+            _logger.LogWarning("Authentication failed: {ErrorTitle}", error.ProblemDetails.Title);
+
+            switch (error.ProblemDetails.Type)
+            {
+                case StandardizedCodes.Authentication.TwoFactorRequired:
+                    _logger.LogInformation("2FA required [Showing sliding panel]");
+                    _twoFactorSlidingPanel.ShowPanel(async code =>
+                    {
+                        await AuthenticateAsync(originalRequest with { TwoFactorCode = code }, cancellationToken);
+                    });
+                    break;
+
+                case StandardizedCodes.TwoFactorAuthentication.Invalid:
+                    _logger.LogWarning("Invalid 2FA code");
+                    await _twoFactorSlidingPanel.ShowErrorState();
+                    break;
+
+                default:
+                    MainWindow.Instance.ShowNotification(
+                        error.ProblemDetails.Title,
+                        error.ProblemDetails.Detail);
+                    break;
+            }
+        }
+
+        #endregion
     }
 }

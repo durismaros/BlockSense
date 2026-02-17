@@ -16,21 +16,25 @@ namespace BlockSense.Desktop.Providers.Implementations
         public string DeviceIdentifier
         {
             get;
+            init;
         }
 
         public string DeviceOs
         {
             get;
+            init;
         }
 
         public string HardwareFingerprint
         {
             get;
+            init;
         }
 
         public string NetworkFingerprint
         {
             get;
+            init;
         }
 
         public DeviceContextProvider()
@@ -45,13 +49,13 @@ namespace BlockSense.Desktop.Providers.Implementations
         {
             var os =
                 OperatingSystem.IsWindows() ? "Windows" :
-                OperatingSystem.IsMacOS() ? "macOS" :
+                OperatingSystem.IsMacOS() ? "MacOS" :
                 "Unknown";
 
             var version = Environment.OSVersion.Version;
             var description = RuntimeInformation.OSDescription;
 
-            return $"{os} {version.Major}.{version.Minor}.{version.Build} ({description})";
+            return $"{os} {version.Major}.{version.Minor}.{version.Build}";
         }
 
         private static string BuildHardwareFingerprint()

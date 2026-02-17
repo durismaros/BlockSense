@@ -4,45 +4,34 @@
     {
         public static class Authentication
         {
-            public const string AuthenticationRequired = "auth.required";
+            public const string AuthenticationRequired = "AUTH_REQUIRED";
 
-            public const string InvalidCredentials = "auth.credentials.invalid";
+            public const string InvalidCredentials = "AUTH_CREDENTIALS_INVALID";
 
-            public const string InvalidClientContext = "auth.client.invalid";
+            public const string InvalidClientContext = "AUTH_CLIENT_INVALID";
 
-            public const string TwoFactorRequired = "auth.2fa.required";
+            public const string TwoFactorRequired = "AUTH_2FA_REQUIRED";
         }
 
         public static class TwoFactorAuthentication
         {
-            public const string Enabled = "auth.2fa.enabled";
 
-            public const string Disabled = "auth.2fa.disabled";
+            public const string ConfigurationConflict = "AUTH_2FA_CONFIGURATION_CONFLICT";
 
-            public const string ConfigurationConflict = "auth.2fa.configuration_conflict";
+            public const string SetupRequired = "AUTH_2FA_SETUP_REQUIRED";
 
-            public const string SetupRequired = "auth.2fa.setup_required";
+            public const string Invalid = "AUTH_2FA_CODE_INVALID";
 
-            public const string Invalid = "auth.2fa.code.invalid";
-
-            public const string Verified = "auth.2fa.code.verified";
-
-            public const string BackupCodesCooldown = "auth.2fa.backup_codes.cooldown";
-
-            public const string BackupCodesRegenerated = "auth.2fa.backup_codes.regenerated";
+            public const string BackupCodesCooldown = "AUTH_2FA_BACKUP_CODES_COOLDOWN";
         }
 
         public static class Registration
         {
-            public const string InvalidInvitation = "registration.invitation.invalid";
+            public const string InvalidInvitation = "REG_INVITATION_INVALID";
 
-            public const string UsernameTaken = "registration.username.taken";
+            public const string UsernameTaken = "REGISTRATION_USERNAME_TAKEN";
 
-            public const string EmailTaken = "registration.email.taken";
-
-            public const string UserRegistered = "registration.user.registered";
-
-            public const string InvitationUsed = "registration.invitation.used";
+            public const string EmailTaken = "REGISTRATION_EMAIL_TAKEN";
         }
 
         public static class Device
@@ -65,24 +54,24 @@
 
         public static class Generic
         {
-            public const string BadRequest = "generic.bad_request";
+            public const string BadRequest = "GENERIC_BAD_REQUEST";
 
-            public const string InternalServerError = "generic.internal_error";
+            public const string InternalServerError = "GENERIC_INTERNAL_ERROR";
 
-            public const string Forbidden = "generic.forbidden";
+            public const string Forbidden = "GENERIC_FORBIDDEN";
 
-            public const string NotFound = "generic.not_found";
+            public const string NotFound = "GENERIC_NOT_FOUND";
         }
 
         public static class Client
         {
-            public const string Timeout = "client.timeout";
+            public const string Timeout = "CLIENT_TIMEOUT";
 
-            public const string NetworkError = "client.network_error";
+            public const string NetworkError = "CLIENT_NETWORK_ERROR";
 
-            public const string RequestCancelled = "client.request_cancelled";
+            public const string RequestCancelled = "CLIENT_REQUEST_CANCELLED";
 
-            public const string UnknownError = "client.unknown_error";
+            public const string UnknownError = "CLIENT_UNKNOWN_ERROR";
         }
     }
 }

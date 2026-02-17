@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BlockSense.Desktop.Utilities.ApiHandling
+namespace BlockSense.Desktop.Utilities.ApiHandling.HeaderHandlers
 {
     public sealed class DeviceContextHeaderHandler : DelegatingHandler
     {

@@ -1,5 +1,6 @@
 ﻿using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Contracts.Definitions;
+using System.ComponentModel.DataAnnotations;
 
 namespace BlockSense.Backend.Models.DeviceContext
 {
@@ -8,46 +9,44 @@ namespace BlockSense.Backend.Models.DeviceContext
     /// </summary>
     public sealed record DeviceContext
     {
-        /// <summary>
-        /// The public IP address of the client.
-        /// </summary>
-        public required string IpAddress
-        {
-            get;
-            init;
-        }
-
-        /// <summary>
-        /// A unique device identifier (e.g., hardware ID or client-generated GUID).
-        /// </summary>
+        [Required]
+        [StringLength(64, MinimumLength = 3)]
+        [RegularExpression(@"^[A-Za-z0-9\-]+$")]
         public required string DeviceIdentifier
         {
             get;
             init;
         }
 
-        /// <summary>
-        /// The operating system or platform of the client device.
-        /// </summary>
+        [Required]
+        [StringLength(64, MinimumLength = 3)]
+        [RegularExpression(@"^[A-Za-z0-9\s\.\-_]+$")]
         public required string DeviceOs
         {
             get;
             init;
         }
 
-        /// <summary>
-        /// Hardware fingerprint derived from CPU, GPU, and other system info.
-        /// </summary>
+        [Required]
+        [StringLength(44, MinimumLength = 44)]
+        [RegularExpression(@"^[A-Za-z0-9+/]{43}=$")]
         public required string HardwareFingerprint
         {
             get;
             init;
         }
 
-        /// <summary>
-        /// Network fingerprint derived from MAC, network stack, or other unique identifiers.
-        /// </summary>
+        [Required]
+        [StringLength(17, MinimumLength = 17)]
+        [RegularExpression(@"^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$")]
         public required string NetworkFingerprint
+        {
+            get;
+            init;
+        }
+
+        [Required]
+        public required string IpAddress
         {
             get;
             init;
@@ -67,7 +66,8 @@ namespace BlockSense.Backend.Models.DeviceContext
 
             // Helper to retrieve header values
             string GetHeader(string key)
-                => httpContext.Request.Headers.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value.ToString() : throw new InvalidClientContextException();
+                => httpContext.Request.Headers.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value)
+                    ? value.ToString() : throw new InvalidClientContextException();
 
             return new DeviceContext
             {
@@ -75,7 +75,8 @@ namespace BlockSense.Backend.Models.DeviceContext
                 DeviceOs = GetHeader(DeviceHeaders.DeviceOs),
                 HardwareFingerprint = GetHeader(DeviceHeaders.HardwareFingerprint),
                 NetworkFingerprint = GetHeader(DeviceHeaders.NetworkFingerprint),
-                IpAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown"
+                IpAddress = httpContext.Connection.RemoteIpAddress?.ToString()
+                    ?? throw new InvalidClientContextException()
             };
         }
     }

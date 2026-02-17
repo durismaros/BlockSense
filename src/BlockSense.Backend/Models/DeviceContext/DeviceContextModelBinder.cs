@@ -1,5 +1,6 @@
 ﻿using BlockSense.Backend.Exceptions.Authentication;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.ComponentModel.DataAnnotations;
 
 namespace BlockSense.Backend.Models.DeviceContext
 {
@@ -7,19 +8,12 @@ namespace BlockSense.Backend.Models.DeviceContext
     {
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
-            if (bindingContext is null)
-                throw new ArgumentNullException(nameof(bindingContext));
+            var deviceContext = DeviceContext.FromHttpContext(bindingContext.HttpContext);
+            bindingContext.Result = ModelBindingResult.Success(deviceContext);
 
-            try
-            {
-                var deviceContext = DeviceContext.FromHttpContext(bindingContext.HttpContext);
-                bindingContext.Result = ModelBindingResult.Success(deviceContext);
-            }
-            catch (InvalidClientContextException ex)
-            {
-                bindingContext.ModelState.AddModelError("DeviceContext", ex.Message);
-                bindingContext.Result = ModelBindingResult.Failed();
-            }
+            Validator.ValidateObject(deviceContext, new ValidationContext(deviceContext), validateAllProperties: true);
+
+
 
             return Task.CompletedTask;
         }

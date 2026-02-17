@@ -6,6 +6,7 @@ using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Implementations;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.ApiHandling;
+using BlockSense.Desktop.Utilities.ApiHandling.HeaderHandlers;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -17,17 +18,11 @@ namespace BlockSense.Desktop
 {
     public partial class App : Application
     {
-        public static IServiceProvider ServiceProvider
-        {
-            get;
-            private set;
-        }
-        = default!;
+        public static IServiceProvider ServiceProvider { get; private set; } = default!;
 
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
-
             ConfigureServices();
         }
 
@@ -37,7 +32,8 @@ namespace BlockSense.Desktop
             {
                 desktop.MainWindow = ServiceProvider.GetRequiredService<MainWindow>();
 
-                await ServiceProvider.GetRequiredService<IUserService>().InitializeAsync();
+                var session = ServiceProvider.GetRequiredService<ISessionService>();
+                await session.InitializeSessionAsync();
             }
 
             base.OnFrameworkInitializationCompleted();
@@ -47,12 +43,14 @@ namespace BlockSense.Desktop
         {
             var services = new ServiceCollection();
 
+            // Logging
             services.AddLogging(builder =>
             {
                 builder.ClearProviders();
                 builder.AddSerilog(dispose: true);
             });
 
+            // HTTP Client with handlers
             services.AddTransient<AuthorizationHeaderHandler>();
             services.AddTransient<DeviceContextHeaderHandler>();
 
@@ -66,19 +64,21 @@ namespace BlockSense.Desktop
             .AddHttpMessageHandler<AuthorizationHeaderHandler>()
             .AddHttpMessageHandler<DeviceContextHeaderHandler>();
 
-            // --- Model Providers ---
+            // --- Model Providers (Singleton for state management) ---
             services.AddSingleton<IDeviceContextProvider, DeviceContextProvider>();
             services.AddSingleton<IRefreshTokenProvider, RefreshTokenProvider>();
             services.AddSingleton<IAccessTokenProvider, AccessTokenProvider>();
             services.AddSingleton<ICurrentUserProvider, CurrentUserProvider>();
 
-            // --- Services / Helpers ---
+            // --- Infrastructure ---
             services.AddSingleton<NavigationManager>();
 
+            // --- Services / Helpers ---
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<ITwoFactorAuthService, TwoFactorAuthService>();
+            services.AddScoped<ISessionService, SessionService>();
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<ITwoFactorAuthService, TwoFactorAuthService>();
 
             // --- Views ---
             services.AddSingleton<WelcomeView>();

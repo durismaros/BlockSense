@@ -55,7 +55,7 @@ public partial class AuthenticationView : UserControl
             return;
         }
 
-        await _authService.AuthAsync(request, cancellationToken);
+        await _authService.AuthenticateAsync(request, cancellationToken);
     }
 
     private async void RevealPasswordClick(object? sender, RoutedEventArgs e)
