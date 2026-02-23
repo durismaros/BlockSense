@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.ComponentModel.DataAnnotations;
 
-namespace BlockSense.Backend.Models.DeviceContext
+namespace BlockSense.Backend.Models.Device
 {
     public class DeviceContextModelBinder : IModelBinder
     {

@@ -2,12 +2,12 @@
 
 namespace BlockSense.Backend.Entities
 {
-    public sealed class UserEntity
+    public sealed class User
     {
-        public required uint UserId
+        public required uint Id
         {
             get;
-            set;
+            init;
         }
 
         public required string Username
@@ -22,7 +22,7 @@ namespace BlockSense.Backend.Entities
             set;
         }
 
-        public required UserType UserType
+        public required UserRole Role
         {
             get;
             set;
@@ -43,7 +43,7 @@ namespace BlockSense.Backend.Entities
         public required DateTime CreatedAt
         {
             get;
-            set;
+            init;
         }
 
         public required DateTime UpdatedAt
@@ -57,6 +57,9 @@ namespace BlockSense.Backend.Entities
             get;
             set;
         }
+
+        public bool IsActive
+            => DeletedAt is null && Role != UserRole.Banned;
 
         public bool IsDeleted
             => DeletedAt.HasValue;

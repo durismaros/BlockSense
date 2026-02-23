@@ -42,7 +42,7 @@ namespace BlockSense.Contracts.DTOs.Registration
         /// Serialized as a string using JSON string enum converter.
         /// </remarks>
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public required UserType UserType
+        public required UserRole UserRole
         {
             get;
             init;

@@ -1,6 +1,5 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Entities;
-using BlockSense.Backend.Repositories.Interfaces;
 using MySql.Data.MySqlClient;
 
 namespace BlockSense.Backend.Repositories.Implementations
@@ -15,33 +14,33 @@ namespace BlockSense.Backend.Repositories.Implementations
                 ?? throw new ArgumentNullException(nameof(databaseContext));
         }
 
-        public async Task InsertAsync(ActivityLogEntity activityLog, CancellationToken cancellationToken = default)
+        public async Task InsertAsync(ActivityLog log, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
+            const string sql = """
                 INSERT INTO activity_logs (
-                    actor_type,
-                    actor_id,
+                    type,
+                    user_id,
                     action,
                     context,
-                    created_at)
+                    occurred_at )
                 VALUES (
-                    @ActorType,
-                    @ActorId,
+                    @Type,
+                    @UserId,
                     @Action,
                     @Context,
-                    @CreatedAt);
+                    @OccurredAt );
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@ActorType", MySqlDbType.Enum) { Value = activityLog.ActorType },
-                new MySqlParameter("@ActorId", MySqlDbType.UInt32) { Value = activityLog.ActorId },
-                new MySqlParameter("@Action", MySqlDbType.VarChar, 255) { Value = activityLog.Action },
-                new MySqlParameter("@Context", MySqlDbType.JSON) { Value = activityLog.Context },
-                new MySqlParameter("@CreatedAt", MySqlDbType.DateTime) { Value = activityLog.CreatedAt }
+                new MySqlParameter("@Type",       MySqlDbType.Enum)          { Value = log.Type.ToString().ToLowerInvariant() },
+                new MySqlParameter("@UserId",     MySqlDbType.UInt32)        { Value = log.UserId },
+                new MySqlParameter("@Action",     MySqlDbType.VarChar, 255)  { Value = log.Action },
+                new MySqlParameter("@Context",    MySqlDbType.JSON)          { Value = (object?)log.Context ?? DBNull.Value },
+                new MySqlParameter("@OccurredAt", MySqlDbType.DateTime)      { Value = log.OccurredAt }
             };
 
-            var result = await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
+            await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
         }
     }
 }

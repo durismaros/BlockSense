@@ -12,11 +12,6 @@ namespace BlockSense.Backend.Data
         private MySqlTransaction? _currentTransaction;
 
         /// <summary>
-        /// Gets the underlying MySQL connection used by this context.
-        /// </summary>
-        public MySqlConnection Connection => _connection;
-
-        /// <summary>
         /// Initializes a new instance of <see cref="DatabaseContext"/> using the provided connection.
         /// </summary>
         /// <param name="connection">A non-null <see cref="MySqlConnection"/>. Connection lifetime is managed externally.</param>
@@ -25,12 +20,6 @@ namespace BlockSense.Backend.Data
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
         }
-
-        /// <summary>
-        /// Gets the currently active transaction, if any.
-        /// </summary>
-        /// <returns>The active <see cref="MySqlTransaction"/> or null if none exists.</returns>
-        public MySqlTransaction? GetCurrentTransaction() => _currentTransaction;
 
         /// <summary>
         /// Begins a new transaction with the specified isolation level.

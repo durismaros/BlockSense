@@ -78,7 +78,7 @@ public partial class UserDashboardView : UserControl
         UserIdTextBlock.Text =
             _currentUserProvider.Profile.UserId.ToString();
 
-        SetAccountBadges(_currentUserProvider.Profile.UserType);
+        SetAccountBadges(_currentUserProvider.Profile.Role);
 
         CreationDateTextBlock.Text =
             DateTimeFormatter.ToOrdinalDate(_currentUserProvider.Profile.CreatedAt);
@@ -247,22 +247,22 @@ public partial class UserDashboardView : UserControl
         await ShowTwoFactorDisabledStateAsync();
     }
 
-    private void SetAccountBadges(UserType userType)
+    private void SetAccountBadges(UserRole role)
     {
         AccountBadgesStackPanel.Children.Clear();
 
-        switch (userType)
+        switch (role)
         {
-            case UserType.Standard:
+            case UserRole.Standard:
                 AccountBadgesStackPanel.Children.Add(CreateBadge("user"));
                 break;
 
-            case UserType.Administrator:
+            case UserRole.Administrator:
                 AccountBadgesStackPanel.Children.Add(CreateBadge("user"));
                 AccountBadgesStackPanel.Children.Add(CreateBadge("admin"));
                 break;
 
-            case UserType.Founder:
+            case UserRole.Founder:
                 AccountBadgesStackPanel.Children.Add(CreateBadge("user"));
                 AccountBadgesStackPanel.Children.Add(CreateBadge("admin"));
                 AccountBadgesStackPanel.Children.Add(CreateBadge("founder"));

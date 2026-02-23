@@ -21,12 +21,12 @@ namespace BlockSense.Backend.Services.Implementations
     public sealed class TwoFactorAuthService : ITwoFactorAuthService
     {
         private readonly TwoFactorAuthConfig _twoFactorAuthConfig;
-        private readonly ITwoFactorAuthRepository _twoFactorAuthRepository;
+        private readonly ITotpCredentialRepository _twoFactorAuthRepository;
         private readonly IUserRepository _userRepository;
 
         public TwoFactorAuthService(
             IOptions<TwoFactorAuthConfig> twoFactorAuthConfig,
-            ITwoFactorAuthRepository twoFactorAuthRepository,
+            ITotpCredentialRepository twoFactorAuthRepository,
             IUserRepository userRepository)
         {
             _twoFactorAuthConfig = twoFactorAuthConfig.Value
@@ -99,10 +99,10 @@ namespace BlockSense.Backend.Services.Implementations
             // Combine nonce (12) + cipherTextWithTag (36) = 48 bytes
             var encryptedSecret = iv.Concat(ciphertext).ToArray();
 
-            var twoFaAuthEntity = new TwoFactorAuthEntity
+            var twoFaAuthEntity = new TotpCredential
             {
                 UserId = userId,
-                EncryptedTotpSecret = encryptedSecret,
+                EncryptedSecret = encryptedSecret,
                 UpdatedAt = DateTime.UtcNow
             };
 
@@ -135,10 +135,10 @@ namespace BlockSense.Backend.Services.Implementations
                 Convert.FromBase64String(_twoFactorAuthConfig.MasterKey);
 
             byte[] iv =
-                twoFaEntity.EncryptedTotpSecret.Take(12).ToArray();
+                twoFaEntity.EncryptedSecret.Take(12).ToArray();
 
             byte[] cipherText =
-                twoFaEntity.EncryptedTotpSecret.Skip(12).ToArray();
+                twoFaEntity.EncryptedSecret.Skip(12).ToArray();
 
             var aes256GcmEncryptor = new Aes256GcmEncryptor();
 
@@ -158,12 +158,11 @@ namespace BlockSense.Backend.Services.Implementations
                 await _twoFactorAuthRepository.GetByUserIdAsync(userId, cancellationToken)
                 ?? throw new TwoFactorConfigurationException();
 
-            var now = DateTime.UtcNow;
             var cooldown = _twoFactorAuthConfig.BackupCodeCooldown;
 
             if (twoFaAuthEntity.BackupCodes is not null)
             {
-                var elapsed = now - twoFaAuthEntity.UpdatedAt;
+                var elapsed = DateTime.UtcNow - twoFaAuthEntity.UpdatedAt;
 
                 if (elapsed < cooldown)
                 {
@@ -180,7 +179,6 @@ namespace BlockSense.Backend.Services.Implementations
             await _twoFactorAuthRepository.UpdateBackupCodesAsync(
                 userId,
                 hashedBackupCodes,
-                now,
                 cancellationToken);
 
             return backupCodes;
@@ -195,7 +193,7 @@ namespace BlockSense.Backend.Services.Implementations
 
             await VerifyAsync(userId, request);
 
-            await _twoFactorAuthRepository.DisableAsync(userId, cancellationToken);
+            await _twoFactorAuthRepository.DeleteAsync(userId, cancellationToken);
         }
 
         private bool VerifyCode(byte[] secretKey, string code)
@@ -233,7 +231,6 @@ namespace BlockSense.Backend.Services.Implementations
                 await _twoFactorAuthRepository.UpdateBackupCodesAsync(
                     userId,
                     backupCodes,
-                    DateTime.UtcNow,
                     cancellationToken);
 
                 return true;

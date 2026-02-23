@@ -1,6 +1,6 @@
 ﻿using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Contracts.DTOs.Authentication;
-using BlockSense.Backend.Models.DeviceContext;
+using BlockSense.Backend.Models.Device;
 
 namespace BlockSense.Backend.Services.Interfaces
 {

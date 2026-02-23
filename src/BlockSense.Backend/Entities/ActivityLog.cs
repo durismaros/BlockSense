@@ -1,43 +1,43 @@
 ﻿using BlockSense.Contracts.Enums;
 
-namespace BlockSense.Contracts.DTOs.Invitation
+namespace BlockSense.Backend.Entities
 {
-    public sealed record InvitationDto
+    public sealed class ActivityLog
     {
-        public required string InvitationCode
+        public required ulong Id
         {
             get;
             init;
         }
 
-        public required string? UsedBy
+        public required ActivityType Type
         {
             get;
             init;
         }
 
-        public required DateTime CreatedAt
+        public required uint UserId
         {
             get;
             init;
         }
 
-        public required DateTime ExpiresAt
+        public required string Action
         {
             get;
             init;
         }
 
-        public required InvitationStatus Status
+        public string? Context
         {
             get;
             init;
         }
 
-        public required bool IsRevoked
+        public required DateTime OccurredAt
         {
             get;
-            init;
+            init; 
         }
     }
 }

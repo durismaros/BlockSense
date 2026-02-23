@@ -7,18 +7,10 @@ using MySql.Data.MySqlClient;
 
 namespace BlockSense.Backend.Repositories.Implementations
 {
-    /// <summary>
-    /// Provides data access methods for <see cref="RefreshTokenEntity"/> objects.
-    /// </summary>
     public sealed class RefreshTokenRepository : IRefreshTokenRepository
     {
         private readonly DatabaseContext _databaseContext;
 
-        /// <summary>
-        /// Initializes a new instance of <see cref="RefreshTokenRepository"/> with the provided <see cref="DatabaseContext"/>.
-        /// </summary>
-        /// <param name="databaseContext">The database context used to execute SQL queries.</param>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="databaseContext"/> is <c>null</c>.</exception>
         public RefreshTokenRepository(DatabaseContext databaseContext)
         {
             _databaseContext = databaseContext
@@ -26,9 +18,9 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<RefreshTokenEntity?> GetByTokenAsync(string tokenHash, CancellationToken cancellationToken = default)
+        public async Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
+            const string sql = """
                 SELECT
                     token_hash              AS TokenHash,
                     user_id                 AS UserId,
@@ -47,22 +39,19 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@TokenHash", MySqlDbType.VarChar, 255)
-                {
-                    Value = tokenHash
-                }
+                new MySqlParameter("@TokenHash", MySqlDbType.VarChar, 255) { Value = tokenHash }
             };
 
-            await using MySqlDataReader dbReader =
-                await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
+            await using var reader =
+                await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
 
-            return SqlMapper.Parse<RefreshTokenEntity>(dbReader).FirstOrDefault();
+            return SqlMapper.Parse<RefreshToken>(reader).FirstOrDefault();
         }
 
         /// <inheritdoc/>
-        public async Task<IReadOnlyList<RefreshTokenEntity>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<RefreshToken>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
+            const string sql = """
                 SELECT
                     token_hash              AS TokenHash,
                     user_id                 AS UserId,
@@ -79,23 +68,20 @@ namespace BlockSense.Backend.Repositories.Implementations
                 """;
 
             var parameters = new[]
-{
-                new MySqlParameter("@UserId", MySqlDbType.UInt32)
-                {
-                    Value = userId
-                }
+            {
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
             };
 
-            await using MySqlDataReader dbReader =
-                await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
+            await using var reader =
+                await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
 
-            return SqlMapper.Parse<RefreshTokenEntity>(dbReader).ToList();
+            return SqlMapper.Parse<RefreshToken>(reader).ToList();
         }
 
         /// <inheritdoc/>
-        public async Task<IReadOnlyList<RefreshTokenEntity>> GetActiveByUserAsync(uint userId, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<RefreshToken>> GetActiveByUserAsync(uint userId, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
+            const string sql = """
                 SELECT
                     token_hash              AS TokenHash,
                     user_id                 AS UserId,
@@ -109,57 +95,53 @@ namespace BlockSense.Backend.Repositories.Implementations
                     is_revoked              AS IsRevoked
                 FROM refresh_tokens
                 WHERE user_id = @UserId
-                  AND is_revoked = 0
-                  AND expires_at > UTC_TIMESTAMP(6);
+                    AND is_revoked = 0
+                    AND expires_at > UTC_TIMESTAMP(6);
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32)
-                {
-                    Value = userId
-                }
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
             };
 
-            await using var dbReader =
-                await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
+            await using var reader =
+                await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
 
-            return SqlMapper.Parse<RefreshTokenEntity>(dbReader).ToList();
+            return SqlMapper.Parse<RefreshToken>(reader).ToList();
         }
-        
+
         /// <inheritdoc/>
         public async Task<IReadOnlyList<UserSessionDto>> GetActiveSessionsByUserAsync(uint userId, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
+            const string sql = """
                 SELECT
-                    token_hash              AS TokenHash,
-                    ip_address              AS IpAddress,
-                    issued_at               AS IssuedAt,
-                    expires_at              AS ExpiresAt
+                    token_hash          AS TokenHash,
+                    ip_address          AS IpAddress,
+                    device_identifier   AS DeviceIdentifier,
+                    device_os           AS DeviceOs,
+                    issued_at           AS IssuedAt,
+                    expires_at          AS ExpiresAt
                 FROM refresh_tokens
                 WHERE user_id = @UserId
-                  AND is_revoked = 0
-                  AND expires_at > UTC_TIMESTAMP(6);
+                    AND is_revoked = 0
+                    AND expires_at > UTC_TIMESTAMP(6);
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32)
-                {
-                    Value = userId
-                }
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
             };
 
-            await using var dbReader =
-                await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
+            await using var reader =
+                await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
 
-            return SqlMapper.Parse<UserSessionDto>(dbReader).ToList();
+            return SqlMapper.Parse<UserSessionDto>(reader).ToList();
         }
 
         /// <inheritdoc/>
-        public async Task CreateOrUpdateAsync(RefreshTokenEntity refreshToken, CancellationToken cancellationToken = default)
+        public async Task UpsertAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
+            const string sql = """
                 INSERT INTO refresh_tokens (
                     token_hash,
                     user_id,
@@ -181,40 +163,40 @@ namespace BlockSense.Backend.Repositories.Implementations
                     @NetworkFingerprint,
                     @IssuedAt,
                     @ExpiresAt,
-                    @IsRevoked)
+                    @IsRevoked )
                 ON DUPLICATE KEY UPDATE
-                    token_hash = VALUES(token_hash),
-                    user_id = VALUES(user_id),
-                    ip_address = VALUES(ip_address),
-                    device_identifier = VALUES(device_identifier),
-                    device_os = VALUES(device_os),
+                    token_hash          = VALUES(token_hash),
+                    user_id             = VALUES(user_id),
+                    ip_address          = VALUES(ip_address),
+                    device_identifier   = VALUES(device_identifier),
+                    device_os           = VALUES(device_os),
                     network_fingerprint = VALUES(network_fingerprint),
-                    issued_at = VALUES(issued_at),
-                    expires_at = VALUES(expires_at),
-                    is_revoked = VALUES(is_revoked);
+                    issued_at           = VALUES(issued_at),
+                    expires_at          = VALUES(expires_at),
+                    is_revoked          = VALUES(is_revoked);
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@TokenHash", MySqlDbType.VarChar, 255) { Value = refreshToken.TokenHash },
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = refreshToken.UserId },
-                new MySqlParameter("@IpAddress", MySqlDbType.VarChar, 45) { Value = refreshToken.IpAddress },
-                new MySqlParameter("@DeviceIdentifier", MySqlDbType.VarChar, 255) { Value = refreshToken.DeviceIdentifier },
-                new MySqlParameter("@HardwareFingerprint", MySqlDbType.VarChar, 44) { Value = refreshToken.HardwareFingerprint },
-                new MySqlParameter("@NetworkFingerprint", MySqlDbType.VarChar, 17) { Value = refreshToken.NetworkFingerprint },
-                new MySqlParameter("@DeviceOs", MySqlDbType.VarChar, 150) { Value = refreshToken.DeviceOs },
-                new MySqlParameter("@IssuedAt", MySqlDbType.DateTime) { Value = refreshToken.IssuedAt },
-                new MySqlParameter("@ExpiresAt", MySqlDbType.DateTime) { Value = refreshToken.ExpiresAt },
-                new MySqlParameter("@IsRevoked", MySqlDbType.Bit) { Value = refreshToken.IsRevoked }
+                new MySqlParameter("@TokenHash",           MySqlDbType.VarChar, 255) { Value = refreshToken.TokenHash },
+                new MySqlParameter("@UserId",              MySqlDbType.UInt32)       { Value = refreshToken.UserId },
+                new MySqlParameter("@IpAddress",           MySqlDbType.VarChar,  45) { Value = refreshToken.IpAddress },
+                new MySqlParameter("@DeviceIdentifier",    MySqlDbType.VarChar, 255) { Value = refreshToken.DeviceIdentifier },
+                new MySqlParameter("@DeviceOs",            MySqlDbType.VarChar, 255) { Value = refreshToken.DeviceOs },
+                new MySqlParameter("@HardwareFingerprint", MySqlDbType.String,   44) { Value = refreshToken.HardwareFingerprint },
+                new MySqlParameter("@NetworkFingerprint",  MySqlDbType.String,   17) { Value = refreshToken.NetworkFingerprint },
+                new MySqlParameter("@IssuedAt",            MySqlDbType.DateTime)     { Value = refreshToken.IssuedAt },
+                new MySqlParameter("@ExpiresAt",           MySqlDbType.DateTime)     { Value = refreshToken.ExpiresAt },
+                new MySqlParameter("@IsRevoked",           MySqlDbType.Bit)          { Value = refreshToken.IsRevoked }
             };
 
-            await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
+            await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
         }
 
         /// <inheritdoc/>
         public async Task RevokeAsync(string tokenHash, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
+            const string sql = """
                 UPDATE refresh_tokens
                 SET is_revoked = 1
                 WHERE token_hash = @TokenHash
@@ -222,20 +204,17 @@ namespace BlockSense.Backend.Repositories.Implementations
                 """;
 
             var parameters = new[]
-{
-                new MySqlParameter("@TokenHash", MySqlDbType.String)
-                {
-                    Value = tokenHash
-                }
+            {
+                new MySqlParameter("@TokenHash", MySqlDbType.VarChar, 255) { Value = tokenHash }
             };
 
-            await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
+            await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
         }
 
         /// <inheritdoc/>
         public async Task RevokeAllForUserAsync(uint userId, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
+            const string sql = """
                 UPDATE refresh_tokens
                 SET is_revoked = 1
                 WHERE user_id = @UserId
@@ -243,14 +222,11 @@ namespace BlockSense.Backend.Repositories.Implementations
                 """;
 
             var parameters = new[]
-{
-                new MySqlParameter("@UserId", MySqlDbType.UInt32)
-                {
-                    Value = userId
-                }
+            {
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
             };
 
-            await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
+            await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
         }
     }
 }

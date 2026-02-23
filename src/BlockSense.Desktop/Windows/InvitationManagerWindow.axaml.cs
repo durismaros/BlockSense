@@ -217,11 +217,11 @@ public partial class InvitationManagerWindow : Window
 
     private void AddInvitedUser(InvitationDto invitation, int row)
     {
-        bool hasUser = !string.IsNullOrWhiteSpace(invitation.InvitedUser);
+        bool hasUser = !string.IsNullOrWhiteSpace(invitation.UsedBy);
 
         var text = new TextBlock
         {
-            Text = hasUser ? invitation.InvitedUser : "( not used )",
+            Text = hasUser ? invitation.UsedBy : "( not used )",
             Classes = { "InvitedUser" }
         };
 
@@ -260,7 +260,7 @@ public partial class InvitationManagerWindow : Window
 
         return
             Contains(invite.InvitationCode, searchText) ||
-            Contains(invite.InvitedUser, searchText) ||
+            Contains(invite.UsedBy, searchText) ||
             Contains(invite.Status.ToString(), searchText) ||
             DateMatches(invite.CreatedAt, searchText) ||
             DateMatches(invite.ExpiresAt, searchText);

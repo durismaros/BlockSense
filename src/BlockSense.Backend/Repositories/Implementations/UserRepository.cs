@@ -7,18 +7,10 @@ using MySql.Data.MySqlClient;
 
 namespace BlockSense.Backend.Repositories.Implementations
 {
-    /// <summary>
-    /// Provides data access methods for <see cref="UserEntity"/> objects.
-    /// </summary>
     public sealed class UserRepository : IUserRepository
     {
         private readonly DatabaseContext _databaseContext;
 
-        /// <summary>
-        /// Initializes a new instance of <see cref="UserRepository"/> with the provided <see cref="DatabaseContext"/>.
-        /// </summary>
-        /// <param name="databaseContext">The database context used to execute SQL queries.</param>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="databaseContext"/> is <c>null</c>.</exception>
         public UserRepository(DatabaseContext databaseContext)
         {
             _databaseContext = databaseContext
@@ -26,53 +18,50 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<UserEntity?> GetByIdAsync(uint userId, CancellationToken cancellationToken = default)
+        public async Task<User?> GetByIdAsync(uint userId, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
-                SELECT                
-                    user_id               AS UserId,
-                    username              AS Username,
-                    email                 AS Email,
-                    user_type             AS UserType,
-                    password_hash         AS PasswordHash,
-                    password_salt         AS PasswordSalt,
-                    created_at            AS CreatedAt,
-                    updated_at            AS UpdatedAt,
-                    deleted_at            AS DeletedAt
+            const string sql = """
+                SELECT
+                    id              AS Id,
+                    username        AS Username,
+                    email           AS Email,
+                    role            AS Role,
+                    password_hash   AS PasswordHash,
+                    password_salt   AS PasswordSalt,
+                    created_at      AS CreatedAt,
+                    updated_at      AS UpdatedAt,
+                    deleted_at      AS DeletedAt
                 FROM users
-                WHERE user_id = @UserId
+                WHERE id = @Id
                     AND deleted_at IS NULL
                 LIMIT 1;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32)
-                {
-                    Value = userId
-                }
+                new MySqlParameter("@Id", MySqlDbType.UInt32) { Value = userId }
             };
 
-            await using MySqlDataReader dbReader =
-                await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
+            await using var reader =
+                await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
 
-            return SqlMapper.Parse<UserEntity>(dbReader).FirstOrDefault();
+            return SqlMapper.Parse<User>(reader).FirstOrDefault();
         }
 
         /// <inheritdoc/>
-        public async Task<UserEntity?> GetByUsernameOrEmailAsync(string identifier, CancellationToken cancellationToken = default)
+        public async Task<User?> GetByUsernameOrEmailAsync(string identifier, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
-                SELECT                
-                    user_id             AS UserId,
-                    username            AS Username,
-                    email               AS Email,
-                    user_type           AS UserType,
-                    password_hash       AS PasswordHash,
-                    password_salt       AS PasswordSalt,
-                    created_at          AS CreatedAt,
-                    updated_at          AS UpdatedAt,
-                    deleted_at          AS DeletedAt
+            const string sql = """
+                SELECT
+                    id              AS Id,
+                    username        AS Username,
+                    email           AS Email,
+                    role            AS Role,
+                    password_hash   AS PasswordHash,
+                    password_salt   AS PasswordSalt,
+                    created_at      AS CreatedAt,
+                    updated_at      AS UpdatedAt,
+                    deleted_at      AS DeletedAt
                 FROM users
                 WHERE ( username = @Identifier OR email = @Identifier )
                     AND deleted_at IS NULL
@@ -81,22 +70,38 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@Identifier", MySqlDbType.VarChar, 50)
-                {
-                    Value = identifier
-                }
+                new MySqlParameter("@Identifier", MySqlDbType.VarChar, 256) { Value = identifier }
             };
 
-            await using MySqlDataReader dbReader =
-                await _databaseContext.ExecuteReaderAsync(sqlQuery, parameters, cancellationToken);
+            await using var reader =
+                await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
 
-            return SqlMapper.Parse<UserEntity>(dbReader).FirstOrDefault();
+            return SqlMapper.Parse<User>(reader).FirstOrDefault();
+        }
+
+        /// <inheritdoc/>
+        public async Task<string?> GetInviterUsernameByUserAsync(uint userId, CancellationToken cancellationToken = default)
+        {
+            const string sql = """
+                SELECT u.username
+                FROM users u
+                JOIN invitation_codes ic ON u.id = ic.generated_by
+                WHERE ic.used_by = @UserId
+                LIMIT 1;
+                """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
+            };
+
+            return await _databaseContext.ExecuteScalarAsync<string?>(sql, parameters, cancellationToken);
         }
 
         /// <inheritdoc/>
         public async Task<bool> UsernameExistsAsync(string username, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
+            const string sql = """
                 SELECT COUNT(1)
                 FROM users
                 WHERE username = @Username
@@ -105,21 +110,19 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@Username", MySqlDbType.VarChar, 50)
-                {
-                    Value = username
-                }
+                new MySqlParameter("@Username", MySqlDbType.VarChar, 32) { Value = username }
             };
 
-            var result = await _databaseContext.ExecuteScalarAsync<long>(sqlQuery, parameters, cancellationToken);
+            var count =
+                await _databaseContext.ExecuteScalarAsync<long>(sql, parameters, cancellationToken);
 
-            return result > 0;
+            return count > 0;
         }
 
         /// <inheritdoc/>
         public async Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
+            const string sql = """
                 SELECT COUNT(1)
                 FROM users
                 WHERE email = @Email
@@ -128,25 +131,23 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@Email", MySqlDbType.VarChar, 100)
-                {
-                    Value = email
-                }
+                new MySqlParameter("@Email", MySqlDbType.VarChar, 256) { Value = email }
             };
 
-            var result = await _databaseContext.ExecuteScalarAsync<long>(sqlQuery, parameters, cancellationToken);
+            var count =
+                await _databaseContext.ExecuteScalarAsync<long>(sql, parameters, cancellationToken);
 
-            return result > 0;
+            return count > 0;
         }
 
         /// <inheritdoc/>
-        public async Task<uint> CreateAsync(UserEntity user, CancellationToken cancellationToken = default)
+        public async Task<uint> CreateAsync(User user, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
+            const string sql = """
                 INSERT INTO users (
                     username,
                     email,
-                    user_type,
+                    role,
                     password_hash,
                     password_salt,
                     created_at,
@@ -154,7 +155,7 @@ namespace BlockSense.Backend.Repositories.Implementations
                 VALUES (
                     @Username,
                     @Email,
-                    @UserType,
+                    @Role,
                     @PasswordHash,
                     @PasswordSalt,
                     @CreatedAt,
@@ -164,85 +165,77 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@Username", MySqlDbType.VarChar, 50) { Value = user.Username },
-                new MySqlParameter("@Email", MySqlDbType.VarChar, 100) { Value = user.Email },
-                new MySqlParameter("@UserType", MySqlDbType.Enum) { Value = user.UserType },
-                new MySqlParameter("@PasswordHash", MySqlDbType.Binary, 32) { Value = user.PasswordHash },
-                new MySqlParameter("@PasswordSalt", MySqlDbType.Binary, 16) { Value = user.PasswordSalt },
-                new MySqlParameter("@CreatedAt", MySqlDbType.DateTime) { Value = user.CreatedAt },
-                new MySqlParameter("@UpdatedAt", MySqlDbType.DateTime) { Value = user.UpdatedAt },
+                new MySqlParameter("@Username",     MySqlDbType.VarChar,  32) { Value = user.Username },
+                new MySqlParameter("@Email",        MySqlDbType.VarChar, 256) { Value = user.Email },
+                new MySqlParameter("@Role",         MySqlDbType.Enum)         { Value = user.Role.ToString().ToLowerInvariant() },
+                new MySqlParameter("@PasswordHash", MySqlDbType.Binary,   32) { Value = user.PasswordHash },
+                new MySqlParameter("@PasswordSalt", MySqlDbType.Binary,   16) { Value = user.PasswordSalt },
+                new MySqlParameter("@CreatedAt",    MySqlDbType.DateTime)     { Value = user.CreatedAt },
+                new MySqlParameter("@UpdatedAt",    MySqlDbType.DateTime)     { Value = user.UpdatedAt }
             };
 
-            var result = await _databaseContext.ExecuteScalarAsync<ulong>(sqlQuery, parameters, cancellationToken);
+            var insertId =
+                await _databaseContext.ExecuteScalarAsync<ulong>(sql, parameters, cancellationToken);
 
-            return Convert.ToUInt32(result);
+            return Convert.ToUInt32(insertId);
         }
 
         /// <inheritdoc/>
-        public async Task UpdateUserTypeAsync(uint userId, UserType userType, CancellationToken cancellationToken = default)
+        public async Task UpdateRoleAsync(
+            uint userId,
+            UserRole role,
+            CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
+            const string sql = """
                 UPDATE users
-                SET user_type = @UserType
-                WHERE user_id = @UserId
+                SET role = @Role
+                WHERE id = @Id
                     AND deleted_at IS NULL;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32)
-                {
-                    Value = userId
-                },
-                new MySqlParameter("@UserType", MySqlDbType.Enum)
-                {
-                    Value = userType,
-                }
+                new MySqlParameter("@Id",   MySqlDbType.UInt32) { Value = userId },
+                new MySqlParameter("@Role", MySqlDbType.Enum)   { Value = role.ToString().ToLowerInvariant() }
             };
 
-            await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
+            await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
         }
 
         /// <inheritdoc/>
         public async Task SoftDeleteAsync(uint userId, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
+            const string sql = """
                 UPDATE users
-                SET deleted_at = CURRENT_TIMESTAMP(6)
-                WHERE user_id = @UserId
-                  AND deleted_at IS NULL;
+                SET deleted_at = UTC_TIMESTAMP(6)
+                WHERE id = @Id
+                    AND deleted_at IS NULL;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32)
-                {
-                    Value = userId
-                }
+                new MySqlParameter("@Id", MySqlDbType.UInt32) { Value = userId }
             };
 
-            await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
+            await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
         }
 
         /// <inheritdoc/>
         public async Task RestoreAsync(uint userId, CancellationToken cancellationToken = default)
         {
-            const string sqlQuery = """
+            const string sql = """
                 UPDATE users
                 SET deleted_at = NULL
-                WHERE user_id = @UserId
-                  AND deleted_at IS NOT NULL;
+                WHERE id = @Id
+                    AND deleted_at IS NOT NULL;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32)
-                {
-                    Value = userId
-                }
+                new MySqlParameter("@Id", MySqlDbType.UInt32) { Value = userId }
             };
 
-            await _databaseContext.ExecuteNonQueryAsync(sqlQuery, parameters, cancellationToken);
+            await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
         }
     }
 }

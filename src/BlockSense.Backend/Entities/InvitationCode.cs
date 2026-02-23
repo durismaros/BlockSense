@@ -1,25 +1,23 @@
-﻿using BlockSense.Contracts.Enums;
-
-namespace BlockSense.Backend.Entities
+﻿namespace BlockSense.Backend.Entities
 {
-    public sealed class InvitationCodeEntity
+    public sealed class InvitationCode
     {
-        public required uint InvitationId
+        public required uint Id
         {
             get;
-            set;
+            init;
         }
 
-        public required string InvitationCode
+        public required string Code
         {
             get;
-            set;
+            init;
         }
 
         public required uint GeneratedBy
         {
             get;
-            set;
+            init;
         }
 
         public uint? UsedBy
@@ -31,13 +29,13 @@ namespace BlockSense.Backend.Entities
         public required DateTime CreatedAt
         {
             get;
-            set;
+            init;
         }
 
         public required DateTime ExpiresAt
         {
             get;
-            set;
+            init;
         }
 
         public required bool IsRevoked
@@ -46,11 +44,14 @@ namespace BlockSense.Backend.Entities
             set;
         }
 
-        public InvitationStatus Status
-            => IsRevoked ? InvitationStatus.Revoked :
-            UsedBy.HasValue ? InvitationStatus.Used :
-            ExpiresAt < DateTime.UtcNow ? InvitationStatus.Expired :
-            InvitationStatus.Active;
+        public string? UsedByUsername
+        {
+            get;
+            set;
+        }
+
+        public bool IsActive
+            => !IsRevoked && UsedBy is null && DateTime.UtcNow < ExpiresAt;
 
         public TimeSpan TimeUntilExpiration
             => ExpiresAt - DateTime.UtcNow;

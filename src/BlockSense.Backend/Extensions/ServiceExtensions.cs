@@ -53,7 +53,7 @@ namespace BlockSense.Backend.Extensions
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IInvitationRepository, InvitationRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-            services.AddScoped<ITwoFactorAuthRepository, TwoFactorAuthRepository>();
+            services.AddScoped<ITotpCredentialRepository, TotpCredentialRepository>();
 
 
             return services;
@@ -113,7 +113,8 @@ namespace BlockSense.Backend.Extensions
             {
                 options.AddPolicy("AdministratorPolicy", policy => policy.RequireClaim(
                     JwtRegisteredClaimNames.Typ,
-                    UserType.Administrator.ToString()));
+                    UserRole.Administrator.ToString(),
+                    UserRole.Founder.ToString()));
             });
 
 

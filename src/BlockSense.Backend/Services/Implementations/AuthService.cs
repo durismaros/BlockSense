@@ -1,7 +1,7 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Exceptions.Generic;
-using BlockSense.Backend.Models.DeviceContext;
+using BlockSense.Backend.Models.Device;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
@@ -19,7 +19,7 @@ namespace BlockSense.Backend.Services.Implementations
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
-        private readonly ITwoFactorAuthRepository _twoFactorAuthRepository;
+        private readonly ITotpCredentialRepository _twoFactorAuthRepository;
         private readonly ITokenService _tokenService;
         private readonly ITwoFactorAuthService _twoFactorAuthService;
         private readonly DatabaseContext _databaseContext;
@@ -33,7 +33,7 @@ namespace BlockSense.Backend.Services.Implementations
         /// <exception cref="ArgumentNullException">Thrown if any dependency is <c>null</c>.</exception>
         public AuthService(
             IUserRepository userRepository,
-            ITwoFactorAuthRepository twoFactorAuthRepository,
+            ITotpCredentialRepository twoFactorAuthRepository,
             ITokenService tokenService,
             ITwoFactorAuthService twoFactorAuthService,
             DatabaseContext databaseContext)
@@ -75,7 +75,7 @@ namespace BlockSense.Backend.Services.Implementations
                     throw new InvalidCredentialsException();
                 }
 
-                if (user.UserType is UserType.Banned)
+                if (user.Role is UserRole.Banned)
                 {
                     throw new ForbiddenException();
                 }
@@ -92,25 +92,25 @@ namespace BlockSense.Backend.Services.Implementations
                     throw new InvalidCredentialsException();
                 }
 
-                if (await _twoFactorAuthRepository.IsEnabledAsync(user.UserId, cancellationToken))
+                if (await _twoFactorAuthRepository.IsEnabledAsync(user.Id, cancellationToken))
                 {
                     if (string.IsNullOrWhiteSpace(request.TwoFactorCode))
                     {
                         throw new TwoFactorRequiredException();
                     }
 
-                    await _twoFactorAuthService.VerifyAsync(user.UserId, new TwoFactorVerificationRequest
+                    await _twoFactorAuthService.VerifyAsync(user.Id, new TwoFactorVerificationRequest
                     {
                         TwoFactorCode = request.TwoFactorCode
                     });
                 }
 
                 var accessToken =
-                    await _tokenService.CreateAccessTokenAsync(user.UserId, cancellationToken);
+                    await _tokenService.CreateAccessTokenAsync(user.Id, cancellationToken);
 
                 var refreshToken =
                     await _tokenService.CreateRefreshTokenAsync(
-                        user.UserId,
+                        user.Id,
                         deviceContext,
                         cancellationToken);
 

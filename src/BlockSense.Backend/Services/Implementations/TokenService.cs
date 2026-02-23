@@ -3,7 +3,7 @@ using BlockSense.Backend.Entities;
 using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Exceptions.Generic;
 using BlockSense.Backend.Exceptions.TwoFactorAuthentication;
-using BlockSense.Backend.Models.DeviceContext;
+using BlockSense.Backend.Models.Device;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
@@ -68,7 +68,7 @@ namespace BlockSense.Backend.Services.Implementations
                 Sha256Hasher.ComputeBase64(Convert.FromBase64String(request.RefreshToken));
 
             var tokenEntity =
-                await _refreshTokenRepository.GetByTokenAsync(tokenHash, cancellationToken);
+                await _refreshTokenRepository.GetByTokenHashAsync(tokenHash, cancellationToken);
 
             if (tokenEntity is null ||
                 tokenEntity.TokenHash != tokenHash ||
@@ -103,7 +103,7 @@ namespace BlockSense.Backend.Services.Implementations
             var now = DateTime.UtcNow;
             var expiration = now.Add(_refreshTokenConfig.Expiration);
 
-            var refreshTokenEntity = new RefreshTokenEntity
+            var refreshTokenEntity = new RefreshToken
             {
                 TokenHash = tokenHash,
                 UserId = userId,
@@ -117,7 +117,7 @@ namespace BlockSense.Backend.Services.Implementations
                 IsRevoked = false
             };
 
-            await _refreshTokenRepository.CreateOrUpdateAsync(refreshTokenEntity, cancellationToken);
+            await _refreshTokenRepository.UpsertAsync(refreshTokenEntity, cancellationToken);
 
             return new RefreshTokenDto
             {
@@ -143,8 +143,8 @@ namespace BlockSense.Backend.Services.Implementations
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                    new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
-                    new Claim(JwtRegisteredClaimNames.Typ, user.UserType.ToString())
+                    new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                    new Claim(JwtRegisteredClaimNames.Typ, user.Role.ToString())
                 }),
                 Expires = tokenExpiry,
                 Issuer = _jwtTokenConfig.Issuer,
@@ -182,7 +182,7 @@ namespace BlockSense.Backend.Services.Implementations
             catch (TwoFactorConfigurationException) { }
 
             var token =
-                await _refreshTokenRepository.GetByTokenAsync(request.TokenHash, cancellationToken);
+                await _refreshTokenRepository.GetByTokenHashAsync(request.TokenHash, cancellationToken);
 
             if (token is null || token.UserId != userId)
             {

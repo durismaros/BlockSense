@@ -2,7 +2,7 @@
 using BlockSense.Contracts.Definitions;
 using System.ComponentModel.DataAnnotations;
 
-namespace BlockSense.Backend.Models.DeviceContext
+namespace BlockSense.Backend.Models.Device
 {
     /// <summary>
     /// Represents the context of a client device making a request to the backend.

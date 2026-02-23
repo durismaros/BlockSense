@@ -1,59 +1,59 @@
 ﻿namespace BlockSense.Backend.Entities
 {
-    public sealed class RefreshTokenEntity
+    public sealed class RefreshToken
     {
         public required string TokenHash
         {
             get;
-            set;
+            init;
         }
 
         public required uint UserId
         {
             get;
-            set;
+            init;
         }
 
         public required string IpAddress
         {
             get;
-            set;
+            init;
         }
 
         public required string DeviceIdentifier
         {
             get;
-            set;
+            init;
         }
 
         public required string DeviceOs
         {
             get;
-            set;
+            init;
         }
 
         public required string HardwareFingerprint
         {
             get;
-            set;
+            init;
         }
 
         public required string NetworkFingerprint
         {
             get;
-            set;
+            init;
         }
 
         public required DateTime IssuedAt
         {
             get;
-            set;
+            init;
         }
 
         public required DateTime ExpiresAt
         {
             get;
-            set;
+            init;
         }
 
         public required bool IsRevoked
@@ -63,7 +63,7 @@
         }
 
         public bool IsActive
-            => !IsRevoked && ExpiresAt > DateTime.UtcNow;
+            => !IsRevoked && DateTime.UtcNow < ExpiresAt;
 
         public TimeSpan TimeUntilExpiration
             => ExpiresAt - DateTime.UtcNow;

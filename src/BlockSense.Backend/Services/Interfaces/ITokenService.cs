@@ -1,4 +1,4 @@
-﻿using BlockSense.Backend.Models.DeviceContext;
+﻿using BlockSense.Backend.Models.Device;
 using BlockSense.Contracts.DTOs.Authentication;
 using BlockSense.Contracts.DTOs.Session;
 using BlockSense.Contracts.DTOs.Token;

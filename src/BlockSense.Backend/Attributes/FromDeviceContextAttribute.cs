@@ -1,4 +1,4 @@
-﻿using BlockSense.Backend.Models.DeviceContext;
+﻿using BlockSense.Backend.Models.Device;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 

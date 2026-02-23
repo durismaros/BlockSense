@@ -1,6 +1,6 @@
 ﻿using BlockSense.Backend.Attributes;
 using BlockSense.Backend.Exceptions.Authentication;
-using BlockSense.Backend.Models.DeviceContext;
+using BlockSense.Backend.Models.Device;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.DTOs.Authentication;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
