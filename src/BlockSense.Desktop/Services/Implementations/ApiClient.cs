@@ -86,6 +86,11 @@ namespace BlockSense.Desktop.Services.Implementations
                 _logger.LogError(ex, "Request timeout for {Method} {Uri}", method.Method, requestUri);
                 return TimeoutError(requestUri);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error for {Method} {Uri}", method.Method, requestUri);
+                return UnexpectedError(requestUri);
+            }
         }
 
         private static async Task<ApiResult> ReadSuccessAsync<TResponse>(HttpResponseMessage response, CancellationToken cancellationToken)
@@ -140,6 +145,15 @@ namespace BlockSense.Desktop.Services.Implementations
             Title = "Request Timeout",
             Status = 408,
             Detail = "The request took too long to complete. Please try again.",
+            Instance = uri
+        });
+
+        private static ApiResult.Failure UnexpectedError(string uri) => new(new ProblemDetails
+        {
+            Type = StandardizedCodes.Client.UnknownError,
+            Title = "Unexpected Error",
+            Status = 500,
+            Detail = "An unexpected error occurred while processing the request.",
             Instance = uri
         });
     }

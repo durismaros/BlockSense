@@ -4,13 +4,13 @@ namespace BlockSense.Contracts.DTOs.Invitation
 {
     public sealed record InvitationDto
     {
-        public required string InvitationCode
+        public required string Code
         {
             get;
             init;
         }
 
-        public required string? UsedBy
+        public required string? RedeemedBy
         {
             get;
             init;

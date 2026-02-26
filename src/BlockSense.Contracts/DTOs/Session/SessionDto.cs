@@ -3,7 +3,7 @@
     /// <summary>
     /// Represents a device session associated with a user account.
     /// </summary>
-    public sealed record UserSessionDto
+    public sealed record SessionDto
     {
         /// <summary>
         /// Unique identifier of the device session (Hashed value of the refresh token).

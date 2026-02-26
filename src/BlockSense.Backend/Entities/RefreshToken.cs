@@ -62,8 +62,11 @@
             set;
         }
 
-        public bool IsActive
-            => !IsRevoked && DateTime.UtcNow < ExpiresAt;
+        public bool IsExpired
+            => DateTime.UtcNow >= ExpiresAt;
+
+        public bool IsValid
+            => !IsRevoked && !IsExpired;
 
         public TimeSpan TimeUntilExpiration
             => ExpiresAt - DateTime.UtcNow;

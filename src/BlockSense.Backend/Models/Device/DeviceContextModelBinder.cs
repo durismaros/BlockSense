@@ -13,8 +13,6 @@ namespace BlockSense.Backend.Models.Device
 
             Validator.ValidateObject(deviceContext, new ValidationContext(deviceContext), validateAllProperties: true);
 
-
-
             return Task.CompletedTask;
         }
     }

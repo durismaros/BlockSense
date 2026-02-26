@@ -21,6 +21,7 @@ public partial class RecoveryPhraseView : UserControl
             ?? throw new ArgumentNullException(nameof(NavigationManager));
 
         InitializeComponent();
+        CreateBorders();
 
         AttachedToVisualTree += OnAttachedToVisualTree;
         DetachedFromVisualTree += OnDetachedFromVisualTree;
@@ -29,6 +30,11 @@ public partial class RecoveryPhraseView : UserControl
     private async void ToWalletSelectionViewClick(object? sender, RoutedEventArgs e)
     {
         await _navigationManager.NavigateToAsync<WalletSelectionView>();
+    }
+
+    private async void ToPinEntryViewClick(object? sender, RoutedEventArgs e)
+    {
+        await _navigationManager.NavigateToAsync<PinEntryView>();
     }
 
     private void CreateBorders()
@@ -68,7 +74,7 @@ public partial class RecoveryPhraseView : UserControl
                 {
                     new EffectTransition
                     {
-                        Property = TextBlock.EffectProperty,
+                        Property = EffectProperty,
                         Duration = TimeSpan.FromMilliseconds(300)
                     }
                 }
@@ -163,12 +169,11 @@ public partial class RecoveryPhraseView : UserControl
         HomeButton.Click += ToWalletSelectionViewClick;
         ContinueButton.Click += (s, e) => AnimateSlidePanel(true);
         ContentGrid.PointerPressed += (s, e) => AnimateSlidePanel(false);
+        SubmitButton.Click += ToPinEntryViewClick;
 
         CheckBox1.IsCheckedChanged += OnCheckboxChanged;
         CheckBox2.IsCheckedChanged += OnCheckboxChanged;
         CheckBox3.IsCheckedChanged += OnCheckboxChanged;
-
-        CreateBorders();
     }
 
     private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
@@ -176,6 +181,7 @@ public partial class RecoveryPhraseView : UserControl
         HomeButton.Click -= ToWalletSelectionViewClick;
         ContinueButton.Click -= (s, e) => AnimateSlidePanel(true);
         ContentGrid.PointerPressed -= (s, e) => AnimateSlidePanel(false);
+        SubmitButton.Click -= ToPinEntryViewClick;
 
         CheckBox1.IsCheckedChanged -= OnCheckboxChanged;
         CheckBox2.IsCheckedChanged -= OnCheckboxChanged;

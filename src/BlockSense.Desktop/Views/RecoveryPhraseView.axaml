@@ -20,6 +20,7 @@
 					Background="Transparent"
 					CornerRadius="22"
 					Margin="16 2 0 0">
+
 				<Viewbox Width="20"
 						 Height="20"
 						 HorizontalAlignment="Center"
@@ -28,10 +29,11 @@
 						  Fill="#28282B"
 						  Stretch="Uniform"/>
 				</Viewbox>
+
 				<Button.Styles>
 					<Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
 						<Setter Property="Background" Value="Transparent"/>
-						<Setter Property="RenderTransform" Value="scale(1.1)" />
+						<Setter Property="RenderTransform" Value="scale(1.1)"/>
 					</Style>
 				</Button.Styles>
 			</Button>
@@ -39,8 +41,7 @@
 			<StackPanel Grid.Row="0"
 						HorizontalAlignment="Center"
 						VerticalAlignment="Top"
-						Spacing="24"
-						>
+						Spacing="24">
 
 				<TextBlock HorizontalAlignment="Center"
 						   Text="Manual Backup"
@@ -83,6 +84,7 @@
 					HorizontalAlignment="Center"
 					VerticalAlignment="Bottom"
 					Margin="30">
+
 				<TextBlock HorizontalAlignment="Center"
 						   VerticalAlignment="Center"
 						   Text="Continue"

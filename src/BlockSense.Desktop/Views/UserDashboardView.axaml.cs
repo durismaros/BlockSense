@@ -283,7 +283,7 @@ public partial class UserDashboardView : UserControl
         }
     }
 
-    private Control CreateDeviceCard(UserSessionDto device) 
+    private Control CreateDeviceCard(SessionDto device) 
     {
         // Left content: IP and dates
         var leftStack = new StackPanel

@@ -22,24 +22,24 @@ namespace BlockSense.Backend.Repositories.Implementations
         {
             const string sql = """
                 SELECT
-                    token_hash              AS TokenHash,
-                    user_id                 AS UserId,
-                    ip_address              AS IpAddress,
-                    device_identifier       AS DeviceIdentifier,
-                    device_os               AS DeviceOs,
-                    hardware_fingerprint    AS HardwareFingerprint,
-                    network_fingerprint     AS NetworkFingerprint,
-                    issued_at               AS IssuedAt,
-                    expires_at              AS ExpiresAt,
-                    is_revoked              AS IsRevoked
+                    token_hash            AS TokenHash,
+                    user_id               AS UserId,
+                    ip_address            AS IpAddress,
+                    device_identifier     AS DeviceIdentifier,
+                    device_os             AS DeviceOs,
+                    hardware_fingerprint  AS HardwareFingerprint,
+                    network_fingerprint   AS NetworkFingerprint,
+                    issued_at             AS IssuedAt,
+                    expires_at            AS ExpiresAt,
+                    is_revoked            AS IsRevoked
                 FROM refresh_tokens
                 WHERE token_hash = @TokenHash
-                LIMIT 1;
+                LIMIT 1
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@TokenHash", MySqlDbType.VarChar, 255) { Value = tokenHash }
+                new MySqlParameter("@TokenHash", MySqlDbType.VarChar) { Value = tokenHash },
             };
 
             await using var reader =
@@ -49,100 +49,74 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<IReadOnlyList<RefreshToken>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default)
+        public async Task<RefreshToken?> GetByHardwareFingerprintAsync(string hardwareFingerprint, CancellationToken cancellationToken = default)
         {
             const string sql = """
                 SELECT
-                    token_hash              AS TokenHash,
-                    user_id                 AS UserId,
-                    ip_address              AS IpAddress,
-                    device_identifier       AS DeviceIdentifier,
-                    device_os               AS DeviceOs,
-                    hardware_fingerprint    AS HardwareFingerprint,
-                    network_fingerprint     AS NetworkFingerprint,
-                    issued_at               AS IssuedAt,
-                    expires_at              AS ExpiresAt,
-                    is_revoked              AS IsRevoked
+                    token_hash            AS TokenHash,
+                    user_id               AS UserId,
+                    ip_address            AS IpAddress,
+                    device_identifier     AS DeviceIdentifier,
+                    device_os             AS DeviceOs,
+                    hardware_fingerprint  AS HardwareFingerprint,
+                    network_fingerprint   AS NetworkFingerprint,
+                    issued_at             AS IssuedAt,
+                    expires_at            AS ExpiresAt,
+                    is_revoked            AS IsRevoked
                 FROM refresh_tokens
-                WHERE user_id = @UserId;
+                WHERE hardware_fingerprint = @HardwareFingerprint
+                LIMIT 1
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
+                new MySqlParameter("@HardwareFingerprint", MySqlDbType.String) { Value = hardwareFingerprint },
             };
 
             await using var reader =
                 await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
 
-            return SqlMapper.Parse<RefreshToken>(reader).ToList();
+            return SqlMapper.Parse<RefreshToken>(reader).FirstOrDefault();
         }
 
         /// <inheritdoc/>
-        public async Task<IReadOnlyList<RefreshToken>> GetActiveByUserAsync(uint userId, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<RefreshToken>> GetActiveByUserIdAsync(uint userId, CancellationToken cancellationToken = default)
         {
             const string sql = """
                 SELECT
-                    token_hash              AS TokenHash,
-                    user_id                 AS UserId,
-                    ip_address              AS IpAddress,
-                    device_identifier       AS DeviceIdentifier,
-                    device_os               AS DeviceOs,
-                    hardware_fingerprint    AS HardwareFingerprint,
-                    network_fingerprint     AS NetworkFingerprint,
-                    issued_at               AS IssuedAt,
-                    expires_at              AS ExpiresAt,
-                    is_revoked              AS IsRevoked
+                    token_hash            AS TokenHash,
+                    user_id               AS UserId,
+                    ip_address            AS IpAddress,
+                    device_identifier     AS DeviceIdentifier,
+                    device_os             AS DeviceOs,
+                    hardware_fingerprint  AS HardwareFingerprint,
+                    network_fingerprint   AS NetworkFingerprint,
+                    issued_at             AS IssuedAt,
+                    expires_at            AS ExpiresAt,
+                    is_revoked            AS IsRevoked
                 FROM refresh_tokens
-                WHERE user_id = @UserId
+                WHERE user_id   = @UserId
                     AND is_revoked = 0
-                    AND expires_at > UTC_TIMESTAMP(6);
+                        AND expires_at > UTC_TIMESTAMP(6)
+                ORDER BY issued_at DESC
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId },
             };
 
             await using var reader =
                 await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
 
-            return SqlMapper.Parse<RefreshToken>(reader).ToList();
+            return SqlMapper.Parse<RefreshToken>(reader).AsList().AsReadOnly();
         }
 
         /// <inheritdoc/>
-        public async Task<IReadOnlyList<UserSessionDto>> GetActiveSessionsByUserAsync(uint userId, CancellationToken cancellationToken = default)
+        public async Task CreateAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default)
         {
             const string sql = """
-                SELECT
-                    token_hash          AS TokenHash,
-                    ip_address          AS IpAddress,
-                    device_identifier   AS DeviceIdentifier,
-                    device_os           AS DeviceOs,
-                    issued_at           AS IssuedAt,
-                    expires_at          AS ExpiresAt
-                FROM refresh_tokens
-                WHERE user_id = @UserId
-                    AND is_revoked = 0
-                    AND expires_at > UTC_TIMESTAMP(6);
-                """;
-
-            var parameters = new[]
-            {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
-            };
-
-            await using var reader =
-                await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
-
-            return SqlMapper.Parse<UserSessionDto>(reader).ToList();
-        }
-
-        /// <inheritdoc/>
-        public async Task UpsertAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default)
-        {
-            const string sql = """
-                INSERT INTO refresh_tokens (
+                REPLACE INTO refresh_tokens (
                     token_hash,
                     user_id,
                     ip_address,
@@ -163,17 +137,7 @@ namespace BlockSense.Backend.Repositories.Implementations
                     @NetworkFingerprint,
                     @IssuedAt,
                     @ExpiresAt,
-                    @IsRevoked )
-                ON DUPLICATE KEY UPDATE
-                    token_hash          = VALUES(token_hash),
-                    user_id             = VALUES(user_id),
-                    ip_address          = VALUES(ip_address),
-                    device_identifier   = VALUES(device_identifier),
-                    device_os           = VALUES(device_os),
-                    network_fingerprint = VALUES(network_fingerprint),
-                    issued_at           = VALUES(issued_at),
-                    expires_at          = VALUES(expires_at),
-                    is_revoked          = VALUES(is_revoked);
+                    @IsRevoked );
                 """;
 
             var parameters = new[]
@@ -200,33 +164,43 @@ namespace BlockSense.Backend.Repositories.Implementations
                 UPDATE refresh_tokens
                 SET is_revoked = 1
                 WHERE token_hash = @TokenHash
-                    AND is_revoked = 0;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@TokenHash", MySqlDbType.VarChar, 255) { Value = tokenHash }
+                new MySqlParameter("@TokenHash", MySqlDbType.VarChar) { Value = tokenHash }
             };
 
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
         }
 
         /// <inheritdoc/>
-        public async Task RevokeAllForUserAsync(uint userId, CancellationToken cancellationToken = default)
+        public async Task RevokeAllByUserIdAsync(uint userId, CancellationToken cancellationToken = default)
         {
             const string sql = """
                 UPDATE refresh_tokens
                 SET is_revoked = 1
-                WHERE user_id = @UserId
-                    AND is_revoked = 0;
+                WHERE user_id   = @UserId
+                    AND is_revoked = 0
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId },
             };
 
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task DeleteExpiredAsync(CancellationToken cancellationToken = default)
+        {
+            const string sql = """
+                DELETE FROM refresh_tokens
+                WHERE expires_at <= UTC_TIMESTAMP(6)
+            """;
+
+            await _databaseContext.ExecuteNonQueryAsync(sql, parameters: null, cancellationToken);
         }
     }
 }

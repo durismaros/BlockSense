@@ -142,9 +142,9 @@
 				   VerticalAlignment="Bottom"
 				   Text="Choose how you'd like to get started with your digital wallet"
 				   Foreground="#2E1812"
-				   FontSize="14"
+				   FontSize="12"
 				   FontStyle="Italic"
-				   Margin="24"/>
+				   Margin="14"/>
 	</Panel>
 
 </UserControl>

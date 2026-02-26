@@ -1,4 +1,5 @@
-﻿using BlockSense.Contracts.DTOs.Authentication;
+﻿using BlockSense.Contracts.Definitions;
+using BlockSense.Contracts.DTOs.Authentication;
 using BlockSense.Desktop.Models.Api;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
@@ -54,24 +55,20 @@ namespace BlockSense.Desktop.Services.Implementations
 
             var refreshed = await RefreshAccessTokenAsync(cancellationToken);
 
-            if (!refreshed)
+            if (refreshed)
             {
-                _logger.LogWarning("Attempt to establish a new session failed [Navigating back to AuthenticationView]");
+                await _userService.LoadCurrentUserAsync(cancellationToken);
 
-                ClearSessionAsync();
-                await _navigationManager.NavigateToAsync<AuthenticationView>();
-
-                MainWindow.Instance.ShowNotification(
-                    "Session Expired",
-                    "Your session has expired. Please sign in again.");
+                _logger.LogInformation("Session established");
+                await _navigationManager.NavigateToAsync<PinEntryView>();
 
                 return;
             }
 
-            await _userService.LoadCurrentUserAsync(cancellationToken);
+            _logger.LogWarning("Attempt to establish a new session failed [Navigating back to AuthenticationView]");
+            await _navigationManager.NavigateToAsync<AuthenticationView>();
 
-            _logger.LogInformation("Session established");
-            await _navigationManager.NavigateToAsync<HomeView>();
+            return;
         }
 
         /// <inheritdoc/>
@@ -108,25 +105,24 @@ namespace BlockSense.Desktop.Services.Implementations
                 return false;
             }
 
-            var result = await _apiClient
+            var response = await _apiClient
                 .AddDeviceHeaders()
                 .PostAsync<AuthRefreshRequest, AuthRefreshResponse>(
                     requestUri: "/api/auth/refresh",
                     request: new AuthRefreshRequest { RefreshToken = refreshToken },
                     cancellationToken: cancellationToken);
 
-            if (result is ApiResult<AuthRefreshResponse>.Success success)
+            switch (response)
             {
-                _accessTokenProvider.Set(success.Data.AccessToken);
-                ScheduleTokenRefresh(success.Data.AccessToken.ExpiresAt);
+                case ApiResult<AuthRefreshResponse>.Success success:
+                    HandleTokenRefreshSuccessAsync(success.Data, cancellationToken);
+                    return true;
 
-                _logger.LogInformation("Access token refreshed successfully");
-
-                return true;
+                case ApiResult.Failure error:
+                    HandleTokenRefreshFailureAsync(error, cancellationToken);
+                    return false;
             }
 
-            Dispose();
-            _logger.LogWarning("Access token refresh was rejected by the server");
             return false;
         }
 
@@ -168,11 +164,43 @@ namespace BlockSense.Desktop.Services.Implementations
 
             var success = await RefreshAccessTokenAsync();
 
-            if (!success)
+            if (success)
             {
-                _logger.LogWarning("Automatic refresh failed — signing out user");
-                await SignOutAsync();
+                return;
             }
+
+            _logger.LogWarning("Automatic refresh failed — signing out user");
+            await SignOutAsync();
+        }
+
+        private void HandleTokenRefreshSuccessAsync(AuthRefreshResponse response, CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Access token refreshed successfully");
+
+            _accessTokenProvider.Set(response.AccessToken);
+            ScheduleTokenRefresh(response.AccessToken.ExpiresAt);
+        }
+
+        private void HandleTokenRefreshFailureAsync(ApiResult.Failure error, CancellationToken cancellationToken)
+        {
+            _logger.LogWarning("Access token refresh was rejected by the server");
+
+            switch (error.ProblemDetails.Type)
+            {
+                case StandardizedCodes.Authentication.AuthenticationRequired:
+                    ClearSessionAsync();
+                    break;
+
+                case StandardizedCodes.Authentication.InvalidClientContext:
+                    ClearSessionAsync();
+                    break;
+            }
+
+            Dispose();
+
+            MainWindow.Instance.ShowNotification(
+                error.ProblemDetails.Title,
+                error.ProblemDetails.Detail);
         }
 
         private void ClearSessionAsync()

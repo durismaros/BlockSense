@@ -14,6 +14,7 @@ using BlockSense.Contracts.DTOs.Token;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Mysqlx.Expr;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -45,34 +46,24 @@ namespace BlockSense.Backend.Services.Implementations
             IUserRepository userRepository,
             ITwoFactorAuthService twoFactorAuthService)
         {
-            _refreshTokenConfig = refreshTokenConfig.Value
-                ?? throw new ArgumentNullException(nameof(refreshTokenConfig));
-
-            _jwtTokenConfig = jwtTokenConfig.Value
-                ?? throw new ArgumentNullException(nameof(jwtTokenConfig));
-
-            _refreshTokenRepository = refreshTokenRepository
-                ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
-
-            _userRepository = userRepository
-                ?? throw new ArgumentNullException(nameof(userRepository));
-
-            _twoFactorAuthService = twoFactorAuthService
-                ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
+            _refreshTokenConfig = refreshTokenConfig.Value ?? throw new ArgumentNullException(nameof(refreshTokenConfig));
+            _jwtTokenConfig = jwtTokenConfig.Value ?? throw new ArgumentNullException(nameof(jwtTokenConfig));
+            _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
+            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _twoFactorAuthService = twoFactorAuthService ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
         }
 
         /// <inheritdoc/>
         public async Task<AuthRefreshResponse> RefreshAccessTokenAsync(AuthRefreshRequest request, DeviceContext deviceContext, CancellationToken cancellationToken = default)
         {
             string tokenHash =
-                Sha256Hasher.ComputeBase64(Convert.FromBase64String(request.RefreshToken));
+                Sha256Hasher.ComputeBase64(
+                    Convert.FromBase64String(request.RefreshToken));
 
             var tokenEntity =
                 await _refreshTokenRepository.GetByTokenHashAsync(tokenHash, cancellationToken);
 
-            if (tokenEntity is null ||
-                tokenEntity.TokenHash != tokenHash ||
-                !tokenEntity.IsActive)
+            if (tokenEntity is null|| !tokenEntity.IsValid)
             {
                 throw new AuthenticationRequiredException();
             }
@@ -101,7 +92,7 @@ namespace BlockSense.Backend.Services.Implementations
                 Sha256Hasher.ComputeBase64(rawToken);
 
             var now = DateTime.UtcNow;
-            var expiration = now.Add(_refreshTokenConfig.Expiration);
+            var expiry = now.Add(_refreshTokenConfig.Expiration);
 
             var refreshTokenEntity = new RefreshToken
             {
@@ -113,16 +104,16 @@ namespace BlockSense.Backend.Services.Implementations
                 HardwareFingerprint = deviceContext.HardwareFingerprint,
                 NetworkFingerprint = deviceContext.NetworkFingerprint,
                 IssuedAt = now,
-                ExpiresAt = expiration,
+                ExpiresAt = expiry,
                 IsRevoked = false
             };
 
-            await _refreshTokenRepository.UpsertAsync(refreshTokenEntity, cancellationToken);
+            await _refreshTokenRepository.CreateAsync(refreshTokenEntity, cancellationToken);
 
             return new RefreshTokenDto
             {
                 Token = Convert.ToBase64String(rawToken),
-                ExpiresAt = expiration
+                ExpiresAt = expiry
             };
         }
 
@@ -130,63 +121,40 @@ namespace BlockSense.Backend.Services.Implementations
         public async Task<AccessTokenDto> CreateAccessTokenAsync(uint userId, CancellationToken cancellationToken = default)
         {
             var user =
-                await _userRepository.GetByIdAsync(userId) ?? throw new NotFoundException();
+                await _userRepository.GetByIdAsync(userId);
 
-            byte[] key =
-                Convert.FromBase64String(_jwtTokenConfig.SigningKey);
+            if (user is null)
+            {
+                throw new NotFoundException();
+            }
 
-            var tokenExpiry =
+            var expiry =
                 DateTime.UtcNow.Add(_jwtTokenConfig.Expiration);
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                    new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                    new Claim(JwtRegisteredClaimNames.Typ, user.Role.ToString())
-                }),
-                Expires = tokenExpiry,
-                Issuer = _jwtTokenConfig.Issuer,
-                Audience = _jwtTokenConfig.Audience,
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha256Signature)
-            };
-
+            var tokenDescriptor = BuildTokenDescriptor(user, expiry);
             var tokenHandler = new JwtSecurityTokenHandler();
 
-            var token =
+            var accessToken =
                 tokenHandler.CreateToken(tokenDescriptor);
 
             return new AccessTokenDto
             {
-                Token = tokenHandler.WriteToken(token),
-                ExpiresAt = tokenExpiry
+                Token = tokenHandler.WriteToken(accessToken),
+                ExpiresAt = expiry
             };
         }
 
         /// <inheritdoc/>
         public async Task RevokeSessionAsync(uint userId, SessionRevokeRequest request, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                await _twoFactorAuthService.VerifyAsync(
-                    userId,
-                    new TwoFactorVerificationRequest
-                    {
-                        TwoFactorCode = request.TwoFactorCode
-                    },
-                    cancellationToken);
-            }
-            catch (TwoFactorConfigurationException) { }
+            await TryVerifyTwoFactorAsync(userId, request.TwoFactorCode, cancellationToken);
 
             var token =
                 await _refreshTokenRepository.GetByTokenHashAsync(request.TokenHash, cancellationToken);
 
             if (token is null || token.UserId != userId)
             {
-                throw new ForbiddenException();
+                throw new NotFoundException();
             }
 
             await _refreshTokenRepository.RevokeAsync(request.TokenHash, cancellationToken);
@@ -195,14 +163,49 @@ namespace BlockSense.Backend.Services.Implementations
         /// <inheritdoc/>
         public async Task RevokeAllSessionsAsync(uint userId, TwoFactorVerificationRequest request, CancellationToken cancellationToken = default)
         {
+            await TryVerifyTwoFactorAsync(userId, request.TwoFactorCode, cancellationToken);
+
+            await _refreshTokenRepository.RevokeAllByUserIdAsync(userId, cancellationToken);
+        }
+
+        private SecurityTokenDescriptor BuildTokenDescriptor(User user, DateTime expiry)
+        {
+            var key =
+                Convert.FromBase64String(_jwtTokenConfig.SigningKey);
+
+            return new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                    new Claim(JwtRegisteredClaimNames.Typ, user.Role.ToString())
+                }),
+                Expires = expiry,
+                Issuer = _jwtTokenConfig.Issuer,
+                Audience = _jwtTokenConfig.Audience,
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha256Signature)
+            };
+        }
+
+        private async Task TryVerifyTwoFactorAsync(
+            uint userId,
+            string? code,
+            CancellationToken cancellationToken)
+        {
             try
             {
-                await _twoFactorAuthService.VerifyAsync(userId, request, cancellationToken);
+                await _twoFactorAuthService.VerifyAsync(
+                    userId,
+                    new TwoFactorVerificationRequest
+                    {
+                        TwoFactorCode = code ?? string.Empty
+                    },
+                    cancellationToken);
             }
             catch (TwoFactorConfigurationException) { }
-            
-
-            await _refreshTokenRepository.RevokeAllForUserAsync(userId, cancellationToken);
         }
     }
 }

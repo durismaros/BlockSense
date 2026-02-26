@@ -122,7 +122,7 @@ public partial class InvitationManagerWindow : Window
         border.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch;
         border.ZIndex = 10;
 
-        text.Text = invite.InvitationCode;
+        text.Text = invite.Code;
         text.Classes.Add("InviteCodeExpandedTextBlock");
 
         border.Classes.Add("InviteCodeExpandedBorder");
@@ -217,11 +217,11 @@ public partial class InvitationManagerWindow : Window
 
     private void AddInvitedUser(InvitationDto invitation, int row)
     {
-        bool hasUser = !string.IsNullOrWhiteSpace(invitation.UsedBy);
+        bool hasUser = !string.IsNullOrWhiteSpace(invitation.RedeemedBy);
 
         var text = new TextBlock
         {
-            Text = hasUser ? invitation.UsedBy : "( not used )",
+            Text = hasUser ? invitation.RedeemedBy : "( not used )",
             Classes = { "InvitedUser" }
         };
 
@@ -259,8 +259,8 @@ public partial class InvitationManagerWindow : Window
         searchText = searchText.Trim();
 
         return
-            Contains(invite.InvitationCode, searchText) ||
-            Contains(invite.UsedBy, searchText) ||
+            Contains(invite.Code, searchText) ||
+            Contains(invite.RedeemedBy, searchText) ||
             Contains(invite.Status.ToString(), searchText) ||
             DateMatches(invite.CreatedAt, searchText) ||
             DateMatches(invite.ExpiresAt, searchText);

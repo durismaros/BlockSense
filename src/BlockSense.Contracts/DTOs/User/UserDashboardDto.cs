@@ -20,7 +20,7 @@ namespace BlockSense.Contracts.DTOs.User
         /// <summary>
         /// List of currently active devices/sessions for the user.
         /// </summary>
-        public required IReadOnlyList<UserSessionDto> ActiveTokens
+        public required IReadOnlyList<SessionDto> ActiveTokens
         {
             get;
             init;

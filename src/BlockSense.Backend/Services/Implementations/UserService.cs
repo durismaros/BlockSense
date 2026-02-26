@@ -27,6 +27,7 @@ namespace BlockSense.Backend.Services.Implementations
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly ITotpCredentialRepository _totpCredentialRepository;
         private readonly DatabaseContext _databaseContext;
+        private readonly Argon2idHasher _argon2IdHasher;
 
         /// <summary>
         /// Initializes a new instance of <see cref="UserService"/> with required dependencies.
@@ -47,6 +48,7 @@ namespace BlockSense.Backend.Services.Implementations
             _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
             _totpCredentialRepository = totpCredentialRepository ?? throw new ArgumentNullException(nameof(totpCredentialRepository));
             _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
+            _argon2IdHasher = new Argon2idHasher() ?? throw new ArgumentNullException(nameof(Argon2idHasher));
         }
 
         /// <inheritdoc/>
@@ -56,7 +58,7 @@ namespace BlockSense.Backend.Services.Implementations
             {
                 Username = request.Username.Trim(),
                 Email = request.Email.Trim().ToLowerInvariant(),
-                InvitationCode = request.InvitationCode.Trim()
+                InvitationCode = request.InvitationCode.Trim(),
             };
 
             await _databaseContext.BeginTransactionAsync(cancellationToken: cancellationToken);
@@ -64,39 +66,24 @@ namespace BlockSense.Backend.Services.Implementations
             try
             {
                 var invitation =
-                    await _invitationRepository.GetByCodeForUpdateAsync(
-                        request.InvitationCode,
-                        cancellationToken) ?? throw new InvalidInvitationCodeException();
+                    await _invitationRepository.GetByCodeForUpdateAsync(request.InvitationCode, cancellationToken);
 
-                var argon2idHasher = new Argon2idHasher();
-
-                var computedHash = argon2idHasher.Derive(
-                    Encoding.UTF8.GetBytes(request.Password),
-                    out byte[] computedSalt);
-
-                var now = DateTime.UtcNow;
-
-                var user = new User
+                if (invitation is null || !invitation.IsValid)
                 {
-                    Id = uint.MinValue,
-                    Username = request.Username,
-                    Email = request.Email,
-                    PasswordHash = computedHash,
-                    PasswordSalt = computedSalt,
-                    Role = UserRole.Standard,
-                    CreatedAt = now,
-                    UpdatedAt = now
-                };
+                    throw new InvalidInvitationCodeException();
+                }
+
+                var user = BuildNewUser(request);
 
                 uint userId =
                     await _userRepository.CreateAsync(user, cancellationToken);
 
-                await _invitationRepository.MarkAsUsedAsync(
+                await _invitationRepository.RedeemAsync(
                     invitation.Id,
                     userId,
                     cancellationToken);
 
-                await _databaseContext.CommitAsync(cancellationToken);
+                await _databaseContext.CommitTransactionAsync(cancellationToken);
 
                 return new RegistrationResponse
                 {
@@ -109,7 +96,7 @@ namespace BlockSense.Backend.Services.Implementations
             }
             catch (MySqlException ex) when (ex.Number == 1062)
             {
-                await _databaseContext.RollbackAsync(cancellationToken);
+                await _databaseContext.RollbackTransactionAsync(cancellationToken);
 
                 if (ex.Message.Contains("uq_users_username"))
                 {
@@ -125,25 +112,27 @@ namespace BlockSense.Backend.Services.Implementations
             }
             catch
             {
-                await _databaseContext.RollbackAsync(cancellationToken);
+                await _databaseContext.RollbackTransactionAsync(cancellationToken);
                 throw;
-            }
-            finally
-            {
-                await _databaseContext.DisposeAsync();
             }
         }
 
         public async Task<UserSummaryDto> GetUserSummaryAsync(uint userId, CancellationToken cancellationToken = default)
         {
             var user =
-                await _userRepository.GetByIdAsync(userId, cancellationToken) ?? throw new NotFoundException();
+                await _userRepository.GetByIdAsync(userId, cancellationToken);
+
+            if (user is null)
+            {
+                throw new NotFoundException();
+            }
 
             var invitedBy =
-                await _userRepository.GetInviterUsernameByUserAsync(userId, cancellationToken) ?? "Unknown";
+                await _userRepository.GetInviterUsernameAsync(userId, cancellationToken)
+                ?? "Unknown";
 
             var twoFaEnabled =
-                await _totpCredentialRepository.IsEnabledAsync(userId);
+                await _totpCredentialRepository.ExistsAsync(userId);
 
             return new UserSummaryDto
             {
@@ -164,27 +153,52 @@ namespace BlockSense.Backend.Services.Implementations
                 await GetUserSummaryAsync(userId, cancellationToken);
 
             var activeTokens =
-                await _refreshTokenRepository.GetActiveByUserAsync(userId, cancellationToken);
+                await _refreshTokenRepository.GetActiveByUserIdAsync(userId, cancellationToken);
 
             var invitationCodes =
-                await _invitationRepository.GetWithInviteeByUserAsync(userId, cancellationToken);
+                await _invitationRepository.GetByIssuedToIdAsync(userId, cancellationToken);
 
             return new UserDashboardDto
             {
                 Profile = userSummary,
+
                 ActiveTokens = activeTokens
-                    .Select(MapToUserSessionDto)
-                    .ToList(),
+                    .Select(MapToSessionDto)
+                    .ToList()
+                    .AsReadOnly(),
 
                 UserInvitations = invitationCodes
                     .Select(MapToInvitationDto)
                     .ToList()
+                    .AsReadOnly()
             };
         }
 
-        private static UserSessionDto MapToUserSessionDto(RefreshToken token)
+        private User BuildNewUser(RegistrationRequest request)
         {
-            return new UserSessionDto
+            var hash = _argon2IdHasher.Derive(
+                Encoding.UTF8.GetBytes(request.Password),
+                out byte[] salt);
+
+            var now = DateTime.UtcNow;
+
+            return new User
+            {
+                Id = default,
+                Username = request.Username,
+                Email = request.Email,
+                PasswordHash = hash,
+                PasswordSalt = salt,
+                Role = UserRole.Standard,
+                CreatedAt = now,
+                UpdatedAt = now,
+                DeletedAt = null
+            };
+        }
+
+        private static SessionDto MapToSessionDto(RefreshToken token)
+        {
+            return new SessionDto
             {
                 TokenHash = token.TokenHash,
                 IpAddress = MaskIp(token.IpAddress),
@@ -197,13 +211,27 @@ namespace BlockSense.Backend.Services.Implementations
         {
             return new InvitationDto
             {
-                InvitationCode = invitation.Code,
-                UsedBy = invitation.UsedByUsername,
+                Code = invitation.Code,
+                RedeemedBy = invitation.RedeemedByUsername,
                 CreatedAt = invitation.CreatedAt,
                 ExpiresAt = invitation.ExpiresAt,
                 Status = GetInvitationStatus(invitation),
                 IsRevoked = invitation.IsRevoked
             };
+        }
+
+        private static InvitationStatus GetInvitationStatus(InvitationCode invitation)
+        {
+            if (invitation.IsRevoked)
+                return InvitationStatus.Revoked;
+
+            if (invitation.IsRedeemed)
+                return InvitationStatus.Used;
+
+            if (DateTime.UtcNow >= invitation.ExpiresAt)
+                return InvitationStatus.Expired;
+
+            return InvitationStatus.Active;
         }
 
         private static string MaskIp(string ipString)
@@ -213,39 +241,34 @@ namespace BlockSense.Backend.Services.Implementations
                 return ipString;
             }
 
-            // Normalize IPv4-mapped IPv6
             if (ip.IsIPv4MappedToIPv6)
             {
                 ip = ip.MapToIPv4();
             }
 
-            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            switch (ip.AddressFamily)
             {
-                var bytes = ip.GetAddressBytes();
-                return $"{bytes[0]}.{bytes[1]}.{bytes[2]}.*";
-            }
+                case AddressFamily.InterNetwork:
+                    return MaskIpv4(ip);
 
-            if (ip.AddressFamily == AddressFamily.InterNetworkV6)
-            {
-                var bytes = ip.GetAddressBytes();
-                return $"{bytes[0]}:{bytes[1]}:{bytes[2]}:{bytes[3]}:*";
-            }
+                case AddressFamily.InterNetworkV6:
+                    return MaskIpv6(ip);
 
-            return ipString;
+                default:
+                    return ipString;
+            }
         }
 
-        private static InvitationStatus GetInvitationStatus(InvitationCode invitation)
+        private static string MaskIpv4(IPAddress ip)
         {
-            if (invitation.IsRevoked)
-                return InvitationStatus.Revoked;
+            var bytes = ip.GetAddressBytes();
+            return $"{bytes[0]}.{bytes[1]}.{bytes[2]}.*";
+        }
 
-            if (invitation.UsedBy is not null)
-                return InvitationStatus.Used;
-
-            if (DateTime.UtcNow >= invitation.ExpiresAt)
-                return InvitationStatus.Expired;
-
-            return InvitationStatus.Active;
+        private static string MaskIpv6(IPAddress ip)
+        {
+            var bytes = ip.GetAddressBytes();
+            return $"{bytes[0]}:{bytes[1]}:{bytes[2]}:{bytes[3]}:*";
         }
     }
 }

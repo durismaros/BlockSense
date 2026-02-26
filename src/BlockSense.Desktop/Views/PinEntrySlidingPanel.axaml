@@ -1,0 +1,103 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 x:Class="BlockSense.Desktop.PinEntrySlidingPanel">
+
+	<Panel Background="#F5E9D8">
+
+		<!-- Top Window Panel -->
+		<Border x:Name="DragBorder"
+				Height="30"
+				VerticalAlignment="Top"
+				Background="Transparent"/>
+
+		<StackPanel HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					Margin="30">
+
+			<TextBlock HorizontalAlignment="Center"
+					   Text="Confirm Your PIN"
+					   Foreground="#614E3E"
+					   FontSize="24"
+					   FontWeight="SemiBold"
+					   Margin="0 0 0 12"/>
+
+			<TextBlock HorizontalAlignment="Center"
+					   Text="Please re-enter your PIN to confirm"
+					   Foreground="#6F4E37"
+					   FontSize="14"
+					   Opacity="0.8"
+					   Margin="0 0 0 32"/>
+
+			<StackPanel x:Name="ConfirmDotsPanel"
+						HorizontalAlignment="Center"
+						Orientation="Horizontal"
+						Margin="0 0 0 40">
+
+				<!-- PIN dots are added automatically -->
+
+			</StackPanel>
+
+			<StackPanel HorizontalAlignment="Center"
+						Orientation="Horizontal"
+						Margin="0 0 0 20">
+
+				<Button x:Name="BackButton"
+						Classes="DefaultLightBrown"
+						Width="100"
+						Height="40"
+						HorizontalAlignment="Center"
+						VerticalAlignment="Center"
+						Margin="0 0 10 0">
+					<TextBlock Text="Go Back"
+							   HorizontalAlignment="Center"
+							   VerticalAlignment="Center"
+							   FontWeight="Medium"
+							   Foreground="#5D3F36"/>
+				</Button>
+
+				<Button x:Name="ConfirmPinButton"
+						Classes="DefaultDarkBrown"
+						Width="100"
+						Height="40"
+						HorizontalAlignment="Center"
+						VerticalAlignment="Center"
+						Margin="10 0 0 0"
+						IsEnabled="False">
+					<TextBlock HorizontalAlignment="Center"
+							   VerticalAlignment="Center"
+							   Text="Confirm"
+							   Foreground="#E6C8A0"
+							   FontWeight="Medium"/>
+
+					<Button.Styles>
+						<Style Selector="Button.DefaultDarkBrown:disabled ContentPresenter">
+							<Setter Property="Background" Value="#6D4C41"/>
+							<Setter Property="Opacity" Value="0.5"/>
+						</Style>
+					</Button.Styles>
+				</Button>
+
+			</StackPanel>
+
+			<TextBlock HorizontalAlignment="Center"
+					   Text="Press Enter or click Confirm when ready"
+					   Foreground="#6F4E37"
+					   FontSize="12"
+					   Opacity="0.6"/>
+		</StackPanel>
+
+		<TextBlock HorizontalAlignment="Center"
+				   VerticalAlignment="Bottom"
+				   Text="( By pressing ESC you can return back )"
+				   Foreground="Black"
+				   FontSize="10"
+				   FontStyle="Italic"
+				   Opacity="0.8"
+				   Margin="10"/>
+
+	</Panel>
+
+</UserControl>

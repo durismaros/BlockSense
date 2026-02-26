@@ -5,8 +5,8 @@ using BlockSense.Desktop.Providers.Implementations;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Implementations;
 using BlockSense.Desktop.Services.Interfaces;
-using BlockSense.Desktop.Utilities.ApiHandling;
 using BlockSense.Desktop.Utilities.ApiHandling.HeaderHandlers;
+using BlockSense.Desktop.Utilities.FileManagement;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -32,8 +32,13 @@ namespace BlockSense.Desktop
             {
                 desktop.MainWindow = ServiceProvider.GetRequiredService<MainWindow>();
 
-                var session = ServiceProvider.GetRequiredService<ISessionService>();
-                await session.InitializeSessionAsync();
+                //var session = ServiceProvider.GetRequiredService<ISessionService>();
+                //await session.InitializeSessionAsync();
+
+                await ServiceProvider.GetRequiredService<NavigationManager>().NavigateToAsync<CryptoWalletView>();
+
+                var x = new LevelDbStorage(DirectoryStructure.WalletDirectory);
+                await x.PutAsync("x", "key");
             }
 
             base.OnFrameworkInitializationCompleted();
@@ -84,12 +89,17 @@ namespace BlockSense.Desktop
             services.AddSingleton<WelcomeView>();
             services.AddSingleton<RegistrationView>();
             services.AddSingleton<AuthenticationView>();
-            services.AddSingleton<TwoFactorSlidingPanel>();
             services.AddSingleton<HomeView>();
             services.AddSingleton<UserDashboardView>();
             services.AddSingleton<WalletSelectionView>();
             services.AddSingleton<RecoveryPhraseView>();
             services.AddSingleton<RecoveryPhraseImportView>();
+            services.AddSingleton<PinEntryView>();
+            services.AddSingleton<CryptoWalletView>();
+
+            // --- Panels ---
+            services.AddSingleton<TwoFactorSlidingPanel>();
+            services.AddSingleton<PinEntrySlidingPanel>();
 
             // --- Windows ---
             services.AddSingleton<MainWindow>();

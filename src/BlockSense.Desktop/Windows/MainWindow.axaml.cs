@@ -1,11 +1,6 @@
-using Avalonia.Animation;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Media;
-using Avalonia.Styling;
 using BlockSense.Desktop.Utilities.UIComponents;
-using System;
 using System.Threading.Tasks;
 
 namespace BlockSense.Desktop;
@@ -25,7 +20,7 @@ public partial class MainWindow : Window
         Instance = this;
 
         // Pointer press handler
-        this.AddHandler(InputElement.PointerPressedEvent, (sender, e) =>
+        this.AddHandler(PointerPressedEvent, (sender, e) =>
         {
             if (!InputThrottler.ShouldProcess())
             {

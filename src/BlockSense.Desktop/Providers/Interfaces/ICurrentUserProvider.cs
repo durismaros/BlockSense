@@ -13,7 +13,7 @@ namespace BlockSense.Desktop.Providers.Interfaces
             get;
         }
 
-        IReadOnlyList<UserSessionDto> ActiveDevices
+        IReadOnlyList<SessionDto> ActiveDevices
         {
             get;
         }

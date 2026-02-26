@@ -14,13 +14,19 @@
             init;
         }
 
-        public required uint GeneratedBy
+        public required uint IssuedToId
         {
             get;
             init;
         }
 
-        public uint? UsedBy
+        public required uint? RedeemedById
+        {
+            get;
+            set;
+        }
+
+        public string? RedeemedByUsername
         {
             get;
             set;
@@ -44,14 +50,14 @@
             set;
         }
 
-        public string? UsedByUsername
-        {
-            get;
-            set;
-        }
+        public bool IsRedeemed
+            => RedeemedById is not null;
 
-        public bool IsActive
-            => !IsRevoked && UsedBy is null && DateTime.UtcNow < ExpiresAt;
+        public bool IsExpired
+            => DateTime.UtcNow >= ExpiresAt;
+
+        public bool IsValid
+            => !IsRevoked && !IsRedeemed && DateTime.UtcNow < ExpiresAt;
 
         public TimeSpan TimeUntilExpiration
             => ExpiresAt - DateTime.UtcNow;

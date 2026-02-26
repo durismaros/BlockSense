@@ -6,14 +6,16 @@ namespace BlockSense.Backend.Repositories.Interfaces
     {
         Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<RefreshToken>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default);
+        Task<RefreshToken?> GetByHardwareFingerprintAsync(string hardwareFingerprint, CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<RefreshToken>> GetActiveByUserAsync(uint userId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<RefreshToken>> GetActiveByUserIdAsync(uint userId, CancellationToken cancellationToken = default);
 
-        Task UpsertAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default);
+        Task CreateAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default);
 
         Task RevokeAsync(string tokenHash, CancellationToken cancellationToken = default);
 
-        Task RevokeAllForUserAsync(uint userId, CancellationToken cancellationToken = default);
+        Task RevokeAllByUserIdAsync(uint userId, CancellationToken cancellationToken = default);
+
+        Task DeleteExpiredAsync(CancellationToken cancellationToken = default);
     }
 }

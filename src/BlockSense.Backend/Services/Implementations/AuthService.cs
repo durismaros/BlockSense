@@ -2,6 +2,7 @@
 using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Exceptions.Generic;
 using BlockSense.Backend.Models.Device;
+using BlockSense.Backend.Repositories.Implementations;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
@@ -19,10 +20,11 @@ namespace BlockSense.Backend.Services.Implementations
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
-        private readonly ITotpCredentialRepository _twoFactorAuthRepository;
+        private readonly ITotpCredentialRepository _totpCredentialRepository;
         private readonly ITokenService _tokenService;
         private readonly ITwoFactorAuthService _twoFactorAuthService;
         private readonly DatabaseContext _databaseContext;
+        private readonly Argon2idHasher _argon2IdHasher;
 
         /// <summary>
         /// Initializes a new instance of <see cref="AuthService"/> with required dependencies.
@@ -33,25 +35,17 @@ namespace BlockSense.Backend.Services.Implementations
         /// <exception cref="ArgumentNullException">Thrown if any dependency is <c>null</c>.</exception>
         public AuthService(
             IUserRepository userRepository,
-            ITotpCredentialRepository twoFactorAuthRepository,
+            ITotpCredentialRepository totpCredentialRepository,
             ITokenService tokenService,
             ITwoFactorAuthService twoFactorAuthService,
             DatabaseContext databaseContext)
         {
-            _userRepository = userRepository
-                ?? throw new ArgumentNullException(nameof(userRepository));
-
-            _twoFactorAuthRepository = twoFactorAuthRepository
-                ?? throw new ArgumentNullException(nameof(twoFactorAuthRepository));
-
-            _tokenService = tokenService
-                ?? throw new ArgumentNullException(nameof(tokenService));
-
-            _twoFactorAuthService = twoFactorAuthService
-                ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
-
-            _databaseContext = databaseContext
-                ?? throw new ArgumentNullException(nameof(databaseContext));
+            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _totpCredentialRepository = totpCredentialRepository ?? throw new ArgumentNullException(nameof(totpCredentialRepository));
+            _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
+            _twoFactorAuthService = twoFactorAuthService ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
+            _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
+            _argon2IdHasher = new Argon2idHasher() ?? throw new ArgumentNullException(nameof(Argon2idHasher));
         }
 
         /// <inheritdoc/>
@@ -80,41 +74,20 @@ namespace BlockSense.Backend.Services.Implementations
                     throw new ForbiddenException();
                 }
 
-                var argon2idHasher = new Argon2idHasher();
+                VerifyPassword(request.Password, user);
 
-                var computedHash = argon2idHasher.Derive(
-                    Encoding.UTF8.GetBytes(request.Password),
-                    out _,
-                    user.PasswordSalt);
-
-                if (!Arrays.FixedTimeEquals(user.PasswordHash, computedHash))
-                {
-                    throw new InvalidCredentialsException();
-                }
-
-                if (await _twoFactorAuthRepository.IsEnabledAsync(user.Id, cancellationToken))
-                {
-                    if (string.IsNullOrWhiteSpace(request.TwoFactorCode))
-                    {
-                        throw new TwoFactorRequiredException();
-                    }
-
-                    await _twoFactorAuthService.VerifyAsync(user.Id, new TwoFactorVerificationRequest
-                    {
-                        TwoFactorCode = request.TwoFactorCode
-                    });
-                }
+                await VerifyTwoFactorIfEnabledAsync(
+                    user.Id,
+                    request.TwoFactorCode,
+                    cancellationToken);
 
                 var accessToken =
                     await _tokenService.CreateAccessTokenAsync(user.Id, cancellationToken);
 
                 var refreshToken =
-                    await _tokenService.CreateRefreshTokenAsync(
-                        user.Id,
-                        deviceContext,
-                        cancellationToken);
+                    await _tokenService.CreateRefreshTokenAsync(user.Id, deviceContext, cancellationToken);
 
-                await _databaseContext.CommitAsync(cancellationToken);
+                await _databaseContext.CommitTransactionAsync(cancellationToken);
 
                 return new AuthResponse
                 {
@@ -124,13 +97,48 @@ namespace BlockSense.Backend.Services.Implementations
             }
             catch
             {
-                await _databaseContext.RollbackAsync(cancellationToken);
+                await _databaseContext.RollbackTransactionAsync(cancellationToken);
                 throw;
             }
-            finally
+        }
+
+        private void VerifyPassword(string plainPassword, Entities.User user)
+        {
+            var computed = _argon2IdHasher.Derive(
+                Encoding.UTF8.GetBytes(plainPassword),
+                out _,
+                user.PasswordSalt);
+
+            if (!Arrays.FixedTimeEquals(user.PasswordHash, computed))
             {
-                await _databaseContext.DisposeAsync();
+                throw new InvalidCredentialsException();
             }
+        }
+
+        private async Task VerifyTwoFactorIfEnabledAsync(
+            uint userId,
+            string? code,
+            CancellationToken cancellationToken)
+        {
+            if (!await _totpCredentialRepository.ExistsAsync(userId, cancellationToken))
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                throw new TwoFactorRequiredException();
+            }
+
+            var request = new TwoFactorVerificationRequest
+            {
+                TwoFactorCode = code
+            };
+
+            await _twoFactorAuthService.VerifyAsync(
+                userId,
+                request,
+                cancellationToken);
         }
     }
 }

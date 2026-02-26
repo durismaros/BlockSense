@@ -3,7 +3,6 @@ using BlockSense.Backend.Entities;
 using BlockSense.Backend.Repositories.Interfaces;
 using Dapper;
 using MySql.Data.MySqlClient;
-using System.Text.Json;
 
 namespace BlockSense.Backend.Repositories.Implementations
 {
@@ -22,19 +21,19 @@ namespace BlockSense.Backend.Repositories.Implementations
         {
             const string sql = """
                 SELECT
-                    user_id             AS UserId,
-                    encrypted_secret    AS EncryptedSecret,
-                    backup_codes        AS BackupCodes,
-                    created_at          AS CreatedAt,
-                    updated_at          AS UpdatedAt
+                    user_id          AS UserId,
+                    encrypted_secret AS EncryptedSecret,
+                    backup_codes     AS BackupCodes,
+                    created_at       AS CreatedAt,
+                    updated_at       AS UpdatedAt
                 FROM totp_credentials
                 WHERE user_id = @UserId
-                LIMIT 1;
+                LIMIT 1
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId },
             };
 
             await using var reader =
@@ -44,27 +43,28 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<bool> IsEnabledAsync(uint userId, CancellationToken cancellationToken = default)
+        public async Task<bool> ExistsAsync(uint userId, CancellationToken cancellationToken = default)
         {
             const string sql = """
-                SELECT COUNT(1)
-                FROM totp_credentials
-                WHERE user_id = @UserId;
-                """;
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM totp_credentials
+                    WHERE user_id = @UserId )
+            """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId },
             };
 
-            var count =
-                await _databaseContext.ExecuteScalarAsync<long>(sql, parameters, cancellationToken);
+            var result =
+                await _databaseContext.ExecuteScalarAsync<ulong>(sql, parameters, cancellationToken);
 
-            return count > 0;
+            return result == 1UL;
         }
 
         /// <inheritdoc/>
-        public async Task CreateAsync(TotpCredential credential, CancellationToken cancellationToken = default)
+        public async Task CreateAsync(TotpCredential totpCredential, CancellationToken cancellationToken = default)
         {
             const string sql = """
                 INSERT INTO totp_credentials (
@@ -83,49 +83,50 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId",          MySqlDbType.UInt32)        { Value = credential.UserId },
-                new MySqlParameter("@EncryptedSecret", MySqlDbType.VarBinary, 48) { Value = credential.EncryptedSecret },
-                new MySqlParameter("@BackupCodes",     MySqlDbType.JSON)          { Value = (object?)credential.BackupCodes ?? DBNull.Value },
-                new MySqlParameter("@CreatedAt",       MySqlDbType.DateTime)      { Value = credential.CreatedAt },
-                new MySqlParameter("@UpdatedAt",       MySqlDbType.DateTime)      { Value = credential.UpdatedAt }
+                new MySqlParameter("@UserId",          MySqlDbType.UInt32)        { Value = totpCredential.UserId },
+                new MySqlParameter("@EncryptedSecret", MySqlDbType.VarBinary, 48) { Value = totpCredential.EncryptedSecret },
+                new MySqlParameter("@BackupCodes",     MySqlDbType.JSON)          { Value = (object?)totpCredential.BackupCodes ?? DBNull.Value },
+                new MySqlParameter("@CreatedAt",       MySqlDbType.DateTime)      { Value = totpCredential.CreatedAt },
+                new MySqlParameter("@UpdatedAt",       MySqlDbType.DateTime)      { Value = totpCredential.UpdatedAt }
             };
 
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
         }
 
         /// <inheritdoc/>
-        public async Task UpdateBackupCodesAsync(
-            uint userId,
-            IEnumerable<string> backupCodes,
-            CancellationToken cancellationToken = default)
+        public async Task UpdateAsync(TotpCredential totpCredential, CancellationToken cancellationToken = default)
         {
             const string sql = """
                 UPDATE totp_credentials
-                SET backup_codes = @BackupCodes,
-                    updated_at = UTC_TIMESTAMP(6)
-                WHERE user_id = @UserId;
+                SET
+                    encrypted_secret = @EncryptedSecret,
+                    backup_codes     = @BackupCodes,
+                    updated_at       = @UpdatedAt
+                WHERE user_id = @UserId
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId",      MySqlDbType.UInt32) { Value = userId },
-                new MySqlParameter("@BackupCodes", MySqlDbType.JSON)   { Value = JsonSerializer.Serialize(backupCodes) }
+                new MySqlParameter("@UserId",          MySqlDbType.UInt32)          { Value = totpCredential.UserId },
+                new MySqlParameter("@EncryptedSecret", MySqlDbType.VarBinary, 48)   { Value = totpCredential.EncryptedSecret },
+                new MySqlParameter("@BackupCodes",     MySqlDbType.JSON)            { Value = (object?)totpCredential.BackupCodes ?? DBNull.Value },
+                new MySqlParameter("@UpdatedAt",       MySqlDbType.DateTime)        { Value = totpCredential.UpdatedAt },
             };
 
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
         }
 
         /// <inheritdoc/>
-        public async Task DeleteAsync(uint userId, CancellationToken cancellationToken = default)
+        public async Task DeleteByUserIdAsync(uint userId, CancellationToken cancellationToken = default)
         {
             const string sql = """
                 DELETE FROM totp_credentials
-                WHERE user_id = @UserId;
+                WHERE user_id = @UserId
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId },
             };
 
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);

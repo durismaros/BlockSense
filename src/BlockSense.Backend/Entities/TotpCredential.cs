@@ -1,4 +1,6 @@
-﻿namespace BlockSense.Backend.Entities
+﻿using System.Text.Json;
+
+namespace BlockSense.Backend.Entities
 {
     public sealed class TotpCredential
     {
@@ -14,25 +16,41 @@
             set;
         }
 
-        public string? BackupCodes
+        public required string? BackupCodes
         {
             get;
             set;
         }
 
-        public DateTime CreatedAt
+        public IList<string> BackupCodesList
+        {
+            get
+            {
+                return string.IsNullOrEmpty(BackupCodes)
+                    ? []
+                    : JsonSerializer.Deserialize<List<string>>(BackupCodes) ?? [];
+            }
+            set
+            {
+                BackupCodes = value is null
+                    ? null
+                    : JsonSerializer.Serialize(value);
+            }
+        }
+
+        public required DateTime CreatedAt
         {
             get;
             init;
         }
 
-        public DateTime UpdatedAt
+        public required DateTime UpdatedAt
         {
             get;
             set;
         }
 
         public bool HasBackupCodes
-            => !string.IsNullOrWhiteSpace(BackupCodes) && BackupCodes.Trim() != "[]";
+            => BackupCodesList.Count > 0;
     }
 }

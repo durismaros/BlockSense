@@ -6,11 +6,20 @@ using BlockSense.Desktop.Utilities.UIComponents;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Tmds.DBus.Protocol;
 
 namespace BlockSense.Desktop;
 
 public partial class ToastNotification : UserControl
 {
+    public ToastNotification()
+    {
+        InitializeComponent();
+
+        TitleText.Text = string.Empty;
+        MessageText.Text = string.Empty;
+    }
+
     public ToastNotification(string title, string message)
     {
         InitializeComponent();

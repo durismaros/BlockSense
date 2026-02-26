@@ -15,7 +15,7 @@ namespace BlockSense.Desktop.Providers.Implementations
             private set;
         }
 
-        public IReadOnlyList<UserSessionDto> ActiveDevices
+        public IReadOnlyList<SessionDto> ActiveDevices
         {
             get;
             private set; 
@@ -51,7 +51,7 @@ namespace BlockSense.Desktop.Providers.Implementations
         public CurrentUserProvider()
         {
             Profile = default!;
-            ActiveDevices = Array.Empty<UserSessionDto>();
+            ActiveDevices = Array.Empty<SessionDto>();
             Invitations = Array.Empty<InvitationDto>();
             TwoFactorBackupCodes = null;
         }
@@ -82,7 +82,7 @@ namespace BlockSense.Desktop.Providers.Implementations
         public void Clear()
         {
             Profile = default!;
-            ActiveDevices = Array.Empty<UserSessionDto>();
+            ActiveDevices = Array.Empty<SessionDto>();
             Invitations = Array.Empty<InvitationDto>();
 
             _onCurrentUserChanged?.Invoke();

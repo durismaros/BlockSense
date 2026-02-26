@@ -22,8 +22,10 @@ namespace BlockSense.Desktop.Services.Implementations
         {
             _apiClient = apiClient
                 ?? throw new ArgumentNullException(nameof(apiClient));
+
             _currentUserProvider = currentUserProvider
                 ?? throw new ArgumentNullException(nameof(currentUserProvider));
+
             _twoFactorSlidingPanel = MainWindow.Instance.TwoFactorSlidingPanel
                 ?? throw new ArgumentNullException(nameof(MainWindow.Instance.TwoFactorSlidingPanel));
         }

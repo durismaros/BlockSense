@@ -1,7 +1,6 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Entities;
 using BlockSense.Backend.Repositories.Interfaces;
-using BlockSense.Contracts.DTOs.Invitation;
 using Dapper;
 using MySql.Data.MySqlClient;
 
@@ -18,25 +17,25 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<InvitationCode?> GetByIdAsync(uint invitationId, CancellationToken cancellationToken = default)
+        public async Task<InvitationCode?> GetByIdAsync(uint id, CancellationToken cancellationToken = default)
         {
             const string sql = """
                 SELECT
                     id              AS Id,
                     code            AS Code,
-                    generated_by    AS GeneratedBy,
-                    used_by         AS UsedBy,
+                    issued_to_id    AS IssuedToId,
+                    redeemed_by_id  AS RedeemedById,
                     created_at      AS CreatedAt,
                     expires_at      AS ExpiresAt,
                     is_revoked      AS IsRevoked
                 FROM invitation_codes
                 WHERE id = @Id
-                LIMIT 1;
+                LIMIT 1
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@Id", MySqlDbType.UInt32) { Value = invitationId }
+                new MySqlParameter("@Id", MySqlDbType.UInt32) { Value = id },
             };
 
             await using var reader =
@@ -52,19 +51,19 @@ namespace BlockSense.Backend.Repositories.Implementations
                 SELECT
                     id              AS Id,
                     code            AS Code,
-                    generated_by    AS GeneratedBy,
-                    used_by         AS UsedBy,
+                    issued_to_id    AS IssuedToId,
+                    redeemed_by_id  AS RedeemedById,
                     created_at      AS CreatedAt,
                     expires_at      AS ExpiresAt,
                     is_revoked      AS IsRevoked
                 FROM invitation_codes
                 WHERE code = @Code
-                LIMIT 1;
+                LIMIT 1
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@Code", MySqlDbType.VarChar, 32) { Value = code }
+                new MySqlParameter("@Code", MySqlDbType.String, 32) { Value = code }
             };
 
             await using var reader =
@@ -80,23 +79,20 @@ namespace BlockSense.Backend.Repositories.Implementations
                 SELECT
                     id              AS Id,
                     code            AS Code,
-                    generated_by    AS GeneratedBy,
-                    used_by         AS UsedBy,
+                    issued_to_id    AS IssuedToId,
+                    redeemed_by_id  AS RedeemedById,
                     created_at      AS CreatedAt,
                     expires_at      AS ExpiresAt,
                     is_revoked      AS IsRevoked
                 FROM invitation_codes
                 WHERE code = @Code
-                    AND used_by IS NULL
-                    AND is_revoked = 0
-                    AND UTC_TIMESTAMP(6) < expires_at
                 LIMIT 1
                 FOR UPDATE;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@Code", MySqlDbType.VarChar, 32) { Value = code }
+                new MySqlParameter("@Code", MySqlDbType.String, 32) { Value = code }
             };
 
             await using var reader =
@@ -106,55 +102,29 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<IReadOnlyList<InvitationCode>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<InvitationCode>> GetByIssuedToIdAsync(uint issuedToId, CancellationToken cancellationToken = default)
         {
             const string sql = """
                 SELECT
-                    id              AS Id,
-                    code            AS Code,
-                    generated_by    AS GeneratedBy,
-                    used_by         AS UsedBy,
-                    created_at      AS CreatedAt,
-                    expires_at      AS ExpiresAt,
-                    is_revoked      AS IsRevoked
-                FROM invitation_codes
-                WHERE generated_by = @UserId
-                ORDER BY
-                    used_by IS NULL DESC,
-                    id              ASC;
-                """;
-
-            var parameters = new[]
-            {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
-            };
-
-            await using var reader =
-                await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
-
-            return SqlMapper.Parse<InvitationCode>(reader).ToList();
-        }
-
-        /// <inheritdoc/>
-        public async Task<IReadOnlyList<InvitationCode>> GetWithInviteeByUserAsync(uint userId, CancellationToken cancellationToken = default)
-        {
-            const string sql = """
-                SELECT
-                    ic.code         AS Code,
-                    ic.created_at   AS CreatedAt,
-                    ic.expires_at   AS ExpiresAt,
-                    u.username      AS InvitedUser
+                    ic.id               AS Id,
+                    ic.code             AS Code,
+                    ic.issued_to_id     AS IssuedToId,
+                    ic.redeemed_by_id   AS RedeemedById,
+                    u.username          AS RedeemedByUsername,
+                    ic.created_at       AS CreatedAt,
+                    ic.expires_at       AS ExpiresAt,
+                    ic.is_revoked       AS IsRevoked
                 FROM invitation_codes ic
-                LEFT JOIN users u ON ic.used_by = u.id
-                WHERE ic.generated_by = @UserId
+                LEFT JOIN users u ON u.id = ic.redeemed_by_id
+                WHERE ic.issued_to_id = @IssuedToId
                 ORDER BY
-                    ic.used_by IS NULL DESC,
-                    ic.id              ASC;
+                    ic.redeemed_by_id IS NULL   DESC,
+                    ic.created_at               ASC
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
+                new MySqlParameter("@IssuedToId", MySqlDbType.UInt32) { Value = issuedToId },
             };
 
             await using var reader =
@@ -164,63 +134,20 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task<bool> CodeExistsAsync(string code, CancellationToken cancellationToken = default)
-        {
-            const string sql = """
-                SELECT COUNT(1)
-                FROM invitation_codes
-                WHERE code = @Code;
-                """;
-
-            var parameters = new[]
-            {
-                new MySqlParameter("@Code", MySqlDbType.VarChar, 32) { Value = code }
-            };
-
-            var count =
-                await _databaseContext.ExecuteScalarAsync<long>(sql, parameters, cancellationToken);
-
-            return count > 0;
-        }
-
-        /// <inheritdoc/>
-        public async Task<bool> IsActiveAsync(string code, CancellationToken cancellationToken = default)
-        {
-            const string sql = """
-                SELECT COUNT(1)
-                FROM invitation_codes
-                WHERE code = @Code
-                    AND used_by IS NULL
-                    AND is_revoked = 0
-                    AND expires_at > UTC_TIMESTAMP(6);
-                """;
-
-            var parameters = new[]
-            {
-                new MySqlParameter("@Code", MySqlDbType.VarChar, 32) { Value = code }
-            };
-
-            var count =
-                await _databaseContext.ExecuteScalarAsync<long>(sql, parameters, cancellationToken);
-
-            return count > 0;
-        }
-
-        /// <inheritdoc/>
-        public async Task<uint> CreateAsync(InvitationCode invitation, CancellationToken cancellationToken = default)
+        public async Task<uint> CreateAsync(InvitationCode invitationCode, CancellationToken cancellationToken = default)
         {
             const string sql = """
                 INSERT INTO invitation_codes (
                     code,
-                    generated_by,
-                    used_by,
+                    issued_to_id,
+                    redeemed_by_id,
                     created_at,
                     expires_at,
                     is_revoked )
                 VALUES (
                     @Code,
-                    @GeneratedBy,
-                    @UsedBy,
+                    @IssuedToId,
+                    @RedeemedById,
                     @CreatedAt,
                     @ExpiresAt,
                     @IsRevoked );
@@ -229,12 +156,12 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@Code",          MySqlDbType.VarChar,   32) { Value = invitation.Code },
-                new MySqlParameter("@GeneratedBy", MySqlDbType.UInt32)          { Value = invitation.GeneratedBy },
-                new MySqlParameter("@UsedBy",      MySqlDbType.UInt32)          { Value = (object?)invitation.UsedBy ?? DBNull.Value },
-                new MySqlParameter("@CreatedAt",     MySqlDbType.DateTime)      { Value = invitation.CreatedAt },
-                new MySqlParameter("@ExpiresAt",     MySqlDbType.DateTime)      { Value = invitation.ExpiresAt },
-                new MySqlParameter("@IsRevoked",     MySqlDbType.Bit)           { Value = invitation.IsRevoked }
+                new MySqlParameter("@Code",         MySqlDbType.String, 32) { Value = invitationCode.Code },
+                new MySqlParameter("@IssuedToId",   MySqlDbType.UInt32)     { Value = invitationCode.IssuedToId },
+                new MySqlParameter("@RedeemedById", MySqlDbType.UInt32)     { Value = (object?)invitationCode.RedeemedById ?? DBNull.Value },
+                new MySqlParameter("@CreatedAt",    MySqlDbType.DateTime)   { Value = invitationCode.CreatedAt },
+                new MySqlParameter("@ExpiresAt",    MySqlDbType.DateTime)   { Value = invitationCode.ExpiresAt },
+                new MySqlParameter("@IsRevoked",    MySqlDbType.Bit)        { Value = invitationCode.IsRevoked },
             };
 
             var insertId =
@@ -244,42 +171,38 @@ namespace BlockSense.Backend.Repositories.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task MarkAsUsedAsync(
-            uint invitationId,
-            uint usedByUserId,
-            CancellationToken cancellationToken = default)
+        public async Task RedeemAsync(uint id, uint redeemedById, CancellationToken cancellationToken = default)
         {
             const string sql = """
                 UPDATE invitation_codes
-                SET used_by = @UsedBy
+                SET redeemed_by_id = @RedeemedById
                 WHERE id = @Id
-                    AND used_by IS NULL
-                    AND is_revoked = 0
-                    AND expires_at > UTC_TIMESTAMP(6);
+                  AND redeemed_by_id IS NULL
+                  AND is_revoked = 0
+                  AND expires_at > UTC_TIMESTAMP(6)
                 """;
-
+            
             var parameters = new[]
             {
-                new MySqlParameter("@Id",     MySqlDbType.UInt32) { Value = invitationId },
-                new MySqlParameter("@UsedBy", MySqlDbType.UInt32) { Value = usedByUserId }
+                new MySqlParameter("@Id",           MySqlDbType.UInt32) { Value = id },
+                new MySqlParameter("@RedeemedById", MySqlDbType.UInt32) { Value = redeemedById },
             };
-
+            
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
         }
 
         /// <inheritdoc/>
-        public async Task RevokeAsync(uint invitationId, CancellationToken cancellationToken = default)
+        public async Task RevokeAsync(uint id, CancellationToken cancellationToken = default)
         {
             const string sql = """
                 UPDATE invitation_codes
                 SET is_revoked = 1
                 WHERE id = @Id
-                    AND is_revoked = 0;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@Id", MySqlDbType.UInt32) { Value = invitationId }
+                new MySqlParameter("@Id", MySqlDbType.UInt32) { Value = id },
             };
 
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);

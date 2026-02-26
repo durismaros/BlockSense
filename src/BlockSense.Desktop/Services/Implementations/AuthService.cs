@@ -28,13 +28,19 @@ namespace BlockSense.Desktop.Services.Implementations
         public AuthService(
             ILogger<AuthService> logger,
             IApiClient apiClient,
-            ISessionService sessionService,
-            TwoFactorSlidingPanel twoFactorSlidingPanel)
+            ISessionService sessionService)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
-            _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
-            _twoFactorSlidingPanel = twoFactorSlidingPanel ?? throw new ArgumentNullException(nameof(twoFactorSlidingPanel));
+            _logger = logger
+                ?? throw new ArgumentNullException(nameof(logger));
+
+            _apiClient = apiClient
+                ?? throw new ArgumentNullException(nameof(apiClient));
+
+            _sessionService = sessionService
+                ?? throw new ArgumentNullException(nameof(sessionService));
+
+            _twoFactorSlidingPanel = MainWindow.Instance.TwoFactorSlidingPanel
+                ?? throw new ArgumentNullException(nameof(MainWindow.Instance.TwoFactorSlidingPanel));
         }
 
         /// <inheritdoc/>

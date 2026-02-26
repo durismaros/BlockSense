@@ -1,0 +1,104 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 x:Class="BlockSense.Desktop.PinEntryView">
+
+	<Panel>
+
+		<!-- Go Back Button -->
+		<Button x:Name="HomeButton"
+				Width="44"
+				Height="44"
+				HorizontalAlignment="Left"
+				VerticalAlignment="Top"
+				Background="Transparent"
+				CornerRadius="22"
+				Margin="16 32 0 0">
+
+			<Viewbox Width="20"
+					 Height="20"
+					 HorizontalAlignment="Center"
+					 VerticalAlignment="Center">
+				<Path Data="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"
+					  Fill="#28282B"
+					  Stretch="Uniform"/>
+			</Viewbox>
+
+			<Button.Styles>
+				<Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
+					<Setter Property="Background" Value="Transparent"/>
+					<Setter Property="RenderTransform" Value="scale(1.1)" />
+				</Style>
+			</Button.Styles>
+		</Button>
+
+		<StackPanel HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					Margin="30">
+
+			<TextBlock HorizontalAlignment="Center"
+					   Text="Create Your Secure PIN"
+					   Foreground="#4A3C30"
+					   FontSize="24"
+					   FontWeight="SemiBold"
+					   Margin="0 0 0 12"/>
+
+			<TextBlock HorizontalAlignment="Center"
+					   Text="Please enter a 6-digit PIN code to protect your account."
+					   Foreground="#553B2A"
+					   FontSize="14"
+					   Opacity="0.8"
+					   Margin="0 0 0 32"/>
+
+			<StackPanel x:Name="DotsPanel"
+						HorizontalAlignment="Center"
+						Orientation="Horizontal"
+						Margin="0 0 0 40">
+
+				<!-- PIN dots are added automatically -->
+
+			</StackPanel>
+
+			<Button x:Name="ConfirmPinButton"
+					Classes="DefaultDarkBrown"
+					Width="140"
+					Height="40"
+					HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					IsEnabled="False"
+					Margin="0 0 0 16">
+
+				<TextBlock HorizontalAlignment="Center"
+						   VerticalAlignment="Center"
+						   Text="Confirm PIN"
+						   Foreground="#E6C8A0"
+						   FontWeight="Medium"/>
+
+				<Button.Styles>
+					<Style Selector="Button.DefaultDarkBrown:disabled ContentPresenter">
+						<Setter Property="Background" Value="#6D4C41"/>
+						<Setter Property="Opacity" Value="0.5"/>
+					</Style>
+				</Button.Styles>
+			</Button>
+
+			<TextBlock HorizontalAlignment="Center"
+					   Text="Press Enter or click the button when ready"
+					   Foreground="#553B2A"
+					   FontSize="12"
+					   Opacity="0.6"/>
+		</StackPanel>
+
+		<TextBlock HorizontalAlignment="Center"
+				   VerticalAlignment="Bottom"
+				   Text="( By pressing ESC you can return back )"
+				   Foreground="Black"
+				   FontSize="10"
+				   FontStyle="Italic"
+				   Opacity="0.8"
+				   Margin="10"/>
+	</Panel>
+
+</UserControl>

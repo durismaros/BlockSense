@@ -31,10 +31,12 @@ namespace BlockSense.Backend.Data
         public async Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted, CancellationToken cancellationToken = default)
         {
             if (_currentTransaction is not null)
+            {
                 throw new InvalidOperationException("A transaction is already active.");
+            }
 
             await EnsureConnectionOpenAsync(cancellationToken);
-            _currentTransaction = _connection.BeginTransaction(isolationLevel);
+            _currentTransaction = await _connection.BeginTransactionAsync(isolationLevel, cancellationToken);
         }
 
         /// <summary>
@@ -43,10 +45,12 @@ namespace BlockSense.Backend.Data
         /// <param name="cancellationToken">Optional token to cancel the commit.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         /// <exception cref="InvalidOperationException">Thrown if no transaction is active.</exception>
-        public async Task CommitAsync(CancellationToken cancellationToken = default)
+        public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
         {
             if (_currentTransaction is null)
+            {
                 throw new InvalidOperationException("No active transaction to commit.");
+            }
 
             await _currentTransaction.CommitAsync(cancellationToken);
             await _currentTransaction.DisposeAsync();
@@ -58,14 +62,16 @@ namespace BlockSense.Backend.Data
         /// </summary>
         /// <param name="cancellationToken">Optional token to cancel the rollback.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public async Task RollbackAsync(CancellationToken cancellationToken = default)
+        public async Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
         {
-            if (_currentTransaction != null)
+            if (_currentTransaction is null)
             {
-                await _currentTransaction.RollbackAsync(cancellationToken);
-                await _currentTransaction.DisposeAsync();
-                _currentTransaction = null;
+                throw new InvalidOperationException("No active transaction to rollback.");
             }
+
+            await _currentTransaction.RollbackAsync(cancellationToken);
+            await _currentTransaction.DisposeAsync();
+            _currentTransaction = null;
         }
 
         /// <summary>

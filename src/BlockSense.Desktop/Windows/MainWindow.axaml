@@ -35,6 +35,9 @@
 
 		<local:TwoFactorSlidingPanel x:Name="TwoFactorSlidingPanel"
 									 IsVisible="False"/>
+		
+		<local:PinEntrySlidingPanel x:Name="PinEntrySlidingPanel"
+									 IsVisible="False"/>
 	</Panel>
 
 </Window>

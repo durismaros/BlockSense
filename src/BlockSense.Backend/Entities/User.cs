@@ -52,7 +52,7 @@ namespace BlockSense.Backend.Entities
             set;
         }
 
-        public DateTime? DeletedAt
+        public required DateTime? DeletedAt
         {
             get;
             set;
@@ -63,5 +63,8 @@ namespace BlockSense.Backend.Entities
 
         public bool IsDeleted
             => DeletedAt.HasValue;
+
+        public bool IsBanned
+            => Role is UserRole.Banned;
     }
 }
