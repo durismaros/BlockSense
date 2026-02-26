@@ -1,4 +1,4 @@
-﻿using LevelDB;
+﻿using RocksDbSharp;
 using System;
 using System.Text;
 using System.Text.Json;
@@ -9,27 +9,26 @@ namespace BlockSense.Desktop.Utilities.FileManagement
 {
     public sealed class LevelDbStorage : IDisposable
     {
-        private readonly DB _db;
-        private readonly object _writeLock = new();
+        private readonly RocksDb _rocksDb;
 
         public LevelDbStorage(string path)
         {
             if (string.IsNullOrWhiteSpace(path))
                 throw new ArgumentNullException(nameof(path));
 
-            var option = new Options
-            {
-                CreateIfMissing = true,
-                CompressionLevel = CompressionLevel.NoCompression,
-                BlockSize = 4096,
-                WriteBufferSize = 4 * 1024 * 1024, // 4MB write buffer
-                ParanoidChecks = true
-            };
+            var dbOptions = new DbOptions()
+                .SetCreateIfMissing(true)
+                .SetCreateMissingColumnFamilies(true)
+                .IncreaseParallelism(Environment.ProcessorCount)
+                .OptimizeLevelStyleCompaction(64 * 1024 * 1024);
 
-            _db = new DB(option, path);
+            _rocksDb = RocksDb.Open(dbOptions, path);
         }
 
-        public Task PutAsync<T>(string key, T value, CancellationToken cancellationToken = default)
+        public Task PutAsync<T>(
+            string key,
+            T value,
+            CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(key))
                 throw new ArgumentNullException(nameof(key));
@@ -37,20 +36,20 @@ namespace BlockSense.Desktop.Utilities.FileManagement
             if (value is null)
                 throw new ArgumentNullException(nameof(value));
 
+            cancellationToken.ThrowIfCancellationRequested();
+
             var keyBytes = Encoding.UTF8.GetBytes(key);
             var valueBytes = JsonSerializer.SerializeToUtf8Bytes(value);
 
-            return Task.Run(() =>
-            {
-                lock (_writeLock)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    _db.Put(keyBytes, valueBytes, new WriteOptions
-                    {
-                        Sync = true
-                    });
-                }
-            }, cancellationToken);
+            var writeOptions = new WriteOptions()
+                .SetSync(true);
+
+            _rocksDb.Put(
+                key: keyBytes,
+                value: valueBytes,
+                writeOptions: writeOptions);
+
+            return Task.CompletedTask;
         }
 
         public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
@@ -58,26 +57,27 @@ namespace BlockSense.Desktop.Utilities.FileManagement
             if (string.IsNullOrWhiteSpace(key))
                 throw new ArgumentNullException(nameof(key));
 
+            cancellationToken.ThrowIfCancellationRequested();
+
             var keyBytes = Encoding.UTF8.GetBytes(key);
 
-            return Task.Run(() =>
+            var readOptions = new ReadOptions()
+                .SetVerifyChecksums(true)
+                .SetFillCache(true);
+
+            var valueBytes = _rocksDb.Get(
+                key: keyBytes,
+                readOptions: readOptions);
+
+            if (valueBytes is null)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                return Task.FromResult<T?>(default);
+            }
 
-                var bytes = _db.Get(key, new ReadOptions
-                {
-                    VerifyCheckSums = true,
-                    FillCache = true
-                });
+            T? value = JsonSerializer.Deserialize<T>(valueBytes);
 
-                if (bytes is null)
-                {
-                    return default;
-                }
+            return Task.FromResult(value);
 
-                return JsonSerializer.Deserialize<T>(bytes);
-
-            }, cancellationToken);
         }
 
         public Task DeleteAsync(string key, CancellationToken cancellationToken = default)
@@ -85,24 +85,23 @@ namespace BlockSense.Desktop.Utilities.FileManagement
             if (string.IsNullOrWhiteSpace(key))
                 throw new ArgumentNullException(nameof(key));
 
+            cancellationToken.ThrowIfCancellationRequested();
+
             var keyBytes = Encoding.UTF8.GetBytes(key);
 
-            return Task.Run(() =>
-            {
-                lock (_writeLock)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    _db.Delete(keyBytes, new WriteOptions
-                    {
-                        Sync = true
-                    });
-                }
-            }, cancellationToken);
+            var writeOptions = new WriteOptions()
+                .SetSync(true);
+
+            _rocksDb.Remove(
+                key: keyBytes,
+                writeOptions: writeOptions);
+
+            return Task.CompletedTask;
         }
 
         public void Dispose()
         {
-            _db.Dispose();
+            _rocksDb.Dispose();
             GC.SuppressFinalize(this);
         }
     }
