@@ -1,0 +1,318 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 x:Class="BlockSense.Desktop.ActivityLogView">
+
+	<UserControl.Styles>
+
+
+		<!-- ── Sheet (the white panel) ───────────────────────────────── -->
+		<Style Selector="Border.Sheet">
+			<Setter Property="Background" Value="#FBF7F1"/>
+			<Setter Property="CornerRadius" Value="20 20 0 0"/>
+			<Setter Property="BoxShadow" Value="0 -4 40 0 #30000000"/>
+			<Setter Property="Padding" Value="32 28 32 20"/>
+		</Style>
+
+		<!-- ── Filter chip (type badge) ───────────────────────────────── -->
+		<Style Selector="Border.FilterChip">
+			<Setter Property="CornerRadius" Value="20"/>
+			<Setter Property="Padding" Value="12 5"/>
+			<Setter Property="Cursor" Value="Hand"/>
+			<Setter Property="Background" Value="#EDE7DE"/>
+			<Setter Property="Transitions">
+				<Transitions>
+					<BrushTransition Property="Background" Duration="0:0:0.2"/>
+				</Transitions>
+			</Setter>
+		</Style>
+
+		<Style Selector="Border.FilterChipActive">
+			<Setter Property="CornerRadius" Value="20"/>
+			<Setter Property="Padding" Value="12 5"/>
+			<Setter Property="Cursor" Value="Hand"/>
+			<Setter Property="Background" Value="#8B6B4A"/>
+		</Style>
+
+		<Style Selector="TextBlock.ChipLabel">
+			<Setter Property="FontSize" Value="11"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="Foreground" Value="#6D4C41"/>
+			<Setter Property="LetterSpacing" Value="0.4"/>
+		</Style>
+
+		<Style Selector="TextBlock.ChipLabelActive">
+			<Setter Property="FontSize" Value="11"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="Foreground" Value="#F5E1C5"/>
+			<Setter Property="LetterSpacing" Value="0.4"/>
+		</Style>
+
+		<!-- ── Table header cell ─────────────────────────────────────── -->
+		<Style Selector="TextBlock.TableHead">
+			<Setter Property="FontSize" Value="11"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="Foreground" Value="#8B6B4A"/>
+			<Setter Property="LetterSpacing" Value="0.8"/>
+		</Style>
+
+		<!-- ── Table row: date ───────────────────────────────────────── -->
+		<Style Selector="TextBlock.RowDate">
+			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="Foreground" Value="#9E8572"/>
+			<Setter Property="VerticalAlignment" Value="Center"/>
+			<Setter Property="FontStyle" Value="Italic"/>
+		</Style>
+
+		<!-- ── Table row: action message ─────────────────────────────── -->
+		<Style Selector="TextBlock.RowAction">
+			<Setter Property="FontSize" Value="13"/>
+			<Setter Property="Foreground" Value="#4A4238"/>
+			<Setter Property="FontWeight" Value="Medium"/>
+			<Setter Property="VerticalAlignment" Value="Center"/>
+			<Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+		</Style>
+
+		<!-- ── Type pill inside rows ──────────────────────────────────── -->
+		<Style Selector="Border.TypePill">
+			<Setter Property="CornerRadius" Value="10"/>
+			<Setter Property="Padding" Value="9 3"/>
+			<Setter Property="VerticalAlignment" Value="Center"/>
+			<Setter Property="HorizontalAlignment" Value="Left"/>
+		</Style>
+
+		<Style Selector="TextBlock.TypePillText">
+			<Setter Property="FontSize" Value="10"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="LetterSpacing" Value="0.5"/>
+		</Style>
+
+		<!-- ── Row separator ─────────────────────────────────────────── -->
+		<Style Selector="Border.RowDivider">
+			<Setter Property="Height" Value="1"/>
+			<Setter Property="Background" Value="#EDE7DE"/>
+			<Setter Property="Margin" Value="0 0"/>
+		</Style>
+
+		<!-- ── Pager button ───────────────────────────────────────────── -->
+		<Style Selector="Button.PagerBtn">
+			<Setter Property="Width" Value="30"/>
+			<Setter Property="Height" Value="30"/>
+			<Setter Property="CornerRadius" Value="15"/>
+			<Setter Property="Background" Value="#EDE7DE"/>
+			<Setter Property="Padding" Value="0"/>
+		</Style>
+
+		<Style Selector="Button.PagerBtn:pointerover ContentPresenter">
+			<Setter Property="Background" Value="#D4C9A8"/>
+		</Style>
+
+		<Style Selector="Button.PagerBtnActive">
+			<Setter Property="Width" Value="30"/>
+			<Setter Property="Height" Value="30"/>
+			<Setter Property="CornerRadius" Value="15"/>
+			<Setter Property="Background" Value="#8B6B4A"/>
+			<Setter Property="Padding" Value="0"/>
+		</Style>
+
+		<!-- ── Search box override ────────────────────────────────────── -->
+		<Style Selector="TextBox.SearchBox">
+			<Setter Property="Background" Value="#F0EBE3"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="CornerRadius" Value="10"/>
+			<Setter Property="Padding" Value="12 8"/>
+			<Setter Property="FontSize" Value="13"/>
+			<Setter Property="Width" Value="240"/>
+		</Style>
+
+		<Style Selector="TextBox.SearchBox:focus /template/ Border#PART_BorderElement">
+			<Setter Property="Background" Value="#EAE4DB"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="0"/>
+		</Style>
+
+		<Style Selector="TextBox.SearchBox:pointerover /template/ Border#PART_BorderElement">
+			<Setter Property="Background" Value="#EAE4DB"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="0"/>
+		</Style>
+
+	</UserControl.Styles>
+
+	<Grid RowDefinitions="* Auto"
+		  Background="#CC1A0F0A"
+		  Cursor="Hand">
+
+		<!-- ── Bottom sheet ── -->
+		<Border x:Name="SheetBorder"
+				Grid.Row="1"
+				Classes="Sheet"
+				MaxHeight="520">
+			<Grid RowDefinitions="Auto Auto Auto *  Auto">
+
+				<!-- ── Header ── -->
+				<Grid Grid.Row="0"
+					  ColumnDefinitions="Auto * Auto"
+					  Margin="0 0 0 18">
+
+					<!-- Icon + Title -->
+					<StackPanel Grid.Column="0"
+								Orientation="Horizontal"
+								Spacing="12"
+								VerticalAlignment="Center">
+
+						<Border Width="36" Height="36"
+								Background="#E6C8A0"
+								CornerRadius="18">
+							<Viewbox Width="18" Height="18">
+								<Path Data="M13 3C9.23 3 6.19 5.95 6 9.67L4.08 12.19C3.84 12.5 4.06 12.94 4.47 12.94H6V15.94C6 17.04 6.9 17.94 8 17.94H9V20.94H16V15.19L18.29 12.64C18.73 12.14 19 11.5 19 10.81V7C19 4.79 17.21 3 15 3H13M13 5H15C16.1 5 17 5.9 17 7V10.81C17 11.04 16.91 11.27 16.76 11.43L14 14.41V18.94H11V15.94H8V10.94H5.89L7.06 9.46C7.2 7.27 9.4 5 12 5H13Z"
+									  Fill="#8B6B4A" Stretch="Uniform"/>
+							</Viewbox>
+						</Border>
+
+						<StackPanel VerticalAlignment="Center">
+							<TextBlock Text="Activity Log"
+									   Foreground="#28282B"
+									   FontSize="20"
+									   FontWeight="SemiBold"
+									   LetterSpacing="0.4"/>
+							<TextBlock x:Name="LogCountTextBlock"
+									   Text="Loading…"
+									   Foreground="#9E8572"
+									   FontSize="11"
+									   FontStyle="Italic"/>
+						</StackPanel>
+					</StackPanel>
+
+					<!-- Search -->
+					<TextBox x:Name="SearchBox"
+							 Grid.Column="1"
+							 Classes="SearchBox"
+							 Watermark="Search activities…"
+							 HorizontalAlignment="Center"
+							 VerticalAlignment="Center"/>
+
+					<!-- Close -->
+					<Button x:Name="CloseActivityLogButton"
+							Grid.Column="2"
+							Width="32" Height="32"
+							CornerRadius="16"
+							Background="#EDE7DE"
+							Padding="0"
+							VerticalAlignment="Center">
+						<Viewbox Width="14" Height="14">
+							<Path Data="M4,4 L20,20 M20,4 L4,20"
+								  Stroke="#6D4C41"
+								  StrokeThickness="2.5"
+								  StrokeLineCap="Round"
+								  Stretch="Uniform"/>
+						</Viewbox>
+						<Button.Styles>
+							<Style Selector="Button:pointerover ContentPresenter">
+								<Setter Property="Background" Value="#D4C9A8"/>
+							</Style>
+						</Button.Styles>
+					</Button>
+				</Grid>
+
+				<!-- ── Filter chips ── -->
+				<StackPanel Grid.Row="1"
+							Orientation="Horizontal"
+							Spacing="8"
+							Margin="0 0 0 16">
+
+					<Border x:Name="ChipAll" Classes="FilterChipActive" Tag="all">
+						<TextBlock x:Name="ChipAllLabel" Classes="ChipLabelActive" Text="All"/>
+					</Border>
+
+					<Border x:Name="ChipUser" Classes="FilterChip" Tag="user">
+						<TextBlock x:Name="ChipUserLabel" Classes="ChipLabel" Text="User"/>
+					</Border>
+
+					<Border x:Name="ChipSystem" Classes="FilterChip" Tag="system">
+						<TextBlock x:Name="ChipSystemLabel" Classes="ChipLabel" Text="System"/>
+					</Border>
+
+					<Border x:Name="ChipCron" Classes="FilterChip" Tag="cron">
+						<TextBlock x:Name="ChipCronLabel" Classes="ChipLabel" Text="Cron"/>
+					</Border>
+				</StackPanel>
+
+				<!-- ── Column headers ── -->
+				<Grid Grid.Row="2"
+					  ColumnDefinitions="160 * 90"
+					  Margin="0 0 0 6">
+					<TextBlock Grid.Column="0" Classes="TableHead" Text="DATE"/>
+					<TextBlock Grid.Column="1" Classes="TableHead" Text="ACTIVITY"/>
+					<TextBlock Grid.Column="2" Classes="TableHead" Text="TYPE"/>
+				</Grid>
+
+				<!-- Header separator -->
+				<Border Grid.Row="2"
+						Height="1"
+						Background="#D4C9A8"
+						VerticalAlignment="Bottom"
+						Margin="0 0 0 0"/>
+
+				<!-- ── Rows area ── -->
+				<ScrollViewer Grid.Row="3"
+							  VerticalScrollBarVisibility="Auto"
+							  Margin="0 4 0 0">
+					<StackPanel x:Name="LogRowsPanel" Spacing="0"/>
+				</ScrollViewer>
+
+				<!-- ── Pager ── -->
+				<Grid Grid.Row="4"
+					  ColumnDefinitions="* Auto *"
+					  Margin="0 14 0 4">
+
+					<TextBlock x:Name="PagerInfoTextBlock"
+							   Grid.Column="0"
+							   Text="Page 1 of 1"
+							   Foreground="#9E8572"
+							   FontSize="12"
+							   VerticalAlignment="Center"/>
+
+					<StackPanel Grid.Column="1"
+								Orientation="Horizontal"
+								Spacing="6">
+
+						<Button x:Name="PrevPageButton"
+								Classes="PagerBtn"
+								IsEnabled="False">
+							<Viewbox Width="12" Height="12">
+								<Path Data="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"
+									  Fill="#6D4C41" Stretch="Uniform"/>
+							</Viewbox>
+						</Button>
+
+						<StackPanel x:Name="PageNumbersPanel"
+									Orientation="Horizontal"
+									Spacing="4"/>
+
+						<Button x:Name="NextPageButton"
+								Classes="PagerBtn">
+							<Viewbox Width="12" Height="12">
+								<Path Data="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"
+									  Fill="#6D4C41" Stretch="Uniform"/>
+							</Viewbox>
+						</Button>
+					</StackPanel>
+
+					<!-- Rows-per-page hint -->
+					<TextBlock Grid.Column="2"
+							   Text="20 rows / page"
+							   Foreground="#C0B09E"
+							   FontSize="11"
+							   HorizontalAlignment="Right"
+							   VerticalAlignment="Center"/>
+				</Grid>
+
+			</Grid>
+		</Border>
+	</Grid>
+
+</UserControl>

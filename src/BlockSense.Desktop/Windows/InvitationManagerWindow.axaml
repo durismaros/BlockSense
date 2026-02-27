@@ -316,7 +316,7 @@
 						   Margin="10"/>
 				
 				<!-- Invitation Items -->
-				<ScrollViewer Height="160"
+				<ScrollViewer Height="200"
 							  HorizontalScrollBarVisibility="Disabled"
 							  VerticalScrollBarVisibility="Auto">
 					

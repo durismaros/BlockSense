@@ -4,7 +4,7 @@
     {
         public static class Device
         {
-            public const string Authenticated = "device.authenticated";
+            public const string Authenticated = "device.auth.succeeded";
 
             public const string Revoked = "device.revoked";
         }
@@ -37,7 +37,7 @@
 
             public const string Deleted = "user.deleted";
 
-            public const string Recovered = "user.recovered";
+            public const string Restored = "user.restored";
 
         }
 
@@ -45,7 +45,7 @@
         {
             public const string CodeGenerated = "invitation.code.generated";
 
-            public const string CodeUsed = "invitation.code.used";
+            public const string CodeRedeemed = "invitation.code.redeemed";
         }
     }
 }

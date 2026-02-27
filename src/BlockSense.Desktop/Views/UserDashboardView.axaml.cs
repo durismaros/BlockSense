@@ -65,6 +65,10 @@ public partial class UserDashboardView : UserControl
 
         DisableTwoFactorCheckButton.Click += DisableTwoFactorCheckClick;
         DisableTwoFactorButton.Click += DisableTwoFactorClick;
+
+        ViewFullActivityLogButton.Click += OpenActivityLogClick;
+
+        ActivityLogOverlay.CloseRequested += CloseActivityLogAsync;
     }
 
     private void OnCurrentUserChanged()
@@ -414,6 +418,18 @@ public partial class UserDashboardView : UserControl
             new Bitmap(new MemoryStream(setup.QRCodeData));
 
         SetupKeyTextBlock.Text = setup.SetupKey;
+    }
+
+    private async void OpenActivityLogClick(object? sender, RoutedEventArgs e)
+    {
+        ActivityLogOverlay.IsVisible = true;
+        await Animations.FadeInAnimation.RunAsync(ActivityLogOverlay);
+    }
+
+    private async Task CloseActivityLogAsync()
+    {
+        await Animations.FadeOutAnimation.RunAsync(ActivityLogOverlay);
+        ActivityLogOverlay.IsVisible = false;
     }
 
     private static string FormatDeviceCount(int count)

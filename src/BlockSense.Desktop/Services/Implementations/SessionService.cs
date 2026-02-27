@@ -60,7 +60,7 @@ namespace BlockSense.Desktop.Services.Implementations
                 await _userService.LoadCurrentUserAsync(cancellationToken);
 
                 _logger.LogInformation("Session established");
-                await _navigationManager.NavigateToAsync<PinEntryView>();
+                await _navigationManager.NavigateToAsync<HomeView>();
 
                 return;
             }

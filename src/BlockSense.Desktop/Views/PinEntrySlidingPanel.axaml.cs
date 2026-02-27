@@ -101,9 +101,9 @@ public partial class PinEntrySlidingPanel : UserControl
                     Setters = { new Setter(TranslateTransform.YProperty, -this.Bounds.Height) }
                 }
             }
-        };
+        }.RunAsync(this);
 
-        await animation.RunAsync(this);
+        await animation;
 
         this.IsVisible = false;
     }

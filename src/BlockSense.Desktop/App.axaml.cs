@@ -32,13 +32,8 @@ namespace BlockSense.Desktop
             {
                 desktop.MainWindow = ServiceProvider.GetRequiredService<MainWindow>();
 
-                //var session = ServiceProvider.GetRequiredService<ISessionService>();
-                //await session.InitializeSessionAsync();
-
-                await ServiceProvider.GetRequiredService<NavigationManager>().NavigateToAsync<CryptoWalletView>();
-
-                var x = new LevelDbStorage(DirectoryStructure.WalletDirectory);
-                await x.PutAsync("x", "key");
+                var session = ServiceProvider.GetRequiredService<ISessionService>();
+                await session.InitializeSessionAsync();
             }
 
             base.OnFrameworkInitializationCompleted();
