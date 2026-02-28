@@ -128,8 +128,7 @@ namespace BlockSense.Backend.Services.Implementations
                 throw new NotFoundException();
             }
 
-            var expiry =
-                DateTime.UtcNow.Add(_jwtTokenConfig.Expiration);
+            var expiry = DateTime.UtcNow.Add(_jwtTokenConfig.Expiration);
 
             var tokenDescriptor = BuildTokenDescriptor(user, expiry);
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -149,8 +148,8 @@ namespace BlockSense.Backend.Services.Implementations
         {
             await TryVerifyTwoFactorAsync(userId, request.TwoFactorCode, cancellationToken);
 
-            var token =
-                await _refreshTokenRepository.GetByTokenHashAsync(request.TokenHash, cancellationToken);
+            var token = await _refreshTokenRepository
+                .GetByTokenHashAsync(request.TokenHash, cancellationToken);
 
             if (token is null || token.UserId != userId)
             {
@@ -158,6 +157,20 @@ namespace BlockSense.Backend.Services.Implementations
             }
 
             await _refreshTokenRepository.RevokeAsync(request.TokenHash, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task RevokeCurrentSessionAsync(uint userId, DeviceContext request, CancellationToken cancellationToken = default)
+        {
+            var token = await _refreshTokenRepository
+                .GetByHardwareFingerprintAsync(request.HardwareFingerprint, cancellationToken);
+
+            if (token is null || token.UserId != userId)
+            {
+                throw new NotFoundException();
+            }
+
+            await _refreshTokenRepository.RevokeAsync(token.TokenHash, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -205,7 +218,11 @@ namespace BlockSense.Backend.Services.Implementations
                     },
                     cancellationToken);
             }
-            catch (TwoFactorConfigurationException) { }
+            catch (TwoFactorConfigurationException)
+            {
+                // DO NOTHING, 2FA not enabled
+                return;
+            }
         }
     }
 }

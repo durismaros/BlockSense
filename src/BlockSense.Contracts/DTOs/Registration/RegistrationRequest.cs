@@ -12,7 +12,7 @@ namespace BlockSense.Contracts.DTOs.Registration
         /// </summary>
         /// <remarks>Must be unique, non-empty, and between 3 and 32 characters.</remarks>
         [Required(ErrorMessage = "Username is required.")]
-        [MinLength(3, ErrorMessage = "Username needs more characters.")]
+        [MinLength(4, ErrorMessage = "Username needs more characters.")]
         [MaxLength(32, ErrorMessage = "Username exceeds max length.")]
         [RegularExpression(@"^[a-zA-Z0-9_\-\.]+$", ErrorMessage = "Invalid Username format")]
         public required string Username

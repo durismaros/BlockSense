@@ -16,15 +16,18 @@ namespace BlockSense.Desktop.Services.Implementations
         private readonly ILogger<UserService> _logger;
         private readonly IApiClient _apiClient;
         private readonly ICurrentUserProvider _currentUserProvider;
+        private readonly NavigationManager _navigationManager;
 
         public UserService(
             ILogger<UserService> logger,
             IApiClient apiClient,
-            ICurrentUserProvider currentUserProvider)
+            ICurrentUserProvider currentUserProvider,
+            NavigationManager navigationManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
             _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
+            _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
         }
 
         /// <inheritdoc/>
@@ -53,7 +56,7 @@ namespace BlockSense.Desktop.Services.Implementations
             switch (response)
             {
                 case ApiResult<RegistrationResponse>.Success:
-                    HandleRegistrationSuccess();
+                    await HandleRegistrationSuccess();
                     break;
 
                 case ApiResult.Failure failure:
@@ -87,13 +90,15 @@ namespace BlockSense.Desktop.Services.Implementations
 
         #region Private Helper Methods
 
-        private void HandleRegistrationSuccess()
+        private async Task HandleRegistrationSuccess()
         {
             _logger.LogInformation("Registration successful");
 
             MainWindow.Instance.ShowNotification(
-                "Registration Successful",
+                "Registration Successful",  
                 "Your account has been created successfully.");
+
+            await _navigationManager.NavigateToAsync<AuthenticationView>();
         }
 
         private void HandleRegistrationFailure(ApiResult.Failure error)

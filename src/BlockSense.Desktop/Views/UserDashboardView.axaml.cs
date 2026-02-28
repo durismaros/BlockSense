@@ -16,6 +16,7 @@ using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BlockSense.Desktop;
@@ -100,7 +101,7 @@ public partial class UserDashboardView : UserControl
             FormatDeviceCount(_currentUserProvider.ActiveDevices.Count);
 
         TotalInvitedUsersTextBlock.Text =
-            FormatInvitationCount(_currentUserProvider.Invitations.Count);
+            FormatInvitationCount(_currentUserProvider.Invitations.Count(i => i.Status == InvitationStatus.Used));
 
         UpdateSecurityManagerCard();
 
