@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BlockSense.Desktop.Services.Implementations
 {
@@ -37,7 +38,7 @@ namespace BlockSense.Desktop.Services.Implementations
             => new ApiClient(_logger, _httpClient, _requestOptions with { AddDeviceHeaders = true });
 
         /// <inheritdoc/>
-        public Task<ApiResult> PostAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
+        public Task<ApiResult> PostAsync<TRequest, TResponse>(string requestUri, TRequest? request, CancellationToken cancellationToken)
             => SendAsync<TRequest, TResponse>(HttpMethod.Post, requestUri, request, cancellationToken);
 
         /// <inheritdoc/>
@@ -45,11 +46,11 @@ namespace BlockSense.Desktop.Services.Implementations
             => SendAsync<object, TResponse>(HttpMethod.Get, requestUri, null, cancellationToken);
 
         /// <inheritdoc/>
-        public Task<ApiResult> PutAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
+        public Task<ApiResult> PutAsync<TRequest, TResponse>(string requestUri, TRequest? request, CancellationToken cancellationToken)
             => SendAsync<TRequest, TResponse>(HttpMethod.Put, requestUri, request, cancellationToken);
 
         /// <inheritdoc/>
-        public Task<ApiResult> DeleteAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken)
+        public Task<ApiResult> DeleteAsync<TRequest, TResponse>(string requestUri, TRequest? request, CancellationToken cancellationToken)
             => SendAsync<TRequest, TResponse>(HttpMethod.Delete, requestUri, request, cancellationToken);
 
         private async Task<ApiResult> SendAsync<TRequest, TResponse>(
@@ -95,10 +96,17 @@ namespace BlockSense.Desktop.Services.Implementations
 
         private static async Task<ApiResult> ReadSuccessAsync<TResponse>(HttpResponseMessage response, CancellationToken cancellationToken)
         {
-            var data = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken)
-                ?? Activator.CreateInstance<TResponse>();
+            try
+            {
+                var data = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken)
+                    ?? throw new NullReferenceException();
 
-            return new ApiResult<TResponse>.Success(data);
+                return new ApiResult<TResponse>.Success(data);
+            }
+            catch
+            {
+                return new ApiResult<TResponse>.Success(default!);
+            }
         }
 
         private async Task<ApiResult> ReadFailureAsync(HttpResponseMessage response, string requestUri)

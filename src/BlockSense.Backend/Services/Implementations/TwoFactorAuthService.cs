@@ -147,6 +147,7 @@ namespace BlockSense.Backend.Services.Implementations
             var hashedBackupCodes = HashBackupCodes(plainCodes);
 
             totpCredential.BackupCodesList = hashedBackupCodes;
+            totpCredential.UpdatedAt = DateTime.UtcNow;
 
             await _twoFactorAuthRepository.UpdateAsync(totpCredential, cancellationToken);
 

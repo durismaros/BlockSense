@@ -4,6 +4,7 @@ using BlockSense.Contracts.DTOs.User;
 using BlockSense.Desktop.Providers.Interfaces;
 using System;
 using System.Collections.Generic;
+using static BlockSense.Contracts.Definitions.ActivityActions;
 
 namespace BlockSense.Desktop.Providers.Implementations
 {
@@ -15,7 +16,7 @@ namespace BlockSense.Desktop.Providers.Implementations
             private set;
         }
 
-        public IReadOnlyList<SessionDto> ActiveDevices
+        public IList<SessionDto> ActiveDevices
         {
             get;
             private set; 
@@ -68,6 +69,20 @@ namespace BlockSense.Desktop.Providers.Implementations
         public void SetProfile(UserSummaryDto userSummaryDto)
         {
             Profile = userSummaryDto;
+
+            _onCurrentUserChanged?.Invoke();
+        }
+
+        public void SetActiveDevices(IList<SessionDto> activeDevices)
+        {
+            ActiveDevices = activeDevices;
+
+            _onCurrentUserChanged?.Invoke();
+        }
+
+        public void SetInvitations(IReadOnlyList<InvitationDto> invitations)
+        {
+            Invitations = invitations;
 
             _onCurrentUserChanged?.Invoke();
         }

@@ -72,15 +72,15 @@ namespace BlockSense.Desktop.Services.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task EstablishSessionAsync(AuthResponse tokens, CancellationToken cancellationToken = default)
+        public async Task EstablishSessionAsync(AuthResponse response, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Establishing user session");
 
-            await _refreshTokenProvider.SaveAsync(tokens.RefreshToken, cancellationToken);
-            _accessTokenProvider.Set(tokens.AccessToken);
+            await _refreshTokenProvider.SaveAsync(response.RefreshToken, cancellationToken);
+            _accessTokenProvider.Set(response.AccessToken);
 
             await _userService.LoadCurrentUserAsync(cancellationToken);
-            ScheduleTokenRefresh(tokens.AccessToken.ExpiresAt);
+            ScheduleTokenRefresh(response.AccessToken.ExpiresAt);
 
             MainWindow.Instance.ShowNotification("Welcome Back", "Signed in successfully.");
             _logger.LogInformation("Session established");

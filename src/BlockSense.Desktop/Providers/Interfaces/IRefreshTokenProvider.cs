@@ -6,8 +6,8 @@ namespace BlockSense.Desktop.Providers.Interfaces
 {
     public interface IRefreshTokenProvider
     {
-        Task<string> GetAsync(CancellationToken cancellationToken);
-        Task SaveAsync(RefreshTokenDto refreshTokenm, CancellationToken cancellationToken);
+        Task<string> GetAsync(CancellationToken cancellationToken = default);
+        Task SaveAsync(RefreshTokenDto refreshTokenm, CancellationToken cancellationToken = default);
         void Clear();
         bool Exists();
     }

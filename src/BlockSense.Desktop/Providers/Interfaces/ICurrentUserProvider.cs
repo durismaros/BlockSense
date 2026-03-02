@@ -13,7 +13,7 @@ namespace BlockSense.Desktop.Providers.Interfaces
             get;
         }
 
-        IReadOnlyList<SessionDto> ActiveDevices
+        IList<SessionDto> ActiveDevices
         {
             get;
         }
@@ -44,6 +44,18 @@ namespace BlockSense.Desktop.Providers.Interfaces
         /// </summary>
         /// <param name="userSummaryDto"></param>
         void SetProfile(UserSummaryDto userSummaryDto);
+
+        /// <summary>
+        /// Sets the user active devices from backend response.
+        /// </summary>
+        /// <param name="userSummaryDto"></param>
+        void SetActiveDevices(IList<SessionDto> activeDevices);
+
+        /// <summary>
+        /// Sets the user invitations from backend response.
+        /// </summary>
+        /// <param name="userSummaryDto"></param>
+        void SetInvitations(IReadOnlyList<InvitationDto> invitations);
 
         /// <summary>
         /// 

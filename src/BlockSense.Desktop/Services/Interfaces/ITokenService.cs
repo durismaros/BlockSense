@@ -7,7 +7,7 @@ namespace BlockSense.Desktop.Services.Interfaces
 {
     public interface ITokenService
     {
-        Task<bool> RevokeAsync(SessionRevokeRequest request, CancellationToken cancellationToken = default);
-        Task<bool> RevokeAllAsync(TwoFactorVerificationRequest request, CancellationToken cancellationToken = default);
+        Task RevokeAsync(SessionRevokeRequest request, CancellationToken cancellationToken = default);
+        Task RevokeAllAsync(RevokeAllSessionsRequest request, CancellationToken cancellationToken = default);
     }
 }

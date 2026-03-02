@@ -37,7 +37,6 @@ namespace BlockSense.Backend.Services.Interfaces
         Task<AccessTokenDto> CreateAccessTokenAsync(uint userId, CancellationToken cancellationToken = default);
 
         Task RevokeSessionAsync(uint userId, SessionRevokeRequest request, CancellationToken cancellationToken = default);
-        Task RevokeCurrentSessionAsync(uint userId, DeviceContext request, CancellationToken cancellationToken = default);
-        Task RevokeAllSessionsAsync(uint userId, TwoFactorVerificationRequest request, CancellationToken cancellationToken = default);
+        Task RevokeAllSessionsAsync(uint userId, RevokeAllSessionsRequest request, CancellationToken cancellationToken = default);
     }
 }

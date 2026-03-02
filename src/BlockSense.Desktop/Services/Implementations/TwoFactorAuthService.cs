@@ -5,6 +5,7 @@ using BlockSense.Contracts.DTOs.User;
 using BlockSense.Desktop.Models.Api;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
+using Org.BouncyCastle.Cms;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -62,7 +63,7 @@ namespace BlockSense.Desktop.Services.Implementations
 
                 var response = await _apiClient
                     .AddBearerToken()
-                    .PostAsync<TwoFactorSetupRequest, UserSummaryDto>(
+                    .PostAsync<TwoFactorSetupRequest, object>(
                         request: request,
                         requestUri: "/api/users/me/2fa",
                         cancellationToken: cancellationToken);
@@ -70,7 +71,7 @@ namespace BlockSense.Desktop.Services.Implementations
                 switch (response)
                 {
                     case ApiResult<UserSummaryDto>.Success success:
-                        _currentUserProvider.SetProfile(success.Data);
+                        _currentUserProvider.SetProfile(_currentUserProvider.Profile with { TwoFactorEnabled = true} );
 
                         await _twoFactorSlidingPanel.ShowVerifiedState();
                         return;
@@ -94,7 +95,7 @@ namespace BlockSense.Desktop.Services.Implementations
 
                 var response = await _apiClient
                     .AddBearerToken()
-                    .DeleteAsync<TwoFactorVerificationRequest, UserSummaryDto>(
+                    .DeleteAsync<TwoFactorVerificationRequest, object>(
                         request: request,
                         requestUri: "/api/users/me/2fa",
                         cancellationToken: cancellationToken);
@@ -102,7 +103,7 @@ namespace BlockSense.Desktop.Services.Implementations
                 switch (response)
                 {
                     case ApiResult<UserSummaryDto>.Success success:
-                        _currentUserProvider.SetProfile(success.Data);
+                        _currentUserProvider.SetProfile(_currentUserProvider.Profile with { TwoFactorEnabled = true });
                         _currentUserProvider.SetTwoFactorBackupCodes(null);
 
                         await _twoFactorSlidingPanel.ShowVerifiedState();

@@ -14,7 +14,6 @@ using BlockSense.Contracts.DTOs.Token;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Mysqlx.Expr;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -160,21 +159,7 @@ namespace BlockSense.Backend.Services.Implementations
         }
 
         /// <inheritdoc/>
-        public async Task RevokeCurrentSessionAsync(uint userId, DeviceContext request, CancellationToken cancellationToken = default)
-        {
-            var token = await _refreshTokenRepository
-                .GetByHardwareFingerprintAsync(request.HardwareFingerprint, cancellationToken);
-
-            if (token is null || token.UserId != userId)
-            {
-                throw new NotFoundException();
-            }
-
-            await _refreshTokenRepository.RevokeAsync(token.TokenHash, cancellationToken);
-        }
-
-        /// <inheritdoc/>
-        public async Task RevokeAllSessionsAsync(uint userId, TwoFactorVerificationRequest request, CancellationToken cancellationToken = default)
+        public async Task RevokeAllSessionsAsync(uint userId, RevokeAllSessionsRequest request, CancellationToken cancellationToken = default)
         {
             await TryVerifyTwoFactorAsync(userId, request.TwoFactorCode, cancellationToken);
 
@@ -222,6 +207,15 @@ namespace BlockSense.Backend.Services.Implementations
             {
                 // DO NOTHING, 2FA not enabled
                 return;
+            }
+            catch (TwoFactorInvalidCodeException)
+            {
+                if (string.IsNullOrWhiteSpace(code))
+                {
+                    throw new TwoFactorRequiredException();
+                }
+
+                throw;
             }
         }
     }

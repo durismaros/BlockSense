@@ -1,10 +1,10 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:local="clr-namespace:BlockSense.Desktop"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="BlockSense.Desktop.UserDashboardView">
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:local="clr-namespace:BlockSense.Desktop"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 x:Class="BlockSense.Desktop.UserDashboardView">
 
 	<UserControl.Styles>
 
@@ -815,14 +815,25 @@
 								<StackPanel Name="DevicesPanel" Spacing="10"/>
 							</ScrollViewer>
 
-							<Button Classes="DefaultDarkBrown" Width="240" Height="38" Margin="0 20 0 0" HorizontalAlignment="Center">
-								<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-									<Viewbox Width="15" Height="15" VerticalAlignment="Center">
-										<Path Data="M14.08,15.59L16.67,13H7V11H16.67L14.08,8.41L15.5,7L20.5,12L15.5,17L14.08,15.59M19,3A2,2 0 0,1 21,5V9.67L19,7.67V5H5V19H19V16.33L21,14.33V19A2,2 0 0,1 19,21H5C3,21 3,20.1 3,19V5C3,3.89 3.89,3 5,3H19Z" Fill="#E6C8A0" Stretch="Uniform"/>
-									</Viewbox>
-									<TextBlock Text="Log Out All Known Devices" FontSize="12" FontWeight="Medium" Foreground="#E6C8A0" VerticalAlignment="Center"/>
-								</StackPanel>
-							</Button>
+							<Panel>
+								<Button x:Name="LogOutAllDevicesButton" Classes="DefaultDarkBrown" Width="240" Height="38" Margin="0 20 0 0" HorizontalAlignment="Center">
+									<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+										<Viewbox Width="15" Height="15" VerticalAlignment="Center">
+											<Path Data="M14.08,15.59L16.67,13H7V11H16.67L14.08,8.41L15.5,7L20.5,12L15.5,17L14.08,15.59M19,3A2,2 0 0,1 21,5V9.67L19,7.67V5H5V19H19V16.33L21,14.33V19A2,2 0 0,1 19,21H5C3,21 3,20.1 3,19V5C3,3.89 3.89,3 5,3H19Z" Fill="#E6C8A0" Stretch="Uniform"/>
+										</Viewbox>
+										<TextBlock Text="Log Out All Known Devices" FontSize="12" FontWeight="Medium" Foreground="#E6C8A0" VerticalAlignment="Center"/>
+									</StackPanel>
+								</Button>
+
+								<Button x:Name="ConfirmLogOutAllDevicesButton" Classes="DefaultDarkBrown" Width="240" Height="38" Margin="0 20 0 0" IsVisible="False" ZIndex="1">
+									<TextBlock HorizontalAlignment="Center"
+											   VerticalAlignment="Center"
+											   Text="Confirm"
+											   Foreground="#E6C8A0"
+											   FontSize="12"
+											   FontWeight="Medium"/>
+								</Button>
+							</Panel>
 
 						</StackPanel>
 					</Border>

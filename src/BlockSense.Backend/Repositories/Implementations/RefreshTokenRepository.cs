@@ -1,7 +1,6 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Entities;
 using BlockSense.Backend.Repositories.Interfaces;
-using BlockSense.Contracts.DTOs.Session;
 using Dapper;
 using MySql.Data.MySqlClient;
 

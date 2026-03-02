@@ -42,12 +42,6 @@ namespace BlockSense.Desktop.Utilities.ApiHandling.HeaderHandlers
                 request.Headers.TryAddWithoutValidation(
                     DeviceHeaders.NetworkFingerprint,
                     deviceContextProvider.NetworkFingerprint);
-
-
-                Console.WriteLine(deviceContextProvider.DeviceIdentifier);
-                Console.WriteLine(deviceContextProvider.DeviceOs);
-                Console.WriteLine(deviceContextProvider.HardwareFingerprint);
-                Console.WriteLine(deviceContextProvider.NetworkFingerprint);
             }
 
             return await base.SendAsync(request, cancellationToken);

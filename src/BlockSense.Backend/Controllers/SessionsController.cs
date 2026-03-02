@@ -1,6 +1,4 @@
-﻿using BlockSense.Backend.Attributes;
-using BlockSense.Backend.Exceptions.Authentication;
-using BlockSense.Backend.Models.Device;
+﻿using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.DTOs.Session;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
@@ -25,7 +23,7 @@ namespace BlockSense.Backend.Controllers
 
         [HttpDelete("me/sessions")]
         [Authorize]
-        public async Task<IActionResult> Delete(SessionRevokeRequest request, CancellationToken cancellationToken)
+        public async Task<IActionResult> Delete([FromBody] SessionRevokeRequest request, CancellationToken cancellationToken)
         {
             if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
                 throw new AuthenticationRequiredException();
@@ -35,21 +33,9 @@ namespace BlockSense.Backend.Controllers
             return NoContent();
         }
 
-        [HttpDelete("me/sessions/current")]
-        [Authorize]
-        public async Task<IActionResult> Delete([FromDeviceContext] DeviceContext deviceContext, CancellationToken cancellationToken)
-        {
-            if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
-                throw new AuthenticationRequiredException();
-
-            await _tokenService.RevokeCurrentSessionAsync(userId, deviceContext, cancellationToken);
-
-            return NoContent();
-        }
-
         [HttpDelete("me/sessions/all")]
         [Authorize]
-        public async Task<IActionResult> DeleteAll(TwoFactorVerificationRequest request, CancellationToken cancellationToken)
+        public async Task<IActionResult> DeleteAll([FromBody] RevokeAllSessionsRequest request, CancellationToken cancellationToken)
         {
             if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
                 throw new AuthenticationRequiredException();

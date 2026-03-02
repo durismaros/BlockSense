@@ -4,12 +4,15 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using BlockSense.Contracts.Cryptography.Hashing;
 using BlockSense.Contracts.Definitions;
 using BlockSense.Contracts.DTOs.Session;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Setup;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
 using BlockSense.Contracts.Enums;
+using BlockSense.Desktop.Providers.Implementations;
 using BlockSense.Desktop.Providers.Interfaces;
+using BlockSense.Desktop.Services.Implementations;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.Formatting;
 using BlockSense.Desktop.Utilities.UIComponents;
@@ -17,6 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BlockSense.Desktop;
@@ -25,7 +29,9 @@ public partial class UserDashboardView : UserControl
 {
     private readonly ITwoFactorAuthService _twoFactorAuthService;
     private readonly ITokenService _tokenService;
+    private readonly ISessionService _sessionService;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IRefreshTokenProvider _refreshTokenProvider;
     private readonly NavigationManager _navigationManager;
     private readonly InvitationManagerWindow _invitationManagerWindow;
 
@@ -37,8 +43,14 @@ public partial class UserDashboardView : UserControl
         _tokenService = App.ServiceProvider.GetRequiredService<ITokenService>()
             ?? throw new ArgumentNullException(nameof(ITokenService));
 
+        _sessionService = App.ServiceProvider.GetRequiredService<ISessionService>()
+            ?? throw new ArgumentNullException(nameof(ISessionService));
+
         _currentUserProvider = App.ServiceProvider.GetRequiredService<ICurrentUserProvider>()
             ?? throw new ArgumentNullException(nameof(ICurrentUserProvider));
+
+        _refreshTokenProvider = App.ServiceProvider.GetRequiredService<IRefreshTokenProvider>()
+            ?? throw new ArgumentNullException(nameof(IRefreshTokenProvider));
 
         _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
             ?? throw new ArgumentNullException(nameof(NavigationManager));
@@ -66,6 +78,9 @@ public partial class UserDashboardView : UserControl
 
         DisableTwoFactorCheckButton.Click += DisableTwoFactorCheckClick;
         DisableTwoFactorButton.Click += DisableTwoFactorClick;
+
+        LogOutAllDevicesButton.Click += LogOutAllDevicesClick;
+        ConfirmLogOutAllDevicesButton.Click += ConfirmLogOutAllDevicesClick;
 
         ViewFullActivityLogButton.Click += OpenActivityLogClick;
 
@@ -205,20 +220,6 @@ public partial class UserDashboardView : UserControl
         await Animations.FadeInAnimation.RunAsync(DisableTwoFactorButton);
     }
 
-    private async void ConfirmRevokeDeviceClick(string tokenHash)
-    {
-        //_twoFactorSlidingPanel.ShowPanel(async code =>
-        //{
-        //    var request = new SessionRevokeRequest
-        //    {
-        //        TokenHash = tokenHash,
-        //        TwoFactorCode = code
-        //    };
-
-        //    bool success = await _tokenService.RevokeAsync(request);
-        //});
-    }
-
     private async void EnableTwoFactorClick(object? sender, RoutedEventArgs e)
     {
         var setupKey = SetupKeyTextBlock.Text ?? string.Empty;
@@ -229,16 +230,6 @@ public partial class UserDashboardView : UserControl
     private async void DisableTwoFactorClick(object? sender, RoutedEventArgs e)
     {
         await _twoFactorAuthService.DisableAsync();
-    }
-
-    private void UpdateActiveDevices()
-    {
-        DevicesPanel.Children.Clear();
-
-        foreach (var device in _currentUserProvider.ActiveDevices)
-        {
-            DevicesPanel.Children.Add(CreateDeviceCard(device));
-        }
     }
 
     private async void UpdateSecurityManagerCard()
@@ -288,19 +279,34 @@ public partial class UserDashboardView : UserControl
         }
     }
 
-    private Control CreateDeviceCard(SessionDto device) 
+    private async void UpdateActiveDevices()
     {
-        // Left content: IP and dates
+        DevicesPanel.Children.Clear();
+
+        var tokenHash =
+            Sha256Hasher.ComputeBase64(
+                Convert.FromBase64String(await _refreshTokenProvider.GetAsync()));
+
+        foreach (var device in _currentUserProvider.ActiveDevices)
+            DevicesPanel.Children.Add(CreateDeviceCard(device, device.TokenHash == tokenHash));
+    }
+
+    private Control CreateDeviceCard(SessionDto device, bool isCurrentDevice)
+    {
+        var confirmButton = isCurrentDevice
+            ? CreateConfirmButton(async () => await _sessionService.SignOutAsync())
+            : CreateConfirmButton(async () => await ConfirmRevokeAsync(device.TokenHash));
+
+        var defaultButton = isCurrentDevice
+            ? CreateDefaultButton("Sign Out", confirmButton)
+            : CreateDefaultButton("Revoke", confirmButton);
+
         var leftStack = new StackPanel
         {
             Spacing = 10,
             Children =
             {
-                new ContentControl
-                {
-                    Classes = { "deviceIp" },
-                    Tag = device.IpAddress
-                }
+                new ContentControl { Classes = { "deviceIp" },       Tag = device.IpAddress }
             }
         };
 
@@ -326,24 +332,47 @@ public partial class UserDashboardView : UserControl
 
         datesGrid.Children.Add(issuedAt);
         datesGrid.Children.Add(expiresAt);
-
         leftStack.Children.Add(datesGrid);
 
-        // Main grid
+        if (isCurrentDevice)
+        {
+            leftStack.Children.Insert(
+                0,
+                new TextBlock
+                {
+                    Text = "This Device",
+                    Classes = { "deviceLabel" },
+                    Foreground = new SolidColorBrush(Color.Parse("#4CAF50"))
+                });
+        }
+
         var grid = new Grid
         {
             ColumnDefinitions = new ColumnDefinitions("* Auto")
         };
 
-        grid.Children.Add(leftStack);
+        Grid.SetColumn(defaultButton, 1);
+        Grid.SetColumn(confirmButton, 1);
 
-        // Revoke button
-        var revokeButton = new Button
+        grid.Children.Add(leftStack);
+        grid.Children.Add(defaultButton);
+        grid.Children.Add(confirmButton);
+
+        return new Border
+        {
+            Classes = { "deviceCard" },
+            Child = grid
+        };
+    }
+
+    private Button CreateDefaultButton(string label, Button confirmButton)
+    {
+        var button = new Button
         {
             Classes = { "DefaultDisable" },
             Content = new TextBlock
             {
-                Text = "Revoke",
+                Text = label,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 Foreground = new SolidColorBrush(Color.Parse("#FF5733")),
@@ -351,10 +380,24 @@ public partial class UserDashboardView : UserControl
                 FontWeight = FontWeight.Medium
             }
         };
-        Grid.SetColumn(revokeButton, 1);
 
-        // Confirm button (initially hidden)
-        var confirmButton = new Button
+        button.Click += async (s, e) =>
+        {
+            confirmButton.IsVisible = true;
+            await Animations.FadeInAnimation.RunAsync(confirmButton);
+
+            await Task.Delay(3000);
+
+            await Animations.FadeOutAnimation.RunAsync(confirmButton);
+            confirmButton.IsVisible = false;
+        };
+
+        return button;
+    }
+
+    private Button CreateConfirmButton(Func<Task> onClick)
+    {
+        var button = new Button
         {
             Classes = { "ConfirmDisable" },
             IsVisible = false,
@@ -369,34 +412,37 @@ public partial class UserDashboardView : UserControl
                 FontWeight = FontWeight.Medium
             }
         };
-        Grid.SetColumn(confirmButton, 1);
 
-        revokeButton.Click += async (s, e) =>
+        button.Click += async (_, _) => await onClick();
+        return button;
+    }
+
+    private async Task ConfirmRevokeAsync(string tokenHash)
+    {
+        var request = new SessionRevokeRequest
         {
-            confirmButton.IsVisible = true;
-            await Animations.FadeInAnimation.RunAsync(confirmButton);
-
-            await Task.Delay(3000);
-
-            await Animations.FadeOutAnimation.RunAsync(confirmButton);
-            confirmButton.IsVisible = false;
+            TokenHash = tokenHash
         };
 
+        await _tokenService.RevokeAsync(
+            request,
+            CancellationToken.None);
+    }
 
-        confirmButton.Click += (s, e) =>
-        {
-            ConfirmRevokeDeviceClick(device.TokenHash);
-        };
+    private async void LogOutAllDevicesClick(object? sender, RoutedEventArgs e)
+    {
+        ConfirmLogOutAllDevicesButton.IsVisible = true;
+        await Animations.FadeInAnimation.RunAsync(ConfirmLogOutAllDevicesButton);
 
-        grid.Children.Add(revokeButton);
-        grid.Children.Add(confirmButton);
+        await Task.Delay(3000);
 
-        // Root border
-        return new Border
-        {
-            Classes = { "deviceCard" },
-            Child = grid
-        };
+        await Animations.FadeOutAnimation.RunAsync(ConfirmLogOutAllDevicesButton);
+        ConfirmLogOutAllDevicesButton.IsVisible = false;
+    }
+
+    private async void ConfirmLogOutAllDevicesClick(object? sender, RoutedEventArgs e)
+    {
+        await _tokenService.RevokeAllAsync(new RevokeAllSessionsRequest(), cancellationToken: CancellationToken.None);
     }
 
     private void ShowTwoFactorEnabledState()

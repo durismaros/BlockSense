@@ -46,9 +46,7 @@ namespace BlockSense.Backend.Controllers
 
             await _twoFactorAuthService.CompleteSetupAsync(userId, request, cancellationToken);
 
-            var userSummary = await _userService.GetUserSummaryAsync(userId, cancellationToken);
-
-            return Ok(userSummary);
+            return NoContent();
         }
 
         [HttpDelete]
@@ -60,9 +58,7 @@ namespace BlockSense.Backend.Controllers
 
             await _twoFactorAuthService.DisableAsync(userId, request, cancellationToken);
 
-            var userSummary = await _userService.GetUserSummaryAsync(userId, cancellationToken);
-
-            return Ok(userSummary);
+            return NoContent();
         }
 
         [HttpGet("backup")]
