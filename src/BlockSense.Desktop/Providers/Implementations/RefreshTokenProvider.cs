@@ -2,7 +2,6 @@
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Utilities.ApiHandling.Exceptions;
 using BlockSense.Desktop.Utilities.FileManagement;
-using Humanizer;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;

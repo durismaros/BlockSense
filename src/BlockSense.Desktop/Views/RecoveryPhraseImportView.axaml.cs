@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Styling;
+using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -16,11 +17,15 @@ namespace BlockSense.Desktop;
 
 public partial class RecoveryPhraseImportView : UserControl
 {
+    private readonly IWalletProvider _walletProvider;
     private readonly NavigationManager _navigationManager;
     private readonly List<TextBox> _wordInputs = new();
 
     public RecoveryPhraseImportView()
     {
+        _walletProvider = App.ServiceProvider.GetRequiredService<IWalletProvider>()
+            ?? throw new ArgumentNullException(nameof(IWalletProvider));
+
         _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
             ?? throw new ArgumentNullException(nameof(NavigationManager));
 
@@ -38,6 +43,8 @@ public partial class RecoveryPhraseImportView : UserControl
 
     private async void ToPinEntryViewClick(object? sender, RoutedEventArgs e)
     {
+        _walletProvider.SetCreationContext(string.Join(" ", GetMnemonicWords()), isImport: true);
+
         await _navigationManager.NavigateToAsync<PinEntryView>();
     }
 

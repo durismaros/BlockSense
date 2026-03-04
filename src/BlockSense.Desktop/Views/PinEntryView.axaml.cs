@@ -6,6 +6,9 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
+using BlockSense.Desktop.Models.Wallet;
+using BlockSense.Desktop.Providers.Interfaces;
+using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -17,6 +20,8 @@ public partial class PinEntryView : UserControl
 {
     private const int PIN_LENGTH = 6;
 
+    private readonly IWalletProvider _walletProvider;
+    private readonly IWalletService _walletService;
     private readonly NavigationManager _navigationManager;
     private readonly PinEntrySlidingPanel _pinEntrySlidingPanel;
 
@@ -36,6 +41,12 @@ public partial class PinEntryView : UserControl
 
     public PinEntryView()
     {
+        _walletProvider = App.ServiceProvider.GetRequiredService<IWalletProvider>()
+            ?? throw new ArgumentNullException(nameof(IWalletProvider));
+
+        _walletService = App.ServiceProvider.GetRequiredService<IWalletService>()
+            ?? throw new ArgumentNullException(nameof(IWalletService));
+
         _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
             ?? throw new ArgumentNullException(nameof(NavigationManager));
 
@@ -58,20 +69,44 @@ public partial class PinEntryView : UserControl
 
     private async void VerifyPinClick(object? sender, RoutedEventArgs e)
     {
-        if (_currentPin.Length != PIN_LENGTH)
-        {
-            return;
-        }
+        if (_currentPin.Length != PIN_LENGTH) return;
 
-        _pinEntrySlidingPanel.ShowPanel(async pin =>
+        _pinEntrySlidingPanel.ShowPanel(async confirmPin =>
         {
-            if (_currentPin == pin)
+            if (confirmPin != _currentPin)
             {
+                await _pinEntrySlidingPanel.ShowErrorState();
                 return;
             }
 
-            await _pinEntrySlidingPanel.ShowErrorState();
+            // PINs match — save wallet and proceed
+            await SaveWalletAndContinueAsync(_currentPin);
         });
+    }
+
+    private async Task SaveWalletAndContinueAsync(string pin)
+    {
+        try
+        {
+            var pendingContext = _walletProvider.CreationContext
+                ?? throw new ArgumentNullException(nameof(WalletCreationContext));
+
+            var wallet = pendingContext.IsImport
+                ? await _walletService.ImportWalletAsync(pendingContext.Mnemonic, pin)
+                : await _walletService.CreateWalletAsync(pendingContext.Mnemonic, pin);
+
+            _walletProvider.SetWallet(wallet);
+            _walletProvider.ClearCreationContext();
+
+            _pinEntrySlidingPanel.HidePanel();
+
+            await _navigationManager.NavigateToAsync<CryptoWalletView>();
+        }
+        catch
+        {
+            _pinEntrySlidingPanel.HidePanel();
+            await _navigationManager.NavigateToAsync<WalletSelectionView>();
+        }
     }
 
     private async void OnKeyDown(object? sender, KeyEventArgs e)

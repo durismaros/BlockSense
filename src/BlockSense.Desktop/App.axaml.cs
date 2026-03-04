@@ -69,6 +69,7 @@ namespace BlockSense.Desktop
             services.AddSingleton<IRefreshTokenProvider, RefreshTokenProvider>();
             services.AddSingleton<IAccessTokenProvider, AccessTokenProvider>();
             services.AddSingleton<ICurrentUserProvider, CurrentUserProvider>();
+            services.AddSingleton<IWalletProvider, WalletProvider>();
 
             // --- Infrastructure ---
             services.AddSingleton<NavigationManager>();
@@ -79,6 +80,7 @@ namespace BlockSense.Desktop
             services.AddScoped<ISessionService, SessionService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<ITwoFactorAuthService, TwoFactorAuthService>();
+            services.AddScoped<IWalletService, WalletService>();
 
             // --- Views ---
             services.AddSingleton<WelcomeView>();

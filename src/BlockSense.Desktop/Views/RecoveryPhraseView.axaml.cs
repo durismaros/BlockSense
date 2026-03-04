@@ -5,6 +5,8 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
+using BlockSense.Desktop.Providers.Interfaces;
+using BlockSense.Desktop.Services.Implementations;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -13,15 +15,22 @@ namespace BlockSense.Desktop;
 
 public partial class RecoveryPhraseView : UserControl
 {
+    private readonly IWalletProvider _walletProvider;
     private readonly NavigationManager _navigationManager;
+    private readonly string _mnemonic;
 
     public RecoveryPhraseView()
     {
+        _walletProvider = App.ServiceProvider.GetRequiredService<IWalletProvider>()
+            ?? throw new ArgumentNullException(nameof(IWalletProvider));
+
         _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
             ?? throw new ArgumentNullException(nameof(NavigationManager));
 
+        _mnemonic = WalletService.GenerateMnemonic();
+
         InitializeComponent();
-        CreateBorders();
+        CreateBorders(_mnemonic);
 
         AttachedToVisualTree += OnAttachedToVisualTree;
         DetachedFromVisualTree += OnDetachedFromVisualTree;
@@ -34,22 +43,19 @@ public partial class RecoveryPhraseView : UserControl
 
     private async void ToPinEntryViewClick(object? sender, RoutedEventArgs e)
     {
+        _walletProvider.SetCreationContext(_mnemonic, isImport: false);
+
         await _navigationManager.NavigateToAsync<PinEntryView>();
     }
 
-    private void CreateBorders()
+    private void CreateBorders(string mnemonic)
     {
         PhraseGrid.Children.Clear();
-
-        string[] array = new string[]
-        {
-            "word1", "word1", "word1", "word1", "word1", "word1", "word1", "word1", "word1", "word1", "word1", "word1"
-        };
 
         int wordIndex = 0;
 
         // Loop through the text items and create a Border for each
-        foreach (var word in array)
+        foreach (var word in mnemonic.Split(' '))
         {
             wordIndex++;
 
