@@ -173,7 +173,7 @@ public partial class UserDashboardView : UserControl
     {
         var backupCodes = _currentUserProvider.TwoFactorBackupCodes;
 
-        if (backupCodes is null || backupCodes.Count is 0)
+        if (backupCodes is null || backupCodes.Count() is 0)
             return;
 
         if (TopLevel.GetTopLevel(this)?.StorageProvider is not { } storageProvider)
@@ -451,7 +451,7 @@ public partial class UserDashboardView : UserControl
         TwoFactorDisabledContent.IsVisible = false;
 
         DownloadBackupCodesButton.IsVisible =
-            _currentUserProvider.TwoFactorBackupCodes?.Count > 0;
+            _currentUserProvider.TwoFactorBackupCodes?.Count() > 0;
     }
 
     private async Task ShowTwoFactorDisabledStateAsync()

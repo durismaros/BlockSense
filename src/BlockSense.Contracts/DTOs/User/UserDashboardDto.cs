@@ -20,7 +20,7 @@ namespace BlockSense.Contracts.DTOs.User
         /// <summary>
         /// List of currently active devices/sessions for the user.
         /// </summary>
-        public required IList<SessionDto> ActiveTokens
+        public required IEnumerable<SessionDto> ActiveTokens
         {
             get;
             init;
@@ -29,7 +29,7 @@ namespace BlockSense.Contracts.DTOs.User
         /// <summary>
         /// List of invitation codes created by the user.
         /// </summary>
-        public required IReadOnlyList<InvitationDto> UserInvitations
+        public required IEnumerable<InvitationDto> UserInvitations
         {
             get;
             init;

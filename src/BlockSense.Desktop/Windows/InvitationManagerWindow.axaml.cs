@@ -37,18 +37,18 @@ public partial class InvitationManagerWindow : Window
         MainWindow.Instance.Closing += (s, e) => this.Close();
     }
 
-    private void DisplayInvites(IReadOnlyList<InvitationDto> invites)
+    private void DisplayInvites(IEnumerable<InvitationDto> invites)
     {
         InviteCodesGrid.Children.Clear();
         InviteCodesGrid.RowDefinitions.Clear();
         _currentExpandedBorder = null;
 
-        if (invites == null || invites.Count == 0)
+        if (invites == null || invites.Count() == 0)
             return;
 
-        for (int row = 0; row < invites.Count; row++)
+        for (int row = 0; row < invites.Count(); row++)
         {
-            var invite = invites[row];
+            var invite = invites.ElementAt(row);
 
             InviteCodesGrid.RowDefinitions.Add(new RowDefinition(new GridLength(40)));
 

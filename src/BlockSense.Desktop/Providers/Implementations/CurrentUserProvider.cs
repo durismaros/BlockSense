@@ -4,6 +4,7 @@ using BlockSense.Contracts.DTOs.User;
 using BlockSense.Desktop.Providers.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using static BlockSense.Contracts.Definitions.ActivityActions;
 
 namespace BlockSense.Desktop.Providers.Implementations
@@ -22,13 +23,13 @@ namespace BlockSense.Desktop.Providers.Implementations
             private set; 
         }
 
-        public IReadOnlyList<InvitationDto> Invitations
+        public IEnumerable<InvitationDto> Invitations
         {
             get;
             private set;
         }
 
-        public IReadOnlyList<string>? TwoFactorBackupCodes
+        public IEnumerable<string>? TwoFactorBackupCodes
         {
             get;
             private set;
@@ -60,7 +61,7 @@ namespace BlockSense.Desktop.Providers.Implementations
         public void Set(UserDashboardDto userDashboardDto)
         {
             Profile = userDashboardDto.Profile;
-            ActiveDevices = userDashboardDto.ActiveTokens;
+            ActiveDevices = userDashboardDto.ActiveTokens.ToList();
             Invitations = userDashboardDto.UserInvitations;
 
             _onCurrentUserChanged?.Invoke();

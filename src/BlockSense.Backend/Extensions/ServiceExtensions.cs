@@ -39,6 +39,12 @@ namespace BlockSense.Backend.Extensions
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
 
+            services
+                .AddOptions<CryptoConfig>()
+                .Bind(configuration.GetSection("CryptoConfig"))
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+
 
             return services;
         }
@@ -61,10 +67,14 @@ namespace BlockSense.Backend.Extensions
 
         public static IServiceCollection ConfigureApplicationServices(this IServiceCollection services)
         {
+            services.AddHttpClient<CryptoApiClient>();
+
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<ITwoFactorAuthService, TwoFactorAuthService>();
+            services.AddKeyedScoped<ICryptoService, BitcoinService>("bitcoin");
+            services.AddKeyedScoped<ICryptoService, EthereumService>("ethereum");
 
 
             return services;

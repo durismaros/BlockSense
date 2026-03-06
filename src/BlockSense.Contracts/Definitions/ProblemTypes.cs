@@ -37,7 +37,9 @@
         {
             public const string BadRequest = "GENERIC_BAD_REQUEST";
 
-            public const string InternalServerError = "GENERIC_INTERNAL_ERROR";
+            public const string InternalServerError = "INTERNAL_SERVER_ERROR";
+
+            public const string ExternalServiceError = "EXTERNAL_SERVICE_ERROR";
 
             public const string NotFound = "GENERIC_NOT_FOUND";
 

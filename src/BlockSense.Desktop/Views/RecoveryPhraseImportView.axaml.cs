@@ -9,6 +9,7 @@ using Avalonia.Styling;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
+using NBitcoin;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,9 @@ public partial class RecoveryPhraseImportView : UserControl
     private readonly IWalletProvider _walletProvider;
     private readonly NavigationManager _navigationManager;
     private readonly List<TextBox> _wordInputs = new();
+
+    private static readonly HashSet<string> _bip39Words =
+        Wordlist.English.GetWords().ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     public RecoveryPhraseImportView()
     {
@@ -104,7 +108,6 @@ public partial class RecoveryPhraseImportView : UserControl
             stackPanel.Children.Add(mnemonicIndex);
 
             PhraseGrid.Children.Add(stackPanel);
-
             _wordInputs.Add(mnemonicTextBox);
         }
     }
@@ -139,6 +142,7 @@ public partial class RecoveryPhraseImportView : UserControl
         SlidePanel.RenderTransform = new TranslateTransform(0, SlidePanel.Height);
 
         HomeButton.Click += ToWalletSelectionViewClick;
+        ContinueButton.Click += (s, e) => AnimateSlidePanel(true);
         ContentGrid.PointerPressed += (s, ev) => AnimateSlidePanel(false);
         SubmitButton.Click += ToPinEntryViewClick;
     }
@@ -146,13 +150,11 @@ public partial class RecoveryPhraseImportView : UserControl
     private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
     {
         HomeButton.Click -= ToWalletSelectionViewClick;
+        ContinueButton.Click -= (s, e) => AnimateSlidePanel(true);
         ContentGrid.PointerPressed -= (s, ev) => AnimateSlidePanel(false);
         SubmitButton.Click -= ToPinEntryViewClick;
     }
 
-    /// <summary>
-    /// Returns the entered mnemonic words in order.
-    /// </summary>
     public IReadOnlyList<string> GetMnemonicWords()
         => _wordInputs.Select(tb => tb.Text?.Trim() ?? string.Empty).ToList();
 }

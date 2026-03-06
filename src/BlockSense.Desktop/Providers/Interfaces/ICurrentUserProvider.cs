@@ -18,12 +18,12 @@ namespace BlockSense.Desktop.Providers.Interfaces
             get;
         }
 
-        IReadOnlyList<InvitationDto> Invitations
+        IEnumerable<InvitationDto> Invitations
         {
             get;
         }
 
-        IReadOnlyList<string>? TwoFactorBackupCodes
+        IEnumerable<string>? TwoFactorBackupCodes
         {
             get;
         }
