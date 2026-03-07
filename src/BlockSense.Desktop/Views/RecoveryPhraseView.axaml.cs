@@ -15,14 +15,14 @@ namespace BlockSense.Desktop;
 
 public partial class RecoveryPhraseView : UserControl
 {
-    private readonly IWalletProvider _walletProvider;
+    private readonly ICurrentWalletProvider _walletProvider;
     private readonly NavigationManager _navigationManager;
     private readonly string _mnemonic;
 
     public RecoveryPhraseView()
     {
-        _walletProvider = App.ServiceProvider.GetRequiredService<IWalletProvider>()
-            ?? throw new ArgumentNullException(nameof(IWalletProvider));
+        _walletProvider = App.ServiceProvider.GetRequiredService<ICurrentWalletProvider>()
+            ?? throw new ArgumentNullException(nameof(ICurrentWalletProvider));
 
         _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
             ?? throw new ArgumentNullException(nameof(NavigationManager));

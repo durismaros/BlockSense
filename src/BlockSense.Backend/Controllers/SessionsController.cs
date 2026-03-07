@@ -1,7 +1,6 @@
 ﻿using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.DTOs.Session;
-using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;

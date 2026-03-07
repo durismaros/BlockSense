@@ -55,13 +55,13 @@ namespace BlockSense.Desktop.Providers.Interfaces
         /// Sets the user invitations from backend response.
         /// </summary>
         /// <param name="userSummaryDto"></param>
-        void SetInvitations(IReadOnlyList<InvitationDto> invitations);
+        void SetInvitations(IEnumerable<InvitationDto> invitations);
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="backupCodes"></param>
-        void SetTwoFactorBackupCodes(IReadOnlyList<string>? backupCodes);
+        void SetTwoFactorBackupCodes(IEnumerable<string>? backupCodes);
 
         /// <summary>
         /// Clears all stored user data (e.g. on logout).

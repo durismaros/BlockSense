@@ -32,27 +32,6 @@ namespace BlockSense.Backend.Controllers
                 response);
         }
 
-        /*
-        [HttpGet]
-        [Authorize(Policy = "AdministratorPolicy")]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
-        [HttpGet("{id:int}")]
-        [Authorize(Policy = "AdministratorPolicy")]
-        public async Task<IActionResult> GetById([FromRoute] int userId, CancellationToken cancellationToken)
-        {
-            if (userId <= 0)
-                throw new UserNotFoundException();
-
-            var response = await _userService.GetUserSummaryAsync((uint)userId, cancellationToken);
-
-            return Ok(response);
-        }
-        */
-
         [HttpGet("me")]
         [Authorize]
         public async Task<IActionResult> GetCurrent(CancellationToken cancellationToken)

@@ -94,7 +94,7 @@ namespace BlockSense.Desktop.Services.Implementations
             }
         }
 
-        private static async Task<ApiResult> ReadSuccessAsync<TResponse>(HttpResponseMessage response, CancellationToken cancellationToken)
+        private async Task<ApiResult> ReadSuccessAsync<TResponse>(HttpResponseMessage response, CancellationToken cancellationToken)
         {
             try
             {
@@ -112,7 +112,7 @@ namespace BlockSense.Desktop.Services.Implementations
         private async Task<ApiResult> ReadFailureAsync(HttpResponseMessage response, string requestUri)
         {
             ProblemDetails problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>()
-                ?? DefaultProblem(response, requestUri);
+                ?? throw new NullReferenceException();
 
             if (problemDetails.Type is StandardizedCodes.Authentication.AuthenticationRequired)
             {
@@ -129,14 +129,14 @@ namespace BlockSense.Desktop.Services.Implementations
             return new ApiResult.Failure(problemDetails);
         }
 
-        private static ProblemDetails DefaultProblem(HttpResponseMessage response, string uri) => new()
+        private static ApiResult.Failure DefaultError(string uri) => new(new ProblemDetails
         {
             Type = StandardizedCodes.Client.UnknownError,
             Title = "Unknown Error",
-            Status = (int)response.StatusCode,
+            Status = 520,
             Detail = "The server returned an unexpected response.",
             Instance = uri
-        };
+        });
 
         private static ApiResult.Failure NetworkError(string uri) => new(new ProblemDetails
         {

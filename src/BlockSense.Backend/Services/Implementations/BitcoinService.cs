@@ -1,5 +1,6 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Data.Configurations;
+using BlockSense.Backend.Exceptions.Generic;
 using BlockSense.Backend.Models.Crypto;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.DTOs.Transaction;
@@ -23,10 +24,10 @@ namespace BlockSense.Backend.Services.Implementations
                 ?? throw new ArgumentNullException(nameof(cryptoConfig));
         }
 
-        public async Task<WalletBalanceResponse> GetBalanceAsync(string address)
+        public async Task<WalletBalanceResponse> GetBalanceAsync(string address, CancellationToken cancellationToken = default)
         {
             var path = $"addresses-latest/utxo/bitcoin/{_cryptoConfig.Bitcoin.Network}/{address}/balance";
-            var response = await _cryptoApiClient.GetAsync<BalanceEnvelope>(path);
+            var response = await _cryptoApiClient.GetAsync<BalanceEnvelope>(path, cancellationToken);
             var balance = response.Data.Item.ConfirmedBalance.Amount;
 
             return new WalletBalanceResponse
@@ -37,14 +38,29 @@ namespace BlockSense.Backend.Services.Implementations
             };
         }
 
-        public async Task<TransactionListResponse> GetTransactionsAsync(string address)
+        public async Task<NextNonceResponse> GetNextAvailableNonce(string address, CancellationToken cancellationToken = default)
         {
-            var path = $"addresses-latest/utxo/bitcoin/{_cryptoConfig.Bitcoin.Network}/{address}/transactions" +
-                         $"?limit=5";
+            throw new NotFoundException();
+        }
 
-            var response = await _cryptoApiClient.GetAsync<TxListEnvelope>(path);
-            var data = response.Data;
-            var transactions = data.Items.Select(t => MapTransaction(t, address));
+        public async Task<TransactionListResponse> GetTransactionsAsync(string address, CancellationToken cancellationToken = default)
+        {
+            var confirmedPath = $"addresses-latest/utxo/bitcoin/{_cryptoConfig.Bitcoin.Network}/{address}/transactions" +
+                $"?limit=5";
+
+            var unconfirmedPath = $"addresses-latest/utxo/bitcoin/{_cryptoConfig.Bitcoin.Network}/{address}/unconfirmed-transactions" +
+                $"?limit=5";
+
+            var confirmedResponse = await _cryptoApiClient.GetAsync<BtcTxListEnvelope>(confirmedPath, cancellationToken);
+            var confirmedTxs = confirmedResponse.Data.Item;
+
+            var unconfirmedResponse = await _cryptoApiClient.GetAsync<BtcTxListEnvelope>(unconfirmedPath, cancellationToken);
+            var unconfirmedTxs = unconfirmedResponse.Data.Item;
+
+            var transactions = confirmedTxs
+                .Select(tx => MapTransaction(tx, address, TransactionStatus.Confirmed))
+                .Concat(unconfirmedTxs.Select(tx => MapTransaction(tx, address, TransactionStatus.Pending)))
+                .OrderByDescending(tx => tx.Timestamp);
 
             return new TransactionListResponse
             {
@@ -54,7 +70,7 @@ namespace BlockSense.Backend.Services.Implementations
             };
         }
 
-        public async Task<BroadcastTransactionResponse> BroadcastAsync(BroadcastTransactionRequest request)
+        public async Task<BroadcastTransactionResponse> BroadcastAsync(BroadcastTransactionRequest request, CancellationToken cancellationToken = default)
         {
             var path = $"transactions/utxo/bitcoin/{_cryptoConfig.Bitcoin.Network}/broadcast";
             var body = new
@@ -68,7 +84,7 @@ namespace BlockSense.Backend.Services.Implementations
                 }
             };
 
-            var response = await _cryptoApiClient.PostAsync<BroadcastEnvelope>(path, body);
+            var response = await _cryptoApiClient.PostAsync<BroadcastEnvelope>(path, body, cancellationToken);
 
             return new BroadcastTransactionResponse
             {
@@ -76,7 +92,7 @@ namespace BlockSense.Backend.Services.Implementations
             };
         }
 
-        private static TransactionDto MapTransaction(TxItem tx, string wallet)
+        private static TransactionDto MapTransaction(BtcTxItem tx, string wallet, TransactionStatus status)
         {
             var received = tx.Recipients?
                 .Where(r => r.Address == wallet)
@@ -96,7 +112,7 @@ namespace BlockSense.Backend.Services.Implementations
                 ToAddress = tx.Recipients?.FirstOrDefault()?.Address ?? "Unknown",
                 Amount = amount,
                 Currency = "BTC",
-                Status = TransactionStatus.Confirmed,
+                Status = status,
                 Timestamp = DateTimeOffset.FromUnixTimeSeconds(tx.Timestamp).UtcDateTime
             };
         }
@@ -106,33 +122,5 @@ namespace BlockSense.Backend.Services.Implementations
                 System.Globalization.NumberStyles.Any,
                 System.Globalization.CultureInfo.InvariantCulture,
                 out var result) ? result : 0m;
-
-
-
-        private sealed class TxListEnvelope
-        {
-            public required TxListData Data { get; set; }
-        }
-
-        private sealed class TxListData
-        {
-            public required List<TxItem> Items { get; set; }
-        }
-
-        private sealed class TxItem
-        {
-            public required string Id { get; set; }
-            public required string Hash { get; set; }
-            public required AmountValue Fee { get; set; }
-            public required List<TxParty> Senders { get; set; }
-            public required List<TxParty> Recipients { get; set; }
-            public required long Timestamp { get; set; }
-        }
-
-        private sealed class TxParty
-        {
-            public required string Address { get; set; }
-            public required AmountValue Value { get; set; }
-        }
     }
 }

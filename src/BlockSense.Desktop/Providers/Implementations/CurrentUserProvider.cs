@@ -81,14 +81,14 @@ namespace BlockSense.Desktop.Providers.Implementations
             _onCurrentUserChanged?.Invoke();
         }
 
-        public void SetInvitations(IReadOnlyList<InvitationDto> invitations)
+        public void SetInvitations(IEnumerable<InvitationDto> invitations)
         {
             Invitations = invitations;
 
             _onCurrentUserChanged?.Invoke();
         }
 
-        public void SetTwoFactorBackupCodes(IReadOnlyList<string>? backupCodes)
+        public void SetTwoFactorBackupCodes(IEnumerable<string>? backupCodes)
         {
             TwoFactorBackupCodes = backupCodes;
 

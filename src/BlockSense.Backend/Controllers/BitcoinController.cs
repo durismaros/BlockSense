@@ -19,7 +19,7 @@ namespace BlockSense.Backend.Controllers
 
         [HttpGet("{address}/balance")]
         [Authorize]
-        public async Task<IActionResult> GetBalance(string address)
+        public async Task<IActionResult> GetBalance(string address, CancellationToken cancellationToken)
         {
             var balance = await _bitcoinService.GetBalanceAsync(address);
             return Ok(balance);
@@ -27,7 +27,7 @@ namespace BlockSense.Backend.Controllers
 
         [HttpGet("{address}/transactions")]
         [Authorize]
-        public async Task<IActionResult> GetTransactions(string address)
+        public async Task<IActionResult> GetTransactions(string address, CancellationToken cancellationToken)
         {
             var result = await _bitcoinService.GetTransactionsAsync(address);
             return Ok(result);
@@ -35,7 +35,7 @@ namespace BlockSense.Backend.Controllers
 
         [HttpPost("broadcast")]
         [Authorize]
-        public async Task<IActionResult> Broadcast([FromBody] BroadcastTransactionRequest request)
+        public async Task<IActionResult> Broadcast([FromBody] BroadcastTransactionRequest request, CancellationToken cancellationToken)
         {
             var result = await _bitcoinService.BroadcastAsync(request);
             return Ok(result);

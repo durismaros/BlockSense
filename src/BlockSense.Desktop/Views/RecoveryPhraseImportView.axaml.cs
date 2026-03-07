@@ -18,7 +18,6 @@ namespace BlockSense.Desktop;
 
 public partial class RecoveryPhraseImportView : UserControl
 {
-    private readonly IWalletProvider _walletProvider;
     private readonly NavigationManager _navigationManager;
     private readonly List<TextBox> _wordInputs = new();
 
@@ -27,9 +26,6 @@ public partial class RecoveryPhraseImportView : UserControl
 
     public RecoveryPhraseImportView()
     {
-        _walletProvider = App.ServiceProvider.GetRequiredService<IWalletProvider>()
-            ?? throw new ArgumentNullException(nameof(IWalletProvider));
-
         _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
             ?? throw new ArgumentNullException(nameof(NavigationManager));
 

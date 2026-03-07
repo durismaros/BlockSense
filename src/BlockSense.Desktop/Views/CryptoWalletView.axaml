@@ -5,457 +5,489 @@
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 x:Class="BlockSense.Desktop.CryptoWalletView">
 
-	<UserControl.Styles>
-		<!-- Wallet Card Style -->
-		<Style Selector="Border.WalletCard">
-			<Setter Property="Background" Value="#D4CCBD"/>
-			<Setter Property="CornerRadius" Value="16"/>
-			<Setter Property="Padding" Value="20"/>
-			<Setter Property="BoxShadow" Value="0 4 12 0 #50000000"/>
-			<Setter Property="Transitions">
-				<Transitions>
-					<TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
-				</Transitions>
-			</Setter>
-		</Style>
+	<UserControl.Resources>
+        <!-- Palette -->
+        <SolidColorBrush x:Key="SurfaceBrush"    Color="#161618"/>
+        <SolidColorBrush x:Key="Surface2Brush"   Color="#1C1C1F"/>
+        <SolidColorBrush x:Key="BorderBrush"     Color="#2A2A2E"/>
+        <SolidColorBrush x:Key="TextPrimary"     Color="#F0EDE8"/>
+        <SolidColorBrush x:Key="TextSecondary"   Color="#7A7870"/>
+        <SolidColorBrush x:Key="TextMuted"       Color="#4A4845"/>
+        <SolidColorBrush x:Key="AccentBtc"       Color="#F7931A"/>
+        <SolidColorBrush x:Key="AccentEth"       Color="#8B8BFF"/>
+        <SolidColorBrush x:Key="GreenBrush"      Color="#3D9970"/>
+        <SolidColorBrush x:Key="RedBrush"        Color="#C0392B"/>
+    </UserControl.Resources>
 
-		<Style Selector="Border.WalletCard:pointerover">
-			<Setter Property="RenderTransform" Value="scale(1.02)"/>
-		</Style>
+    <UserControl.Styles>
 
-		<!-- Transaction Item Style -->
-		<Style Selector="Border.TransactionItem">
-			<Setter Property="Background" Value="#D4CCBD"/>
-			<Setter Property="CornerRadius" Value="12"/>
-			<Setter Property="Padding" Value="16"/>
-			<Setter Property="Margin" Value="0 0 0 8"/>
-			<Setter Property="BorderThickness" Value="1"/>
-			<Setter Property="BorderBrush" Value="#B8AF9E"/>
-			<Setter Property="Transitions">
-				<Transitions>
-					<BrushTransition Property="Background" Duration="0:0:0.2"/>
-				</Transitions>
-			</Setter>
-		</Style>
+        <!-- ── Scroll bars ── -->
+        <Style Selector="ScrollViewer">
+            <Setter Property="AllowAutoHide" Value="True"/>
+        </Style>
 
-		<Style Selector="Border.TransactionItem:pointerover">
-			<Setter Property="Background" Value="#DED8CA"/>
-		</Style>
+        <!-- ── Ghost button (back, copy, per-card refresh) ── -->
+        <Style Selector="Button.Ghost">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.Ghost:pointerover ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Opacity" Value="0.7"/>
+        </Style>
+        <Style Selector="Button.Ghost:pressed ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Opacity" Value="0.5"/>
+        </Style>
 
-		<!-- Tab Button Style -->
-		<Style Selector="Button.TabButton">
-			<Setter Property="Width" Value="100"/>
-			<Setter Property="Height" Value="36"/>
-			<Setter Property="Background" Value="Transparent"/>
-			<Setter Property="BorderThickness" Value="0 0 0 2"/>
-			<Setter Property="BorderBrush" Value="Transparent"/>
-			<Setter Property="CornerRadius" Value="0"/>
-			<Setter Property="Transitions">
-				<Transitions>
-					<BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
-				</Transitions>
-			</Setter>
-		</Style>
+        <!-- ── Icon button (32×32 circle, subtle) ── -->
+        <Style Selector="Button.IconBtn">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Background" Value="#1C1C1F"/>
+            <Setter Property="BorderBrush" Value="#2A2A2E"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.IconBtn:pointerover ContentPresenter">
+            <Setter Property="Background" Value="#252528"/>
+        </Style>
+        <Style Selector="Button.IconBtn:pressed ContentPresenter">
+            <Setter Property="Background" Value="#0E0E0F"/>
+        </Style>
 
-		<Style Selector="Button.TabButton:pointerover ContentPresenter">
-			<Setter Property="Background" Value="Transparent"/>
-		</Style>
+        <!-- ── Primary action button ── -->
+        <Style Selector="Button.Primary">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Background" Value="#1C1C1F"/>
+            <Setter Property="BorderBrush" Value="#2A2A2E"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="20 0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.Primary:pointerover ContentPresenter">
+            <Setter Property="Background" Value="#252528"/>
+        </Style>
+        <Style Selector="Button.Primary:pointerover">
+            <Setter Property="BorderBrush" Value="#3A3A3E"/>
+        </Style>
+        <Style Selector="Button.Primary:pressed ContentPresenter">
+            <Setter Property="Background" Value="#0E0E0F"/>
+        </Style>
 
-		<Style Selector="Button.TabButton.Active">
-			<Setter Property="BorderBrush" Value="#6D5D47"/>
-		</Style>
+        <!-- ── Tab pill ── -->
+        <Style Selector="Button.Tab">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14 0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.Tab:pointerover ContentPresenter">
+            <Setter Property="Background" Value="#1C1C1F"/>
+        </Style>
+        <Style Selector="Button.Tab.Active">
+            <Setter Property="Background" Value="#1C1C1F"/>
+            <Setter Property="BorderBrush" Value="#2A2A2E"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="Button.Tab.Active:pointerover ContentPresenter">
+            <Setter Property="Background" Value="#252528"/>
+        </Style>
+        <Style Selector="Button.Tab ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
 
-		<!-- Action Button Style -->
-		<Style Selector="Button.ActionButton">
-			<Setter Property="Width" Value="140"/>
-			<Setter Property="Height" Value="44"/>
-			<Setter Property="Background" Value="#8B7A61"/>
-			<Setter Property="CornerRadius" Value="12"/>
-			<Setter Property="Margin" Value="8"/>
-			<Setter Property="Transitions">
-				<Transitions>
-					<BrushTransition Property="Background" Duration="0:0:0.2"/>
-				</Transitions>
-			</Setter>
-		</Style>
+        <!-- ── Transaction row ── -->
+        <Style Selector="Border.TxRow">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="0 14"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.12"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.TxRow:pointerover">
+            <Setter Property="Background" Value="#161618"/>
+        </Style>
 
-		<Style Selector="Button.ActionButton:pointerover ContentPresenter">
-			<Setter Property="Background" Value="#76674F"/>
-		</Style>
+    </UserControl.Styles>
 
-		<!-- Copy Button Style -->
-		<Style Selector="Button.CopyButton">
-			<Setter Property="Width" Value="32"/>
-			<Setter Property="Height" Value="32"/>
-			<Setter Property="Background" Value="#C4BBAA"/>
-			<Setter Property="CornerRadius" Value="8"/>
-			<Setter Property="Padding" Value="0"/>
-			<Setter Property="Transitions">
-				<Transitions>
-					<BrushTransition Property="Background" Duration="0:0:0.2"/>
-				</Transitions>
-			</Setter>
-		</Style>
+    <Grid RowDefinitions="Auto *">
 
-		<Style Selector="Button.CopyButton:pointerover ContentPresenter">
-			<Setter Property="Background" Value="#B3A999"/>
-		</Style>
-	</UserControl.Styles>
+        <!-- ══════════════════════════════════════════
+             TOP BAR
+             ══════════════════════════════════════════ -->
+        <Border Grid.Row="0"
+                Background="#0E0E0F"
+                BorderBrush="#1E1E21"
+                BorderThickness="0 0 0 1"
+                Padding="24 18">
+            <Grid ColumnDefinitions="Auto * Auto">
 
-	<Panel>
+                <!-- Back -->
+                <Button x:Name="BackButton"
+                        Grid.Column="0"
+                        Classes="Ghost"
+                        VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Viewbox Width="16" Height="16">
+                            <Path Data="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18Z"
+                                  Fill="#7A7870" Stretch="Uniform"/>
+                        </Viewbox>
+                        <TextBlock Text="Back"
+                                   Foreground="#7A7870"
+                                   FontSize="13"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
 
-		<!-- Back Button -->
-		<Button x:Name="BackButton"
-				Width="44"
-				Height="44"
-				HorizontalAlignment="Left"
-				VerticalAlignment="Top"
-				Background="Transparent"
-				CornerRadius="22"
-				Margin="16 32 0 0">
+                <!-- Title -->
+                <StackPanel Grid.Column="1"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="2">
+                    <TextBlock Text="Portfolio"
+                               Foreground="#F0EDE8"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center"
+                               LetterSpacing="1.5"/>
+                    <TextBlock x:Name="LastRefreshedText"
+                               Text=""
+                               Foreground="#4A4845"
+                               FontSize="11"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
 
-			<Viewbox Width="20"
-					 Height="20"
-					 HorizontalAlignment="Center"
-					 VerticalAlignment="Center">
-				<Path Data="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"
-					  Fill="#28282B"
-					  Stretch="Uniform"/>
-			</Viewbox>
+                <!-- Send / Receive -->
+                <StackPanel Grid.Column="2"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            VerticalAlignment="Center">
+                    <Button x:Name="ReceiveButton" Classes="Primary">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Viewbox Width="13" Height="13">
+                                <Path Data="M19 12L20.41 13.41L13.5 20.34V3H11.5V20.34L4.59 13.41L3.18 14.82L12 23.64L20.82 14.82Z"
+                                      Fill="#7A7870" Stretch="Uniform"/>
+                            </Viewbox>
+                            <TextBlock Text="Receive"
+                                       Foreground="#A0A09A"
+                                       FontSize="12"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="SendButton" Classes="Primary">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Viewbox Width="13" Height="13">
+                                <Path Data="M2 21L23 12L2 3V10L17 12L2 14V21Z"
+                                      Fill="#F7931A" Stretch="Uniform"/>
+                            </Viewbox>
+                            <TextBlock Text="Send"
+                                       Foreground="#F7931A"
+                                       FontSize="12"
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
 
-			<Button.Styles>
-				<Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
-					<Setter Property="Background" Value="Transparent"/>
-					<Setter Property="RenderTransform" Value="scale(1.1)" />
-				</Style>
-			</Button.Styles>
-		</Button>
+        <!-- ══════════════════════════════════════════
+             MAIN SCROLL AREA
+             ══════════════════════════════════════════ -->
+        <ScrollViewer Grid.Row="1"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24 28 24 40" Spacing="28">
 
-		<!-- Header -->
-		<StackPanel Margin="72 24 0 0">
-			<TextBlock Text="Crypto Wallet"
-					   Foreground="#2B2621"
-					   FontSize="28"
-					   FontWeight="SemiBold"/>
+                <!-- ── Wallet Cards ── -->
+                <Grid ColumnDefinitions="* 12 *">
 
-			<TextBlock Text="Manage your digital assets securely"
-					   Foreground="#3E3832"
-					   FontSize="14"
-					   FontStyle="Italic"/>
-		</StackPanel>
+                    <!-- Bitcoin Card -->
+                    <Border Grid.Column="0"
+                            Background="#161618"
+                            CornerRadius="14"
+                            BorderBrush="#2A2A2E"
+                            BorderThickness="1"
+                            ClipToBounds="True">
+                        <Grid RowDefinitions="3 *">
 
-		<!-- Main Content -->
-		<ScrollViewer HorizontalAlignment="Stretch"
-					  VerticalAlignment="Stretch"
-					  Margin="20 100 20 20">
+                            <!-- Accent stripe -->
+                            <Border Grid.Row="0" Background="#F7931A" CornerRadius="14 14 0 0"/>
 
-			<StackPanel Spacing="24">
+                            <StackPanel Grid.Row="1" Spacing="0" Margin="20 18 20 20">
 
-				<!-- Wallet Cards Section -->
-				<StackPanel Orientation="Horizontal"
-							Spacing="16"
-							HorizontalAlignment="Center">
+                                <!-- Card header -->
+                                <Grid ColumnDefinitions="* Auto" Margin="0 0 0 18">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                        <Svg Width="22" Height="22" Path="/Assets/Icons/bitcoin.svg"/>
+                                        <StackPanel Spacing="1" VerticalAlignment="Center">
+                                            <TextBlock Text="Bitcoin"
+                                                       Foreground="#F0EDE8"
+                                                       FontSize="14"
+                                                       FontWeight="SemiBold"/>
+                                            <TextBlock Text="BTC"
+                                                       Foreground="#4A4845"
+                                                       FontSize="11"
+                                                       LetterSpacing="1"/>
+                                        </StackPanel>
+                                    </StackPanel>
 
-					<!-- Bitcoin Wallet Card -->
-					<Border Classes="WalletCard"
-							Width="340">
+                                    <!-- Per-card refresh -->
+                                    <Button x:Name="RefreshBtcButton"
+                                            Grid.Column="1"
+                                            Classes="IconBtn"
+                                            ToolTip.Tip="Refresh Bitcoin">
+                                        <Viewbox Width="14" Height="14">
+                                            <Path Data="M17.65 6.35C16.2 4.9 14.21 4 12 4C7.58 4 4.01 7.58 4.01 12C4.01 16.42 7.58 20 12 20C15.73 20 18.84 17.45 19.73 14H17.65C16.83 16.33 14.61 18 12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C13.66 6 15.14 6.69 16.22 7.78L13 11H20V4L17.65 6.35Z"
+                                                  Fill="#7A7870" Stretch="Uniform"/>
+                                        </Viewbox>
+                                    </Button>
+                                </Grid>
 
-						<StackPanel Spacing="12">
-							<!-- Header with Icon -->
-							<StackPanel Orientation="Horizontal"
-										Spacing="12">
+                                <!-- Balance -->
+                                <TextBlock Text="Balance"
+                                           Foreground="#4A4845"
+                                           FontSize="10"
+                                           LetterSpacing="2"
+                                           Margin="0 0 0 4"/>
+                                <TextBlock x:Name="BtcBalanceText"
+                                           Text="—"
+                                           Foreground="#F0EDE8"
+                                           FontSize="26"
+                                           FontWeight="Light"
+                                           LetterSpacing="-0.5"/>
+                                <TextBlock x:Name="BtcUsdValueText"
+                                           Text=""
+                                           Foreground="#7A7870"
+                                           FontSize="13"
+                                           Margin="0 2 0 0"/>
 
-								<!-- Bitcoin Icon -->
-								<Svg Width="40"
-									 Height="40"
-									 Path="/Assets/Icons/bitcoin.svg"/>
+                                <!-- Divider -->
+                                <Border Height="1"
+                                        Background="#1E1E21"
+                                        Margin="0 16"/>
 
-								<StackPanel>
-									<TextBlock Text="Bitcoin"
-											   Foreground="#2B2621"
-											   FontSize="18"
-											   FontWeight="SemiBold"/>
-									<TextBlock Text="BTC"
-											   Foreground="#6B5E4D"
-											   FontSize="12"/>
-								</StackPanel>
-							</StackPanel>
+                                <!-- Address -->
+                                <TextBlock Text="ADDRESS"
+                                           Foreground="#4A4845"
+                                           FontSize="9"
+                                           LetterSpacing="2"
+                                           Margin="0 0 0 6"/>
+                                <Grid ColumnDefinitions="* Auto">
+                                    <TextBlock x:Name="BtcAddressText"
+                                               Grid.Column="0"
+                                               Foreground="#7A7870"
+                                               FontSize="10"
+                                               FontFamily="Consolas"
+                                               TextWrapping="NoWrap"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center"/>
+                                    <Button x:Name="CopyBtcAddressButton"
+                                            Grid.Column="1"
+                                            Classes="IconBtn"
+                                            Margin="8 0 0 0"
+                                            ToolTip.Tip="Copy address">
+                                        <Viewbox Width="13" Height="13">
+                                            <Path Data="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"
+                                                  Fill="#7A7870" Stretch="Uniform"/>
+                                        </Viewbox>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
 
-							<!-- Balance -->
-							<StackPanel Spacing="4"
-										Margin="0 8 0 0">
-								<TextBlock Text="Balance"
-										   Foreground="#6B5E4D"
-										   FontSize="12"
-										   FontWeight="Medium"/>
-								<TextBlock x:Name="BtcBalanceText"
-										   Text="0.00000000 BTC"
-										   Foreground="#2B2621"
-										   FontSize="24"
-										   FontWeight="SemiBold"/>
-								<TextBlock x:Name="BtcUsdValueText"
-										   Text="≈ $0.00 USD"
-										   Foreground="#6B5E4D"
-										   FontSize="14"/>
-							</StackPanel>
+                    <!-- Ethereum Card -->
+                    <Border Grid.Column="2"
+                            Background="#161618"
+                            CornerRadius="14"
+                            BorderBrush="#2A2A2E"
+                            BorderThickness="1"
+                            ClipToBounds="True">
+                        <Grid RowDefinitions="3 *">
 
-							<!-- Address Section -->
-							<StackPanel Spacing="6"
-										Margin="0 12 0 0">
-								<TextBlock Text="Wallet Address"
-										   Foreground="#6B5E4D"
-										   FontSize="12"
-										   FontWeight="Medium"/>
-								<Panel>
-									<Border Background="#C4BBAA"
-											CornerRadius="8"
-											Padding="8 0">
-										<TextBlock x:Name="BtcAddressText"
-												   HorizontalAlignment="Left"
-												   VerticalAlignment="Center"
-												   Text="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
-												   Foreground="#2B2621"
-												   FontSize="11"
-												   FontFamily="Consolas"
-												   TextWrapping="Wrap"/>
-									</Border>
-									<Button x:Name="CopyBtcAddressButton"
-											Classes="CopyButton"
-											HorizontalAlignment="Right"
-											VerticalAlignment="Center">
-										<Viewbox Width="16" Height="16">
-											<Path Data="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"
-												  Fill="#4A3F30"
-												  Stretch="Uniform"/>
-										</Viewbox>
-									</Button>
-								</Panel>
-							</StackPanel>
-						</StackPanel>
-					</Border>
+                            <!-- Accent stripe -->
+                            <Border Grid.Row="0" Background="#8B8BFF" CornerRadius="14 14 0 0"/>
 
-					<!-- Ethereum Wallet Card -->
-					<Border Classes="WalletCard"
-							Width="340">
-						<StackPanel Spacing="12">
+                            <StackPanel Grid.Row="1" Spacing="0" Margin="20 18 20 20">
 
-							<!-- Header with Icon -->
-							<StackPanel Orientation="Horizontal"
-										Spacing="12">
+                                <!-- Card header -->
+                                <Grid ColumnDefinitions="* Auto" Margin="0 0 0 18">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                        <Svg Width="22" Height="22" Path="/Assets/Icons/ethereum.svg"/>
+                                        <StackPanel Spacing="1" VerticalAlignment="Center">
+                                            <TextBlock Text="Ethereum"
+                                                       Foreground="#F0EDE8"
+                                                       FontSize="14"
+                                                       FontWeight="SemiBold"/>
+                                            <TextBlock Text="ETH"
+                                                       Foreground="#4A4845"
+                                                       FontSize="11"
+                                                       LetterSpacing="1"/>
+                                        </StackPanel>
+                                    </StackPanel>
 
-								<!-- Ethereum Icon -->
-								<Svg Width="40"
-									 Height="40"
-									 Path="/Assets/Icons/ethereum.svg"/>
+                                    <!-- Per-card refresh -->
+                                    <Button x:Name="RefreshEthButton"
+                                            Grid.Column="1"
+                                            Classes="IconBtn"
+                                            ToolTip.Tip="Refresh Ethereum">
+                                        <Viewbox Width="14" Height="14">
+                                            <Path Data="M17.65 6.35C16.2 4.9 14.21 4 12 4C7.58 4 4.01 7.58 4.01 12C4.01 16.42 7.58 20 12 20C15.73 20 18.84 17.45 19.73 14H17.65C16.83 16.33 14.61 18 12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C13.66 6 15.14 6.69 16.22 7.78L13 11H20V4L17.65 6.35Z"
+                                                  Fill="#7A7870" Stretch="Uniform"/>
+                                        </Viewbox>
+                                    </Button>
+                                </Grid>
 
-								<StackPanel>
-									<TextBlock Text="Ethereum"
-											   Foreground="#2B2621"
-											   FontSize="18"
-											   FontWeight="SemiBold"/>
-									<TextBlock Text="ETH"
-											   Foreground="#6B5E4D"
-											   FontSize="12"/>
-								</StackPanel>
-							</StackPanel>
+                                <!-- Balance -->
+                                <TextBlock Text="Balance"
+                                           Foreground="#4A4845"
+                                           FontSize="10"
+                                           LetterSpacing="2"
+                                           Margin="0 0 0 4"/>
+                                <TextBlock x:Name="EthBalanceText"
+                                           Text="—"
+                                           Foreground="#F0EDE8"
+                                           FontSize="26"
+                                           FontWeight="Light"
+                                           LetterSpacing="-0.5"/>
+                                <TextBlock x:Name="EthUsdValueText"
+                                           Text=""
+                                           Foreground="#7A7870"
+                                           FontSize="13"
+                                           Margin="0 2 0 0"/>
 
-							<!-- Balance -->
-							<StackPanel Spacing="4"
-										Margin="0 8 0 0">
-								<TextBlock Text="Balance"
-										   Foreground="#6B5E4D"
-										   FontSize="12"
-										   FontWeight="Medium"/>
-								<TextBlock x:Name="EthBalanceText"
-										   Text="0.00000000 ETH"
-										   Foreground="#2B2621"
-										   FontSize="24"
-										   FontWeight="SemiBold"/>
-								<TextBlock x:Name="EthUsdValueText"
-										   Text="≈ $0.00 USD"
-										   Foreground="#6B5E4D"
-										   FontSize="14"/>
-							</StackPanel>
+                                <!-- Divider -->
+                                <Border Height="1"
+                                        Background="#1E1E21"
+                                        Margin="0 16"/>
 
-							<!-- Address Section -->
-							<StackPanel Spacing="6"
-										Margin="0 12 0 0">
-								<TextBlock Text="Wallet Address"
-										   Foreground="#6B5E4D"
-										   FontSize="12"
-										   FontWeight="Medium"/>
-								<Panel>
-									<Border Background="#C4BBAA"
-											CornerRadius="8"
-											Padding="8 0">
-										<TextBlock x:Name="EthAddressText"
-												   HorizontalAlignment="Left"
-												   VerticalAlignment="Center"
-												   Text="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
-												   Foreground="#2B2621"
-												   FontSize="11"
-												   FontFamily="Consolas"
-												   TextWrapping="Wrap"/>
-									</Border>
-									<Button x:Name="CopyEthAddressButton"
-											Classes="CopyButton"
-											HorizontalAlignment="Right"
-											VerticalAlignment="Center">
-										<Viewbox Width="16" Height="16">
-											<Path Data="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"
-												  Fill="#4A3F30"
-												  Stretch="Uniform"/>
-										</Viewbox>
-									</Button>
-								</Panel>
-							</StackPanel>
-						</StackPanel>
-					</Border>
-				</StackPanel>
+                                <!-- Address -->
+                                <TextBlock Text="ADDRESS"
+                                           Foreground="#4A4845"
+                                           FontSize="9"
+                                           LetterSpacing="2"
+                                           Margin="0 0 0 6"/>
+                                <Grid ColumnDefinitions="* Auto">
+                                    <TextBlock x:Name="EthAddressText"
+                                               Grid.Column="0"
+                                               Foreground="#7A7870"
+                                               FontSize="10"
+                                               FontFamily="Consolas"
+                                               TextWrapping="NoWrap"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center"/>
+                                    <Button x:Name="CopyEthAddressButton"
+                                            Grid.Column="1"
+                                            Classes="IconBtn"
+                                            Margin="8 0 0 0"
+                                            ToolTip.Tip="Copy address">
+                                        <Viewbox Width="13" Height="13">
+                                            <Path Data="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"
+                                                  Fill="#7A7870" Stretch="Uniform"/>
+                                        </Viewbox>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
 
-				<!-- Action Buttons -->
-				<StackPanel Orientation="Horizontal"
-							HorizontalAlignment="Center"
-							Spacing="12"
-							Margin="0 8 0 0">
-					<Button x:Name="SendButton"
-							Classes="DefaultLightBrown"
-							Width="140"
-							Height="40">
-						<StackPanel Orientation="Horizontal"
-									Spacing="8"
-									HorizontalAlignment="Center">
-							<Viewbox Width="20" Height="20">
-								<Path Data="M2 21L23 12L2 3V10L17 12L2 14V21Z"
-									  Fill="#5D3F36"
-									  Stretch="Uniform"/>
-							</Viewbox>
-							<TextBlock Text="Send"
-									   Foreground="#5D3F36"
-									   FontWeight="SemiBold"
-									   VerticalAlignment="Center"/>
-						</StackPanel>
-					</Button>
+                <!-- ── Transaction History ── -->
+                <StackPanel Spacing="16">
 
-					<Button x:Name="ReceiveButton"
-							Classes="DefaultLightBrown"
-							Width="140"
-							Height="40">
-						<StackPanel Orientation="Horizontal"
-									Spacing="8"
-									HorizontalAlignment="Center">
-							<Viewbox Width="20" Height="20">
-								<Path Data="M19 12L20.41 13.41L15.5 18.34V3H13.5V18.34L8.59 13.41L7.18 14.82L13.68 21.32C14.07 21.71 14.7 21.71 15.09 21.32L21.59 14.82L20.18 13.41L19 12Z"
-									  Fill="#5D3F36"
-									  Stretch="Uniform"/>
-							</Viewbox>
-							<TextBlock Text="Receive"
-									   Foreground="#5D3F36"
-									   FontWeight="SemiBold"
-									   VerticalAlignment="Center"/>
-						</StackPanel>
-					</Button>
+                    <!-- Section header -->
+                    <Grid ColumnDefinitions="* Auto">
+                        <TextBlock Grid.Column="0"
+                                   Text="Transactions"
+                                   Foreground="#F0EDE8"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   LetterSpacing="0.5"
+                                   VerticalAlignment="Center"/>
 
-					<Button x:Name="RefreshButton"
-							Classes="DefaultLightBrown"
-							Width="140"
-							Height="40">
-						<StackPanel Orientation="Horizontal"
-									Spacing="8"
-									HorizontalAlignment="Center">
-							<Viewbox Width="20" Height="20">
-								<Path Data="M17.65 6.35C16.2 4.9 14.21 4 12 4C7.58 4 4.01 7.58 4.01 12C4.01 16.42 7.58 20 12 20C15.73 20 18.84 17.45 19.73 14H17.65C16.83 16.33 14.61 18 12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C13.66 6 15.14 6.69 16.22 7.78L13 11H20V4L17.65 6.35Z"
-									  Fill="#5D3F36"
-									  Stretch="Uniform"/>
-							</Viewbox>
-							<TextBlock Text="Refresh"
-									   Foreground="#5D3F36"
-									   FontWeight="SemiBold"
-									   VerticalAlignment="Center"/>
-						</StackPanel>
-					</Button>
-				</StackPanel>
+                        <!-- Tab pills -->
+                        <Border Grid.Column="1"
+                                Background="#0E0E0F"
+                                BorderBrush="#1E1E21"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="3">
+                            <StackPanel Orientation="Horizontal" Spacing="2">
+                                <Button x:Name="AllTabButton" Classes="Tab Active">
+                                    <TextBlock Text="All"
+                                               Foreground="#F0EDE8"
+                                               FontSize="12"
+                                               FontWeight="Medium"/>
+                                </Button>
+                                <Button x:Name="BtcTabButton" Classes="Tab">
+                                    <TextBlock Text="BTC"
+                                               Foreground="#7A7870"
+                                               FontSize="12"/>
+                                </Button>
+                                <Button x:Name="EthTabButton" Classes="Tab">
+                                    <TextBlock Text="ETH"
+                                               Foreground="#7A7870"
+                                               FontSize="12"/>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
 
-				<!-- Transaction History Section -->
-				<StackPanel Spacing="16">
+                    <!-- Transaction list container -->
+                    <Border Background="#161618"
+                            CornerRadius="14"
+                            BorderBrush="#2A2A2E"
+                            BorderThickness="1"
+                            ClipToBounds="True">
+                        <ScrollViewer MaxHeight="420"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="TransactionsPanel">
 
-					<!-- Tab Headers -->
-					<StackPanel Spacing="12">
-						<TextBlock Text="Transaction History"
-								   Foreground="#2B2621"
-								   FontSize="18"
-								   FontWeight="SemiBold"/>
+                                <!-- Empty state -->
+                                <Border x:Name="EmptyStatePanel"
+                                        Padding="0 56">
+                                    <StackPanel Spacing="10" HorizontalAlignment="Center">
+                                        <Viewbox Width="32" Height="32" HorizontalAlignment="Center">
+                                            <Path Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                                  Fill="#2A2A2E" Stretch="Uniform"/>
+                                        </Viewbox>
+                                        <TextBlock Text="No transactions"
+                                                   Foreground="#4A4845"
+                                                   FontSize="13"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
 
-						<StackPanel Orientation="Horizontal"
-									Spacing="0">
-							<Button x:Name="AllTabButton"
-									Classes="TabButton Active"
-									HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center">
-								<TextBlock Text="All"
-										   Foreground="#2B2621"
-										   FontWeight="Medium"
-										   FontSize="14"/>
-							</Button>
-							<Button x:Name="BtcTabButton"
-									Classes="TabButton"
-									HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center">
-								<TextBlock Text="Bitcoin"
-										   Foreground="#2B2621"
-										   FontWeight="Medium"
-										   FontSize="14"/>
-							</Button>
-							<Button x:Name="EthTabButton"
-									Classes="TabButton"
-									HorizontalContentAlignment="Center"
-									VerticalContentAlignment="Center">
-								<TextBlock Text="Ethereum"
-										   Foreground="#2B2621"
-										   FontWeight="Medium"
-										   FontSize="14"/>
-							</Button>
-						</StackPanel>
-					</StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
 
-					<!-- Transactions List -->
-					<ScrollViewer MaxHeight="400"
-								  HorizontalScrollBarVisibility="Disabled"
-								  VerticalScrollBarVisibility="Auto">
-						<StackPanel x:Name="TransactionsPanel"
-									Spacing="0">
-
-							<!-- Empty State -->
-							<Border x:Name="EmptyStatePanel"
-									Background="#D4CCBD"
-									CornerRadius="12"
-									Padding="40"
-									BorderThickness="2"
-									BorderBrush="#B8AF9E">
-								<StackPanel Spacing="12"
-											HorizontalAlignment="Center">
-									<Viewbox Width="64" Height="64">
-										<Path Data="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z"
-											  Fill="#9A8F7E"
-											  Stretch="Uniform"/>
-									</Viewbox>
-									<TextBlock Text="No transactions yet"
-											   Foreground="#6B5E4D"
-											   FontSize="16"
-											   FontWeight="SemiBold"
-											   HorizontalAlignment="Center"/>
-									<TextBlock Text="Your transaction history will appear here"
-											   Foreground="#6B5E4D"
-											   FontSize="13"
-											   HorizontalAlignment="Center"
-											   Opacity="0.8"/>
-								</StackPanel>
-							</Border>
-						</StackPanel>
-					</ScrollViewer>
-				</StackPanel>
-			</StackPanel>
-		</ScrollViewer>
-	</Panel>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 
 </UserControl>

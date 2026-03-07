@@ -25,6 +25,14 @@ namespace BlockSense.Backend.Controllers
             return Ok(balance);
         }
 
+        [HttpGet("{address}/next-available-nonce")]
+        [Authorize]
+        public async Task<IActionResult> GetNextAvailableNonce(string address)
+        {
+            var nonce = await _ethereumService.GetNextAvailableNonce(address);
+            return Ok(nonce);
+        }
+
         [HttpGet("{address}/transactions")]
         [Authorize]
         public async Task<IActionResult> GetTransactions(string address)

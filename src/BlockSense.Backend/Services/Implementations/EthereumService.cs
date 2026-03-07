@@ -23,10 +23,10 @@ namespace BlockSense.Backend.Services.Implementations
                 ?? throw new ArgumentNullException(nameof(cryptoConfig));
         }
 
-        public async Task<WalletBalanceResponse> GetBalanceAsync(string address)
+        public async Task<WalletBalanceResponse> GetBalanceAsync(string address, CancellationToken cancellationToken = default)
         {
             var path = $"addresses-latest/evm/ethereum/{_cryptoConfig.Ethereum.Network}/{address}/balance";
-            var response = await _cryptoApiClient.GetAsync<BalanceEnvelope>(path);
+            var response = await _cryptoApiClient.GetAsync<BalanceEnvelope>(path, cancellationToken);
             var balance = response.Data.Item.ConfirmedBalance.Amount;
 
             return new WalletBalanceResponse
@@ -37,14 +37,26 @@ namespace BlockSense.Backend.Services.Implementations
             };
         }
 
-        public async Task<TransactionListResponse> GetTransactionsAsync(string address)
+        public async Task<NextNonceResponse> GetNextAvailableNonce(string address, CancellationToken cancellationToken = default)
+        {
+            var path = $"addresses-latest/evm/ethereum/{_cryptoConfig.Ethereum.Network}/{address}/next-available-nonce";
+            var response = await _cryptoApiClient.GetAsync<NextNonceEnvelope>(path, cancellationToken);
+            var nonce = response.Data.Item.NextAvailableNonce;
+
+            return new NextNonceResponse
+            {
+                NextAvailableNonce = nonce
+            };
+        }
+
+        public async Task<TransactionListResponse> GetTransactionsAsync(string address, CancellationToken cancellationToken = default)
         {
             var path = $"addresses-latest/evm/ethereum/{_cryptoConfig.Ethereum.Network}/{address}/transactions" +
                          $"?limit=5";
 
-            var response = await _cryptoApiClient.GetAsync<TxListEnvelope>(path);
+            var response = await _cryptoApiClient.GetAsync<EthTxListEnvelope>(path, cancellationToken);
             var data = response.Data;
-            var transactions = data.Items.Select(MapTransaction);
+            var transactions = data.Item    .Select(MapTransaction);
 
             return new TransactionListResponse
             {
@@ -54,7 +66,7 @@ namespace BlockSense.Backend.Services.Implementations
             };
         }
 
-        public async Task<BroadcastTransactionResponse> BroadcastAsync(BroadcastTransactionRequest request)
+        public async Task<BroadcastTransactionResponse> BroadcastAsync(BroadcastTransactionRequest request, CancellationToken cancellationToken = default)
         {
             var path = $"transactions/evm/ethereum/{_cryptoConfig.Ethereum.Network}/broadcast";
             var body = new
@@ -68,7 +80,7 @@ namespace BlockSense.Backend.Services.Implementations
                 }
             };
 
-            var response = await _cryptoApiClient.PostAsync<BroadcastEnvelope>(path, body);
+            var response = await _cryptoApiClient.PostAsync<BroadcastEnvelope>(path, body, cancellationToken);
 
             return new BroadcastTransactionResponse
             {
@@ -76,7 +88,7 @@ namespace BlockSense.Backend.Services.Implementations
             };
         }
 
-        private static TransactionDto MapTransaction(TxItem tx)
+        private static TransactionDto MapTransaction(EthTxItem tx)
         {
             var status = tx.Status switch
             {
@@ -103,24 +115,5 @@ namespace BlockSense.Backend.Services.Implementations
                 System.Globalization.NumberStyles.Any,
                 System.Globalization.CultureInfo.InvariantCulture,
                 out var result) ? result : 0m;
-
-        private sealed class TxListEnvelope
-        {
-            public required TxListData Data { get; set; }
-        }
-        private sealed class TxListData
-        {
-            public required List<TxItem> Items { get; set; }
-        }
-        private sealed class TxItem
-        {
-            public required string Hash { get; set; }
-            public required AmountValue Fee { get; set; }
-            public required string Sender { get; set; }
-            public required string Recipient { get; set; }
-            public required string Status { get; set; }
-            public required AmountValue Value { get; set; }
-            public required long Timestamp { get; set; }
-        }
     }
 }

@@ -27,28 +27,28 @@ namespace BlockSense.Backend.Data
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
         }
 
-        public Task<T> GetAsync<T>(string path)
-            => SendAsync<T>(new HttpRequestMessage(HttpMethod.Get, path));
+        public Task<T> GetAsync<T>(string path, CancellationToken cancellationToken = default)
+            => SendAsync<T>(new HttpRequestMessage(HttpMethod.Get, path), cancellationToken);
 
-        public Task<T> PostAsync<T>(string path, object body)
+        public Task<T> PostAsync<T>(string path, object body, CancellationToken cancellationToken = default)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, path)
             {
                 Content = JsonContent.Create(body)
             };
 
-            return SendAsync<T>(request);
+            return SendAsync<T>(request, cancellationToken);
         }
 
-        private async Task<T> SendAsync<T>(HttpRequestMessage request)
+        private async Task<T> SendAsync<T>(HttpRequestMessage request, CancellationToken cancellationToken = default)
         {
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             };
 
-            using var response = await _httpClient.SendAsync(request);
-            var json = await response.Content.ReadAsStringAsync();
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {

@@ -73,9 +73,11 @@ namespace BlockSense.Backend.Extensions
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<ITwoFactorAuthService, TwoFactorAuthService>();
+
             services.AddKeyedScoped<ICryptoService, BitcoinService>("bitcoin");
             services.AddKeyedScoped<ICryptoService, EthereumService>("ethereum");
 
+            services.AddSingleton<IExchangeRateService, ExchangeRateService>();
 
             return services;
         }

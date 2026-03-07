@@ -69,7 +69,9 @@ namespace BlockSense.Desktop
             services.AddSingleton<IRefreshTokenProvider, RefreshTokenProvider>();
             services.AddSingleton<IAccessTokenProvider, AccessTokenProvider>();
             services.AddSingleton<ICurrentUserProvider, CurrentUserProvider>();
-            services.AddSingleton<IWalletProvider, WalletProvider>();
+            services.AddSingleton<ICurrentWalletProvider, CurrentWalletProvider>();
+            services.AddSingleton<IBitcoinProvider, BitcoinProvider>();
+            services.AddSingleton<IEthereumProvider, EthereumProvider>();
 
             // --- Infrastructure ---
             services.AddSingleton<NavigationManager>();

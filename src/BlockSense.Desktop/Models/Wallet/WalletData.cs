@@ -22,31 +22,7 @@ namespace BlockSense.Desktop.Models.Wallet
             init;
         }
 
-        public required string BtcAddress
-        {
-            get;
-            init;
-        }
-
-        public required string BtcPublicKey
-        {
-            get;
-            init;
-        }
-
-        public required string EthAddress
-        {
-            get;
-            init;
-        }
-
-        public required string EthPublicKey
-        {
-            get;
-            init;
-        }
-
-        public required DateTimeOffset CreatedAt
+        public required DateTime CreatedAt
         {
             get;
             init;

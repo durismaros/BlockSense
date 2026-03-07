@@ -20,7 +20,6 @@ public partial class PinEntryView : UserControl
 {
     private const int PIN_LENGTH = 6;
 
-    private readonly IWalletProvider _walletProvider;
     private readonly IWalletService _walletService;
     private readonly NavigationManager _navigationManager;
     private readonly PinEntrySlidingPanel _pinEntrySlidingPanel;
@@ -41,9 +40,6 @@ public partial class PinEntryView : UserControl
 
     public PinEntryView()
     {
-        _walletProvider = App.ServiceProvider.GetRequiredService<IWalletProvider>()
-            ?? throw new ArgumentNullException(nameof(IWalletProvider));
-
         _walletService = App.ServiceProvider.GetRequiredService<IWalletService>()
             ?? throw new ArgumentNullException(nameof(IWalletService));
 
