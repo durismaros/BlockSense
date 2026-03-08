@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using BlockSense.Contracts.DTOs.Transaction;
 using BlockSense.Contracts.Enums;
+using BlockSense.Desktop.Models.Wallet;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
@@ -52,6 +53,8 @@ public partial class CryptoWalletView : UserControl
         DetachedFromVisualTree += OnDetachedFromVisualTree;
     }
 
+    // ── Event handlers ────────────────────────────────────────────────────────
+
     private async void OnBackClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         => await _navigationManager.NavigateToAsync<HomeView>();
 
@@ -68,7 +71,7 @@ public partial class CryptoWalletView : UserControl
         => await CloseSendOverlayAsync();
 
     private async void OnConfirmSendClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-        => await ExecuteSend();
+        => await ExecuteSendAsync();
 
     private void OnSendBtcToggleClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         => SetSendCurrency(SendCurrency.Bitcoin);
@@ -108,22 +111,7 @@ public partial class CryptoWalletView : UserControl
     private void OnSendAmountChanged(object? sender, Avalonia.Controls.TextChangedEventArgs e)
         => UpdateConversion();
 
-    private async Task ShowConfirmDeleteAsync()
-    {
-        ConfirmDeleteButton.IsVisible = true;
-        await Animations.FadeInAnimation.RunAsync(ConfirmDeleteButton);
-
-        await Task.Delay(3000);
-
-        await Animations.FadeOutAnimation.RunAsync(ConfirmDeleteButton);
-        ConfirmDeleteButton.IsVisible = false;
-    }
-
-    private async Task DeleteWalletAsync()
-    {
-        await _walletService.DeleteWalletAsync();
-        await _navigationManager.NavigateToAsync<HomeView>();
-    }
+    // ── Send overlay ──────────────────────────────────────────────────────────
 
     private async Task OpenSendOverlayAsync()
     {
@@ -159,17 +147,23 @@ public partial class CryptoWalletView : UserControl
 
     private void UpdateConversion()
     {
-        var amountStr = SendAmountInput?.Text ?? string.Empty;
-        if (!decimal.TryParse(amountStr, System.Globalization.NumberStyles.Any,
-                System.Globalization.CultureInfo.InvariantCulture, out var amount))
-            amount = 0;
+        if (SendAmountInput is null) return;
 
-        var rate = _sendCurrency == SendCurrency.Bitcoin
-            ? _bitcoinProvider.ExchangeRate
-            : _ethereumProvider.ExchangeRate;
+        var isBtc = _sendCurrency == SendCurrency.Bitcoin;
+        var ticker = isBtc ? "BTC" : "ETH";
+        var rate = isBtc ? _bitcoinProvider.ExchangeRate : _ethereumProvider.ExchangeRate;
+        var balance = isBtc ? _bitcoinProvider.Balance : _ethereumProvider.Balance;
+        var fee = GetNetworkFee();
 
-        var ticker = _sendCurrency == SendCurrency.Bitcoin ? "BTC" : "ETH";
+        _ = decimal.TryParse(
+            SendAmountInput.Text,
+            System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture,
+            out var amount);
 
+        var total = amount + fee;
+
+        // EUR conversion
         if (SendConversionText is not null)
             SendConversionText.Text = $"€{amount * rate:N2}";
 
@@ -178,19 +172,44 @@ public partial class CryptoWalletView : UserControl
 
         if (SendExchangeRateText is not null)
             SendExchangeRateText.Text = $"1 {ticker} = €{rate:N2}";
+
+        // Fee row
+        if (SendFeeText is not null)
+            SendFeeText.Text = $"{fee:F8} {ticker}";
+
+        if (SendFeeEurText is not null)
+            SendFeeEurText.Text = $"≈ €{fee * rate:N2}";
+
+        // Total row
+        if (SendTotalText is not null)
+            SendTotalText.Text = $"{total:F8} {ticker}";
+
+        if (SendTotalEurText is not null)
+            SendTotalEurText.Text = $"≈ €{total * rate:N2}";
     }
 
-    private async Task ExecuteSend()
+    private decimal GetNetworkFee() => _sendCurrency switch
+    {
+        SendCurrency.Bitcoin => BitcoinFees.Default,
+        SendCurrency.Ethereum => EthereumFees.DefaultGasLimit * EthereumFees.DefaultGasPriceGwei / 1_000_000_000m,
+        _ => 0m
+    };
+
+    private async Task ExecuteSendAsync()
     {
         var address = SendAddressInput.Text?.Trim() ?? string.Empty;
         var amountStr = SendAmountInput.Text?.Trim() ?? string.Empty;
 
-        if (string.IsNullOrWhiteSpace(address))
-            return;
+        if (string.IsNullOrWhiteSpace(address)) return;
 
-        if (!decimal.TryParse(amountStr, System.Globalization.NumberStyles.Any,
-                System.Globalization.CultureInfo.InvariantCulture, out var amount) || amount <= 0)
-            return;
+        if (!decimal.TryParse(amountStr,
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var amount) || amount <= 0) return;
+
+        var balance = _sendCurrency == SendCurrency.Bitcoin
+            ? _bitcoinProvider.Balance
+            : _ethereumProvider.Balance;
 
         var token = _cancellationTokenSource?.Token ?? default;
 
@@ -200,12 +219,16 @@ public partial class CryptoWalletView : UserControl
                 await _bitcoinService.SignAndBroadcastAsync(address, amount, token);
             else if (_sendCurrency == SendCurrency.Ethereum)
                 await _ethereumService.SignAndBroadcastAsync(address, amount, token);
+
+            await CloseSendOverlayAsync();
         }
         catch
         {
-            // handled below via null check
+            // Errors are surfaced via notifications inside the service
         }
     }
+
+    // ── UI update callbacks ───────────────────────────────────────────────────
 
     private void OnBitcoinChanged() => Dispatcher.UIThread.Post(UpdateBitcoinUi);
     private void OnEthereumChanged() => Dispatcher.UIThread.Post(UpdateEthereumUi);
@@ -232,6 +255,8 @@ public partial class CryptoWalletView : UserControl
         EthAddressText.Text = _ethereumProvider.Address;
     }
 
+    // ── Tabs ──────────────────────────────────────────────────────────────────
+
     private void SetTab(ActiveTab tab)
     {
         _activeTab = tab;
@@ -242,6 +267,8 @@ public partial class CryptoWalletView : UserControl
 
         RenderTransactions();
     }
+
+    // ── Transactions ──────────────────────────────────────────────────────────
 
     private void RenderTransactions()
     {
@@ -274,13 +301,50 @@ public partial class CryptoWalletView : UserControl
                 .ToList()
     };
 
+    // ── Wallet actions ────────────────────────────────────────────────────────
+
+    private async Task ShowConfirmDeleteAsync()
+    {
+        ConfirmDeleteButton.IsVisible = true;
+        await Animations.FadeInAnimation.RunAsync(ConfirmDeleteButton);
+
+        await Task.Delay(3000);
+
+        await Animations.FadeOutAnimation.RunAsync(ConfirmDeleteButton);
+        ConfirmDeleteButton.IsVisible = false;
+    }
+
+    private async Task DeleteWalletAsync()
+    {
+        await _walletService.DeleteWalletAsync();
+        await _navigationManager.NavigateToAsync<HomeView>();
+    }
+
+    private async Task RefreshAllAsync()
+    {
+        var token = _cancellationTokenSource?.Token ?? default;
+        await Task.WhenAll(
+            _bitcoinService.RefreshAsync(token),
+            _ethereumService.RefreshAsync(token));
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private void CopyToClipboard(string? text)
+    {
+        if (!string.IsNullOrWhiteSpace(text))
+            TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(text);
+    }
+
+    // ── UI builders ───────────────────────────────────────────────────────────
+
     private static Control BuildEmptyState() => new Border
     {
         Padding = new Thickness(40, 48),
         Child = new StackPanel
         {
             Spacing = 10,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center,
             Children =
             {
                 new Border
@@ -288,12 +352,12 @@ public partial class CryptoWalletView : UserControl
                     Width = 44, Height = 44,
                     CornerRadius = new CornerRadius(22),
                     Background = new SolidColorBrush(Color.Parse("#C4BBAA")),
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Center,
                     Child = new Viewbox
                     {
                         Width = 20, Height = 20,
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center,
                         Child = new Path
                         {
                             Data = Avalonia.Media.Geometry.Parse(
@@ -304,9 +368,9 @@ public partial class CryptoWalletView : UserControl
                     }
                 },
                 Txt("No transactions yet", "#4A4540", 14, FontWeight.SemiBold,
-                    horizontalAlignment: Avalonia.Layout.HorizontalAlignment.Center),
+                    horizontalAlignment: HorizontalAlignment.Center),
                 Txt("Your transaction history will appear here", "#8A7E6E", 12,
-                    horizontalAlignment: Avalonia.Layout.HorizontalAlignment.Center)
+                    horizontalAlignment: HorizontalAlignment.Center)
             }
         }
     };
@@ -335,19 +399,19 @@ public partial class CryptoWalletView : UserControl
 
         var counterparty = isIncoming ? tx.FromAddress : tx.ToAddress;
         var directionLabel = isIncoming ? "From" : "To";
-        var amountSign = isIncoming ? "+" : "−";
+        var amountSign = isIncoming ? "+" : "-";
         var amountText = $"{amountSign}{Math.Abs(tx.Amount):F6} {tx.Currency}";
 
-        // Status pill
         var statusPill = new Border
         {
             Background = new SolidColorBrush(Color.Parse(statusColor + "22")),
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(7, 3),
-            Child = Txt(statusText, statusColor, 10, FontWeight.SemiBold, horizontalAlignment: HorizontalAlignment.Center, verticalAlignment: VerticalAlignment.Center)
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(8, 4),
+            Child = Txt(statusText, statusColor, 10, FontWeight.SemiBold,
+                horizontalAlignment: HorizontalAlignment.Center,
+                verticalAlignment: VerticalAlignment.Center)
         };
 
-        // Direction badge
         var directionBadge = new Border
         {
             Background = new SolidColorBrush(Color.Parse(accentColor + "22")),
@@ -359,19 +423,14 @@ public partial class CryptoWalletView : UserControl
         var leftInfo = new StackPanel
         {
             Spacing = 5,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
             Children =
             {
-                // Hash + direction badge in one row
                 new StackPanel
                 {
-                    Orientation = Avalonia.Layout.Orientation.Horizontal,
+                    Orientation = Orientation.Horizontal,
                     Spacing = 8,
-                    Children =
-                    {
-                        directionBadge,
-                        Txt(tx.TxHash, "#5A4E42", 11, FontWeight.Normal, "Consolas")
-                    }
+                    Children = { directionBadge, Txt(tx.TxHash, "#5A4E42", 11, FontWeight.Normal, "Consolas") }
                 },
                 Txt(counterparty ?? "—", "#7A6E62", 11, fontFamily: "Consolas"),
                 Txt(tx.Timestamp.ToString("dd MMM yyyy · HH:mm"), "#9A8F7E", 10)
@@ -381,12 +440,12 @@ public partial class CryptoWalletView : UserControl
         var rightInfo = new StackPanel
         {
             Spacing = 6,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
             Children =
             {
                 Txt(amountText, accentColor, 13, FontWeight.SemiBold,
-                    horizontalAlignment: Avalonia.Layout.HorizontalAlignment.Right),
+                    horizontalAlignment: HorizontalAlignment.Right),
                 statusPill
             }
         };
@@ -400,28 +459,14 @@ public partial class CryptoWalletView : UserControl
         return new Border { Classes = { "TxRow" }, Child = grid };
     }
 
-    private async Task RefreshAllAsync()
-    {
-        var token = _cancellationTokenSource?.Token ?? default;
-        await Task.WhenAll(
-            _bitcoinService.RefreshAsync(token),
-            _ethereumService.RefreshAsync(token));
-    }
-
-    private void CopyToClipboard(string? text)
-    {
-        if (!string.IsNullOrWhiteSpace(text))
-            TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(text);
-    }
-
     private static TextBlock Txt(
         string text,
         string hex,
         double size,
         FontWeight weight = FontWeight.Normal,
         string? fontFamily = null,
-        Avalonia.Layout.HorizontalAlignment horizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
-        Avalonia.Layout.VerticalAlignment verticalAlignment = Avalonia.Layout.VerticalAlignment.Center) => new()
+        HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left,
+        VerticalAlignment verticalAlignment = VerticalAlignment.Center) => new()
         {
             Text = text,
             Foreground = new SolidColorBrush(Color.Parse(hex)),
@@ -432,6 +477,8 @@ public partial class CryptoWalletView : UserControl
             VerticalAlignment = verticalAlignment,
             TextTrimming = TextTrimming.CharacterEllipsis
         };
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     private void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
     {

@@ -155,14 +155,26 @@ namespace BlockSense.Desktop.Services.Implementations
                         new BroadcastTransactionRequest { SignedTransactionHex = signedHex },
                         cancellationToken);
 
-                    _pinEntrySlidingPanel.HidePanel();
-
                     MainWindow.Instance.ShowNotification(
                         "Transaction Broadcast",
                         $"Transaction {result?.TransactionId} broadcasted");
                 }
+                catch (FormatException)
+                {
+                    MainWindow.Instance.ShowNotification(
+                        "Invalid Address",
+                        "Please enter a valid address.");
+                }
+                catch (NotEnoughFundsException)
+                {
+                    MainWindow.Instance.ShowNotification(
+                        "Not Enough Funds",
+                        "");
+                }
                 finally
                 {
+                    _pinEntrySlidingPanel.HidePanel();
+
                     CryptographicOperations.ZeroMemory(decryptedSeed);
                 }
             });
