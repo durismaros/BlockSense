@@ -51,7 +51,10 @@ public partial class AuthenticationView : UserControl
 
         if (!DataAnnotationsValidator.TryValidate(request, out var validationError))
         {
-            MainWindow.Instance.ShowNotification("Authentication", validationError);
+            MainWindow.Instance.ShowNotification(
+                "Authentication",
+                validationError);
+
             return;
         }
 

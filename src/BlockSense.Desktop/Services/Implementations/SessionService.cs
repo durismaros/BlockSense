@@ -134,7 +134,9 @@ namespace BlockSense.Desktop.Services.Implementations
             ClearSessionAsync();
             await _navigationManager.NavigateToAsync<WelcomeView>();
 
-            MainWindow.Instance.ShowNotification("Signed Out", "You have been signed out.");
+            MainWindow.Instance.ShowNotification(
+                "Signed Out",
+                "You have been signed out.");
         }
 
         private void ScheduleTokenRefresh(DateTime scheduledTime)
@@ -197,10 +199,6 @@ namespace BlockSense.Desktop.Services.Implementations
             }
 
             Dispose();
-
-            MainWindow.Instance.ShowNotification(
-                error.ProblemDetails.Title,
-                error.ProblemDetails.Detail);
         }
 
         private void ClearSessionAsync()

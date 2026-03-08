@@ -129,15 +129,6 @@ namespace BlockSense.Desktop.Services.Implementations
             return new ApiResult.Failure(problemDetails);
         }
 
-        private static ApiResult.Failure DefaultError(string uri) => new(new ProblemDetails
-        {
-            Type = StandardizedCodes.Client.UnknownError,
-            Title = "Unknown Error",
-            Status = 520,
-            Detail = "The server returned an unexpected response.",
-            Instance = uri
-        });
-
         private static ApiResult.Failure NetworkError(string uri) => new(new ProblemDetails
         {
             Type = StandardizedCodes.Client.NetworkError,

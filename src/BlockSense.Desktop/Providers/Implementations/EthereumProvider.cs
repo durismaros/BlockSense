@@ -3,16 +3,11 @@ using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace BlockSense.Desktop.Providers.Implementations
 {
     public sealed class EthereumProvider : IEthereumProvider
     {
-        private readonly IEthereumService _ethereumService;
-
         private Action? _onChanged;
 
         public string Address
@@ -51,48 +46,34 @@ namespace BlockSense.Desktop.Providers.Implementations
             }
         }
 
-        public EthereumProvider(IEthereumService ethereumService)
+        public EthereumProvider()
         {
-            _ethereumService = ethereumService
-                ?? throw new ArgumentNullException(nameof(ethereumService));
-
             Address = string.Empty;
-            Transactions = new List<TransactionDto>().AsReadOnly();
+            Balance = 0m;
+            ExchangeRate = 0m;
+            Transactions = Array.Empty<TransactionDto>();
         }
 
-        public void Initialize(byte[] seed)
+        public void Initialize(string address)
         {
-            Address = _ethereumService.DeriveAddress(seed);
+            this.Address = address;
+            _onChanged?.Invoke();
         }
 
-        public async Task RefreshAsync(CancellationToken cancellationToken = default)
+        public void Set(decimal balance, decimal exchangeRate, IReadOnlyList<TransactionDto> transactions)
         {
-            if (string.IsNullOrWhiteSpace(Address))
-            {
-                return;
-            }
+            Balance = balance;
+            ExchangeRate = exchangeRate;
+            Transactions = transactions;
+            _onChanged?.Invoke();
+        }
 
-            try
-            {
-                var balance = await _ethereumService.GetBalanceAsync(Address, cancellationToken);
-                var rate = await _ethereumService.GetExchangeRateAsync("EUR", cancellationToken);
-                var txs = await _ethereumService.GetTransactionsAsync(Address, cancellationToken);
-
-                if (balance is null || rate is null || txs is null)
-                {
-                    return;
-                }
-
-                Balance = balance.Balance;
-                ExchangeRate = rate.Rate;
-                Transactions = txs.Transactions.ToList().AsReadOnly();
-
-                _onChanged?.Invoke();
-            }
-            catch
-            {
-
-            }
+        public void Clear()
+        {
+            Address = string.Empty;
+            Balance = 0;
+            ExchangeRate = 0;
+            Transactions = Array.Empty<TransactionDto>();
         }
     }
 }

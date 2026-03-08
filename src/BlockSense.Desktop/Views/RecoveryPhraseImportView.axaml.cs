@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
@@ -39,6 +40,11 @@ public partial class RecoveryPhraseImportView : UserControl
 
     private async void ToPinEntryViewClick(object? sender, RoutedEventArgs e)
     {
+        if (!SetValidMnemonic())
+        {
+            return;
+        }
+
         await _navigationManager.NavigateToAsync<PinEntryView>();
     }
 
@@ -126,6 +132,39 @@ public partial class RecoveryPhraseImportView : UserControl
 
         await animation.RunAsync(SlidePanel);
     }
+    public bool SetValidMnemonic()
+    {
+        // Check if any TextBox is null, empty, or whitespace
+        if (_wordInputs.Any(tb => string.IsNullOrWhiteSpace(tb.Text)))
+        {
+            MainWindow.Instance.ShowNotification(
+                "Invalid Phrase",
+                "Please fill in all mnemonic words.");
+            return false;
+        }
+
+        // Combine the words into a phrase
+        var phrase = string.Join(" ", _wordInputs.Select(tb => tb.Text?.Trim()));
+
+        // Create the mnemonic
+        var mnemonic = new Mnemonic(phrase, Wordlist.English);
+
+        if (mnemonic.IsValidChecksum)
+        {
+            PinEntryView.Mnemonic = mnemonic;
+            return true;
+        }
+
+        MainWindow.Instance.ShowNotification(
+            "Invalid Phrase",
+            "Entered mnemonic phrase seems to be invalid.");
+        return false;
+    }
+
+    private void OnCheckboxChanged(object? sender, RoutedEventArgs e)
+    {
+        SubmitButton.IsEnabled = CheckBox1.IsChecked == true && CheckBox2.IsChecked == true && CheckBox3.IsChecked == true;
+    }
 
     private void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
     {
@@ -135,6 +174,10 @@ public partial class RecoveryPhraseImportView : UserControl
         ContinueButton.Click += (s, e) => AnimateSlidePanel(true);
         ContentGrid.PointerPressed += (s, ev) => AnimateSlidePanel(false);
         SubmitButton.Click += ToPinEntryViewClick;
+
+        CheckBox1.IsCheckedChanged += OnCheckboxChanged;
+        CheckBox2.IsCheckedChanged += OnCheckboxChanged;
+        CheckBox3.IsCheckedChanged += OnCheckboxChanged;
     }
 
     private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
@@ -143,21 +186,9 @@ public partial class RecoveryPhraseImportView : UserControl
         ContinueButton.Click -= (s, e) => AnimateSlidePanel(true);
         ContentGrid.PointerPressed -= (s, ev) => AnimateSlidePanel(false);
         SubmitButton.Click -= ToPinEntryViewClick;
-    }
 
-    public void SetValidMnemonic()
-    {
-        var phrase = string.Join(" ",
-            _wordInputs.Select(tb => tb.Text?.Trim() ?? string.Empty));
-
-        var mnemonic = new Mnemonic(phrase, Wordlist.English);
-
-        if (mnemonic.IsValidChecksum)
-        {
-            PinEntryView.Mnemonic = mnemonic;
-            return;
-        }
-
-        // Show error;
+        CheckBox1.IsCheckedChanged -= OnCheckboxChanged;
+        CheckBox2.IsCheckedChanged -= OnCheckboxChanged;
+        CheckBox3.IsCheckedChanged -= OnCheckboxChanged;
     }
 }

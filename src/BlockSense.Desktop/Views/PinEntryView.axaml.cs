@@ -21,9 +21,6 @@ public partial class PinEntryView : UserControl
     private const int PIN_LENGTH = 6;
 
     private readonly IWalletService _walletService;
-    private readonly ICurrentWalletProvider _currentWalletProvider;
-    private readonly IBitcoinProvider _bitcoinProvider;
-    private readonly IEthereumProvider _ethereumProvider;
     private readonly NavigationManager _navigationManager;
     private readonly PinEntrySlidingPanel _pinEntrySlidingPanel;
 
@@ -52,15 +49,6 @@ public partial class PinEntryView : UserControl
         _walletService = App.ServiceProvider.GetRequiredService<IWalletService>()
             ?? throw new ArgumentNullException(nameof(IWalletService));
 
-        _currentWalletProvider = App.ServiceProvider.GetRequiredService<ICurrentWalletProvider>()
-            ?? throw new ArgumentNullException(nameof(ICurrentWalletProvider));
-
-        _bitcoinProvider = App.ServiceProvider.GetRequiredService<IBitcoinProvider>()
-            ?? throw new ArgumentNullException(nameof(IBitcoinProvider));
-
-        _ethereumProvider = App.ServiceProvider.GetRequiredService<IEthereumProvider>()
-            ?? throw new ArgumentNullException(nameof(IEthereumProvider));
-
         _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
             ?? throw new ArgumentNullException(nameof(NavigationManager));
 
@@ -82,19 +70,19 @@ public partial class PinEntryView : UserControl
 
     private void OnConfirmPinClicked(object? sender, RoutedEventArgs e)
     {
-        if (_currentPin.Length != PIN_LENGTH)
+        var chosenPin = _currentPin;
+
+        if (chosenPin.Length != PIN_LENGTH)
         {
             return;
         }
-
-        var chosenPin = _currentPin;
 
         _pinEntrySlidingPanel.ShowPanel(async confirmedPin =>
         {
             if (confirmedPin != chosenPin)
             {
                 await _pinEntrySlidingPanel.ShowErrorState();
-                return; // panel stays open for another attempt
+                return;
             }
 
             await SaveAndContinueAsync(chosenPin);
@@ -106,32 +94,14 @@ public partial class PinEntryView : UserControl
         try
         {
             if (Mnemonic is null || !Mnemonic.IsValidChecksum)
-                throw new InvalidOperationException("Invalid or missing mnemonic.");
-
-            var wallet = await _walletService.CreateWalletAsync(Mnemonic, pin);
-            _currentWalletProvider.Set(wallet);
-
-            var seed = _currentWalletProvider.DecryptSeed(pin);
-            if (seed is not null)
             {
-                try
-                {
-                    _bitcoinProvider.Initialize(seed);
-                    _ethereumProvider.Initialize(seed);
-                }
-                finally
-                {
-                    CryptographicOperations.ZeroMemory(seed);
-                }
+                throw new InvalidOperationException("Invalid or missing mnemonic.");
             }
+
+            await _walletService.CreateWalletAsync(Mnemonic, pin);
 
             _pinEntrySlidingPanel.HidePanel();
             await _navigationManager.NavigateToAsync<CryptoWalletView>();
-        }
-        catch
-        {
-            _pinEntrySlidingPanel.HidePanel();
-            await _navigationManager.NavigateToAsync<WalletSelectionView>();
         }
         finally
         {

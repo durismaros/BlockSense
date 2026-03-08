@@ -10,10 +10,10 @@
 
         public required decimal GasPriceGwei { get; init; }
 
-        public required ulong GasLimit { get; init; }
+        public required long GasLimit { get; init; }
 
-        public required ulong Nonce { get; init; }
+        public required long Nonce { get; init; }
 
-        public required ulong ChainId { get; init; }
+        public required long ChainId { get; init; }
     }
 }

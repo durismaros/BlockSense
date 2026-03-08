@@ -60,6 +60,7 @@ public partial class PinEntrySlidingPanel : UserControl
             ?? throw new ArgumentNullException(nameof(onSubmitAsync));
 
         IsVisible = true;
+        this.Focus();
 
         var animation = new Animation
         {
@@ -75,8 +76,6 @@ public partial class PinEntrySlidingPanel : UserControl
                 }
             }
         }.RunAsync(this);
-
-        await ResetPinEntry();
 
         await animation;
     }
@@ -106,6 +105,7 @@ public partial class PinEntrySlidingPanel : UserControl
         await animation;
 
         this.IsVisible = false;
+        await ResetPinEntry();
     }
 
     public async Task ShowErrorState()
@@ -114,6 +114,8 @@ public partial class PinEntrySlidingPanel : UserControl
             ShakePanel(),
             ResetPinEntry()
             );
+
+        this.Focus();
     }
 
     private async void VerifyPinClick(object? sender, RoutedEventArgs e)
@@ -203,7 +205,7 @@ public partial class PinEntrySlidingPanel : UserControl
 
         ConfirmPinButton.IsEnabled = false;
 
-        this.Focus();
+        
     }
 
     private async Task AnimatePinEntry(int index)

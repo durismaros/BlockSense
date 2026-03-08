@@ -11,7 +11,11 @@ namespace BlockSense.Desktop.Services.Interfaces
         Task<WalletBalanceResponse?> GetBalanceAsync(string address, CancellationToken cancellationToken = default);
         Task<TransactionListResponse?> GetTransactionsAsync(string address, CancellationToken cancellationToken = default);
         Task<ExchangeRateResponse?> GetExchangeRateAsync(string toAssetSymbol, CancellationToken cancellationToken = default);
+        Task<long?> GetNextAvailableNonce(string address, CancellationToken cancellationToken = default);
         Task<BroadcastTransactionResponse?> BroadcastAsync(BroadcastTransactionRequest request, CancellationToken cancellationToken = default);
+        void Initialize(byte[] seed);
+        Task RefreshAsync(CancellationToken cancellationToken = default);
+        Task SignAndBroadcastAsync(string toAddress, decimal amount, CancellationToken cancellationToken = default);
         string DeriveAddress(byte[] seed);
         string SignTransaction(EthereumSignRequest request);
     }

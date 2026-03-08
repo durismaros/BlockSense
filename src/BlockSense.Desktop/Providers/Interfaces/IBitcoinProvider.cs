@@ -1,8 +1,6 @@
 ﻿using BlockSense.Contracts.DTOs.Transaction;
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace BlockSense.Desktop.Providers.Interfaces
 {
@@ -30,7 +28,8 @@ namespace BlockSense.Desktop.Providers.Interfaces
 
         event Action? OnChanged;
 
-        void Initialize(byte[] seed);
-        Task RefreshAsync(CancellationToken cancellationToken = default);
+        void Initialize(string address);
+        void Set(decimal balance, decimal exchangeRate, IReadOnlyList<TransactionDto> transactions);
+        void Clear();
     }
 }
