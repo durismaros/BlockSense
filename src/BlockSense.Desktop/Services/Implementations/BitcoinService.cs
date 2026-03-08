@@ -6,6 +6,7 @@ using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using NBitcoin;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
@@ -171,6 +172,10 @@ namespace BlockSense.Desktop.Services.Implementations
                         "Not Enough Funds",
                         "");
                 }
+                catch (Exception ex)
+                {
+                    MainWindow.Instance.ShowNotification("Error", ex.Message);
+                }
                 finally
                 {
                     _pinEntrySlidingPanel.HidePanel();
@@ -205,11 +210,7 @@ namespace BlockSense.Desktop.Services.Implementations
                 var source = key.PubKey.GetAddress(ScriptPubKeyType.Legacy, BitcoinChain.CurrentNetwork);
                 var destination = BitcoinAddress.Create(request.ToAddress, BitcoinChain.CurrentNetwork);
 
-                var coins = request.Utxos.Select(u => new Coin(
-                    fromTxHash: uint256.Parse(u.TransactionId),
-                    fromOutputIndex: (uint)u.OutputIndex,
-                    amount: Money.Coins(u.Amount),
-                    scriptPubKey: source.ScriptPubKey));
+                var coins = BuildCoins(request, source);
 
                 var tx = BitcoinChain.CurrentNetwork.CreateTransactionBuilder()
                     .AddCoins(coins)
@@ -225,6 +226,23 @@ namespace BlockSense.Desktop.Services.Implementations
             {
                 CryptographicOperations.ZeroMemory(privateKeyBytes);
             }
+        }
+
+        private static IEnumerable<Coin> BuildCoins(BitcoinSignRequest request, BitcoinAddress source)
+        {
+            return request.Utxos.SelectMany(u =>
+            {
+                var txHash = uint256.Parse(u.TransactionId);
+                var amount = Money.Coins(u.Amount);
+                var script = source.ScriptPubKey;
+
+                // Try both vout 0 and vout 1 since we don't know the real index
+                return new[]
+                {
+                    new Coin(txHash, 0, amount, script),
+                    new Coin(txHash, 1, amount, script)
+                };
+            });
         }
     }
 }

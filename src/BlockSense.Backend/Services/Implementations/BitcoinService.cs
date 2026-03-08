@@ -58,12 +58,19 @@ namespace BlockSense.Backend.Services.Implementations
             var unconfirmedTxs = unconfirmedResponse.Data.Items;
 
             var transactions = confirmedTxs
-                    .Select(tx => MapTransaction(tx, address, TransactionStatus.Confirmed))
-                    .Concat(unconfirmedTxs.Select(tx => MapTransaction(tx, address, TransactionStatus.Pending)))
-                    .OrderByDescending(tx => tx.Timestamp);
+                .Select(tx => MapTransaction(tx, address, TransactionStatus.Confirmed))
+                .Concat(unconfirmedTxs.Select(tx => MapTransaction(tx, address, TransactionStatus.Pending)))
+                .OrderByDescending(tx => tx.Timestamp);
 
             var allTransactions = confirmedTxs.Concat(unconfirmedTxs).ToList();
             var utxos = ExtractUtxos(allTransactions, address);
+
+            foreach (var x in utxos)
+            {
+                Console.WriteLine(x.TransactionId);
+                Console.WriteLine(x.OutputIndex);
+                Console.WriteLine(x.Amount);
+            }
 
             return new TransactionListResponse
             {
@@ -135,27 +142,28 @@ namespace BlockSense.Backend.Services.Implementations
         {
             var txList = transactions.ToList();
 
-            var unspentOutputs = txList
+            // Build set of all spent outputs across all transactions
+            var spentOutputs = txList
+                .SelectMany(tx => tx.Inputs
+                    .Where(i => i.TransactionId is not null)
+                    .Select(i => (i.TransactionId!, i.OutputIndex)))
+                .ToHashSet();
+
+            // An output is a UTXO if it pays to our address, is not spent,
+            // and is not referenced by any input in our transaction history
+            return txList
                 .SelectMany(tx => tx.Outputs
                     .Select((output, index) => (TxId: tx.Hash ?? tx.Id, Index: index, Output: output))
                     .Where(x =>
                         x.Output.Addresses?.Contains(address) == true &&
-                        !x.Output.IsSpent)
+                        !x.Output.IsSpent &&
+                        !spentOutputs.Contains((x.TxId, x.Index)))
                     .Select(x => new UtxoDto
                     {
                         TransactionId = x.TxId,
                         OutputIndex = x.Index,
                         Amount = ParseDecimal(x.Output.Value?.Amount ?? "0")
-                    }));
-
-            var spentKeys = txList
-                .SelectMany(tx => tx.Inputs
-                    .Where(i => i.Addresses?.Contains(address) == true)
-                    .Select(i => (i.TransactionId, i.OutputIndex)))
-                .ToHashSet();
-
-            return unspentOutputs
-                .Where(u => !spentKeys.Contains((u.TransactionId, u.OutputIndex)))
+                    }))
                 .ToList();
         }
 
