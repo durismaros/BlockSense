@@ -133,22 +133,22 @@ namespace BlockSense.Backend.Services.Implementations
 
         private static List<UtxoDto> ExtractUtxos(IEnumerable<BtcTxItem> transactions, string address)
         {
-            // All unspent outputs to our address, position in array = vout index
-            var unspentOutputs = transactions
+            var txList = transactions.ToList();
+
+            var unspentOutputs = txList
                 .SelectMany(tx => tx.Outputs
-                    .Select((output, index) => (tx.Hash, Index: index, Output: output))
+                    .Select((output, index) => (TxId: tx.Hash ?? tx.Id, Index: index, Output: output))
                     .Where(x =>
                         x.Output.Addresses?.Contains(address) == true &&
                         !x.Output.IsSpent)
                     .Select(x => new UtxoDto
                     {
-                        TransactionId = x.Hash,
+                        TransactionId = x.TxId,
                         OutputIndex = x.Index,
                         Amount = ParseDecimal(x.Output.Value?.Amount ?? "0")
                     }));
 
-            // Cross-check: remove anything that appears as a spent input
-            var spentKeys = transactions
+            var spentKeys = txList
                 .SelectMany(tx => tx.Inputs
                     .Where(i => i.Addresses?.Contains(address) == true)
                     .Select(i => (i.TransactionId, i.OutputIndex)))
