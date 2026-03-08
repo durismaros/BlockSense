@@ -303,7 +303,7 @@ public partial class TwoFactorSlidingPanel : UserControl
     /// Resets the entered code and clears all displayed digit UI elements.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    private async Task ResetCodeEntry()
+    private Task ResetCodeEntry()
     {
         _currentCode = string.Empty;
 
@@ -324,6 +324,8 @@ public partial class TwoFactorSlidingPanel : UserControl
         }
 
         this.Focus();
+
+        return Task.CompletedTask;
     }
 
     /// <summary>

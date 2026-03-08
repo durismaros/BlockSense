@@ -1,6 +1,5 @@
 ﻿using BlockSense.Contracts.DTOs.Transaction;
 using BlockSense.Desktop.Providers.Interfaces;
-using BlockSense.Desktop.Services.Implementations;
 using BlockSense.Desktop.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -13,7 +12,6 @@ namespace BlockSense.Desktop.Providers.Implementations
     public sealed class EthereumProvider : IEthereumProvider
     {
         private readonly IEthereumService _ethereumService;
-        private readonly IWalletService _walletService;
 
         private Action? _onChanged;
 
@@ -29,19 +27,13 @@ namespace BlockSense.Desktop.Providers.Implementations
             private set;
         }
 
-        public decimal EurValue
+        public decimal ExchangeRate
         {
             get;
             private set;
         }
 
         public IReadOnlyList<TransactionDto> Transactions
-        {
-            get;
-            private set;
-        }
-
-        public DateTime? LastRefreshed
         {
             get;
             private set;
@@ -59,16 +51,18 @@ namespace BlockSense.Desktop.Providers.Implementations
             }
         }
 
-        public EthereumProvider(IEthereumService ethereumService, IWalletService walletService)
+        public EthereumProvider(IEthereumService ethereumService)
         {
             _ethereumService = ethereumService
                 ?? throw new ArgumentNullException(nameof(ethereumService));
 
-            _walletService = walletService
-                ?? throw new ArgumentNullException(nameof(walletService));
-
             Address = string.Empty;
             Transactions = new List<TransactionDto>().AsReadOnly();
+        }
+
+        public void Initialize(byte[] seed)
+        {
+            Address = _ethereumService.DeriveAddress(seed);
         }
 
         public async Task RefreshAsync(CancellationToken cancellationToken = default)
@@ -80,29 +74,18 @@ namespace BlockSense.Desktop.Providers.Implementations
 
             try
             {
-                var balanceTask = _ethereumService.GetBalanceAsync(Address, cancellationToken);
-                var rateTask = _walletService.GetRateAsync("BTC", "EUR", cancellationToken);
-                var txTask = _ethereumService.GetTransactionsAsync(Address, cancellationToken);
+                var balance = await _ethereumService.GetBalanceAsync(Address, cancellationToken);
+                var rate = await _ethereumService.GetExchangeRateAsync("EUR", cancellationToken);
+                var txs = await _ethereumService.GetTransactionsAsync(Address, cancellationToken);
 
-                await Task.WhenAll(balanceTask, txTask, rateTask);
-
-                if (balanceTask.Result is null ||
-                    rateTask.Result is null ||
-                    txTask.Result is null)
+                if (balance is null || rate is null || txs is null)
                 {
                     return;
                 }
 
-                var balance = balanceTask.Result.Balance;
-                var rate = rateTask.Result.Rate;
-                var transactions = txTask.Result.Transactions
-                    .ToList()
-                    .AsReadOnly();
-
-                Balance = balance;
-                EurValue = balance * rate;
-                Transactions = transactions;
-                LastRefreshed = DateTime.UtcNow;
+                Balance = balance.Balance;
+                ExchangeRate = rate.Rate;
+                Transactions = txs.Transactions.ToList().AsReadOnly();
 
                 _onChanged?.Invoke();
             }

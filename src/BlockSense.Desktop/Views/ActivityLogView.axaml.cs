@@ -26,71 +26,14 @@ public partial class ActivityLogView : UserControl
         InitializeComponent();
 
         WireEvents();
-
-        // Seed sample data so the UI is immediately visible during development.
-        LoadSampleData();
     }
 
-    public async Task LoadAsync()
+    public void Load()
     {
-        LogCountTextBlock.Text = "Loading…";
+        LogCountTextBlock.Text = "Loading...";
         LogRowsPanel.Children.Clear();
 
         ApplyFilters();
-    }
-
-    private void LoadSampleData()
-    {
-        var now = DateTime.UtcNow;
-
-        _allLogs =
-        [
-            // ── User events ──────────────────────────────────────────
-Make(1,  "user",   "device.auth.succeeded",              "Device authenticated",                     now.AddMinutes(-8)),
-Make(2,  "user",   "profile.password.changed",           "Password changed",                         now.AddHours(-2)),
-Make(3,  "user",   "auth.2fa.enabled",                   "Two-factor authentication enabled",        now.AddHours(-5)),
-Make(4,  "user",   "profile.picture.changed",            "Profile picture changed",                  now.AddHours(-14)),
-Make(5,  "user",   "device.auth.succeeded",              "Device authenticated",                     now.AddDays(-1)),
-Make(6,  "user",   "device.revoked",                     "Device revoked",                           now.AddDays(-1).AddHours(-3)),
-Make(7,  "user",   "invitation.code.redeemed",           "Invitation code redeemed",                 now.AddDays(-2)),
-Make(8,  "user",   "device.auth.succeeded",              "Device authenticated",                     now.AddDays(-2).AddMinutes(-6)),
-Make(9,  "user",   "profile.email.changed",              "Email address changed",                    now.AddDays(-4)),
-Make(10, "user",   "invitation.code.generated",          "Invitation code generated",                now.AddDays(-6)),
-Make(11, "user",   "auth.2fa.disabled",                  "Two-factor authentication disabled",       now.AddDays(-9)),
-Make(12, "user",   "invitation.code.generated",          "Invitation code generated",                now.AddDays(-10)),
-Make(13, "user",   "profile.username.changed",           "Username changed",                         now.AddDays(-12)),
-Make(14, "user",   "device.auth.succeeded",              "Device authenticated",                     now.AddDays(-14)),
-Make(15, "user",   "device.revoked",                     "Device revoked",                           now.AddDays(-15)),
-Make(16, "user",   "device.auth.succeeded",              "Device authenticated",                     now.AddDays(-21)),
-
-// ── System events ────────────────────────────────────────
-Make(17, "system", "user.role.updated",                  "User role updated to Administrator",       now.AddDays(-11)),
-Make(18, "system", "auth.2fa.backup.generated",          "Two-factor backup codes generated",        now.AddDays(-5)),
-Make(19, "system", "user.registered",                    "New user registered",                      now.AddDays(-3)),
-Make(20, "system", "user.restored",                      "User account restored",                    now.AddDays(-13)),
-
-// ── Cron events ──────────────────────────────────────────
-Make(21, "cron",   "device.revoked",                     "Expired device credentials revoked",       now.AddHours(-3)),
-Make(22, "cron",   "invitation.code.generated",          "Scheduled invitation codes generated",     now.AddDays(-1).AddHours(-3)),
-Make(23, "cron",   "device.revoked",                     "Expired device credentials revoked",       now.AddDays(-2).AddHours(-3)),
-Make(24, "cron",   "auth.2fa.backup.generated",          "Scheduled 2FA backup codes generated",     now.AddDays(-3).AddHours(-3)),
-Make(25, "cron",   "device.revoked",                     "Expired device credentials revoked",       now.AddDays(-4).AddHours(-3))
-        ];
-
-        ApplyFilters();
-
-        // ── Local factory ─────────────────────────────────────────────
-        static ActivityLogDto Make(
-            ulong id, string type, string action, string message, DateTime occurredAt) =>
-            new()
-            {
-                Id = id,
-                Type = type,
-                UserId = 1,
-                Action = action,
-                ActivityMessage = message,
-                OccurredAt = occurredAt
-            };
     }
 
     // ── Wiring ────────────────────────────────────────────────────────

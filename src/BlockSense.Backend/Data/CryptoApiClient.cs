@@ -47,6 +47,8 @@ namespace BlockSense.Backend.Data
                 PropertyNameCaseInsensitive = true
             };
 
+            await Task.Delay(1000, cancellationToken);
+
             using var response = await _httpClient.SendAsync(request, cancellationToken);
             var json = await response.Content.ReadAsStringAsync(cancellationToken);
 
@@ -62,9 +64,9 @@ namespace BlockSense.Backend.Data
 
                 throw new CustomException(
                     errorEnvelope.Error.Code.ToUpperInvariant(),
-                    errorEnvelope.Error.Message,
+                    "Crypto API Error",
                     (int)response.StatusCode,
-                    errorEnvelope.Error.Details?.Message ?? string.Empty);
+                    errorEnvelope.Error.Message);
             }
 
             return JsonSerializer.Deserialize<T>(json, options)
@@ -79,13 +81,6 @@ namespace BlockSense.Backend.Data
         private sealed class ApiError
         {
             public required string Code { get; set; }
-            public required string Message { get; set; }
-            public ErrorDetails? Details { get; set; }
-        }
-
-        private sealed class ErrorDetails
-        {
-            public required string Attribute { get; set; }
             public required string Message { get; set; }
         }
     }

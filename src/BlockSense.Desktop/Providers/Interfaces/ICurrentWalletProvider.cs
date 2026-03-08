@@ -16,5 +16,6 @@ namespace BlockSense.Desktop.Providers.Interfaces
 
         void Set(WalletData wallet);
         void Clear();
+        byte[]? DecryptSeed(string pin);
     }
 }

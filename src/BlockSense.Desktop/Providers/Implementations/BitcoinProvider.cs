@@ -12,7 +12,6 @@ namespace BlockSense.Desktop.Providers.Implementations
     public sealed class BitcoinProvider : IBitcoinProvider
     {
         private readonly IBitcoinService _bitcoinService;
-        private readonly IWalletService _walletService;
 
         private Action? _onChanged;
 
@@ -28,7 +27,7 @@ namespace BlockSense.Desktop.Providers.Implementations
             private set;
         }
 
-        public decimal EurValue
+        public decimal ExchangeRate
         {
             get;
             private set;
@@ -38,12 +37,6 @@ namespace BlockSense.Desktop.Providers.Implementations
         {
             get;
             private set; 
-        }
-
-        public DateTime? LastRefreshed
-        {
-            get;
-            private set;
         }
 
         public event Action? OnChanged
@@ -58,16 +51,18 @@ namespace BlockSense.Desktop.Providers.Implementations
             }
         }
 
-        public BitcoinProvider(IBitcoinService bitcoinService, IWalletService walletService)
+        public BitcoinProvider(IBitcoinService bitcoinService)
         {
             _bitcoinService = bitcoinService
                 ?? throw new ArgumentNullException(nameof(bitcoinService));
 
-            _walletService = walletService
-                ?? throw new ArgumentNullException(nameof(walletService));
-
             Address = string.Empty;
             Transactions = new List<TransactionDto>().AsReadOnly();
+        }
+
+        public void Initialize(byte[] seed)
+        {
+            Address = _bitcoinService.DeriveAddress(seed);
         }
 
         public async Task RefreshAsync(CancellationToken cancellationToken = default)
@@ -79,29 +74,18 @@ namespace BlockSense.Desktop.Providers.Implementations
 
             try
             {
-                var balanceTask = _bitcoinService.GetBalanceAsync(Address, cancellationToken);
-                var rateTask = _walletService.GetRateAsync("BTC", "EUR", cancellationToken);
-                var txTask = _bitcoinService.GetTransactionsAsync(Address, cancellationToken);
+                var balance = await _bitcoinService.GetBalanceAsync(Address, cancellationToken);
+                var rate = await _bitcoinService.GetExchangeRateAsync("EUR", cancellationToken);
+                var txs = await _bitcoinService.GetTransactionsAsync(Address, cancellationToken);
 
-                await Task.WhenAll(balanceTask, txTask, rateTask);
-
-                if (balanceTask.Result is null ||
-                    rateTask.Result is null ||
-                    txTask.Result is null)
+                if (balance is null || rate is null || txs is null)
                 {
                     return;
                 }
 
-                var balance = balanceTask.Result.Balance;
-                var rate = rateTask.Result.Rate;
-                var transactions = txTask.Result.Transactions
-                    .ToList()
-                    .AsReadOnly();
-
-                Balance = balance;
-                EurValue = balance * rate;
-                Transactions = transactions;
-                LastRefreshed = DateTime.UtcNow;
+                Balance = balance.Balance;
+                ExchangeRate = rate.Rate;
+                Transactions = txs.Transactions.ToList().AsReadOnly();
 
                 _onChanged?.Invoke();
             }

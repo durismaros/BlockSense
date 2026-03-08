@@ -18,7 +18,7 @@ namespace BlockSense.Desktop.Providers.Interfaces
             get;
         }
 
-        decimal EurValue
+        decimal ExchangeRate
         {
             get;
         }
@@ -28,13 +28,9 @@ namespace BlockSense.Desktop.Providers.Interfaces
             get;
         }
 
-        DateTime? LastRefreshed
-        {
-            get;
-        }
-
         event Action? OnChanged;
 
+        void Initialize(byte[] seed);
         Task RefreshAsync(CancellationToken cancellationToken = default);
     }
 }

@@ -5,11 +5,16 @@ using BlockSense.Contracts.DTOs.Transaction;
 using BlockSense.Contracts.DTOs.Wallet;
 using BlockSense.Desktop.Models.Api;
 using BlockSense.Desktop.Models.Wallet;
+using BlockSense.Desktop.Providers.Implementations;
+using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.FileManagement;
+using BlockSense.Desktop.Utilities.UIComponents;
+using Microsoft.Extensions.DependencyInjection;
 using NBitcoin;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,13 +26,41 @@ namespace BlockSense.Desktop.Services.Implementations
         private const string WalletKey = "wallet:active";
 
         private readonly IApiClient _apiClient;
+        private readonly ICurrentWalletProvider _currentWalletProvider;
+        private readonly IBitcoinProvider _bitcoinProvider;
+        private readonly IEthereumProvider _ethereumProvider;
+        private readonly NavigationManager _navigationManager;
         private readonly LevelDbStorage _dbStorage;
         private readonly Aes256GcmEncryptor _aes256GcmEncryptor = new();
+        private readonly PinEntrySlidingPanel _pinEntrySlidingPanel;
 
-        public WalletService(IApiClient apiClient, LevelDbStorage dbStorage)
+        public WalletService(
+            IApiClient apiClient,
+            ICurrentWalletProvider currentWalletProvider,
+            IBitcoinProvider bitcoinProvider,
+            IEthereumProvider ethereumProvider,
+            NavigationManager navigationManager)
         {
-            _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
-            _dbStorage = dbStorage ?? throw new ArgumentNullException(nameof(dbStorage));
+            _apiClient = apiClient
+                ?? throw new ArgumentNullException(nameof(apiClient));
+
+            _currentWalletProvider = currentWalletProvider
+                ?? throw new ArgumentNullException(nameof(currentWalletProvider));
+
+            _bitcoinProvider = bitcoinProvider
+                ?? throw new ArgumentNullException(nameof(bitcoinProvider));
+
+            _ethereumProvider = ethereumProvider
+                ?? throw new ArgumentNullException(nameof(ethereumProvider));
+
+            _navigationManager = navigationManager
+                ?? throw new ArgumentNullException(nameof(navigationManager));
+
+            _dbStorage = new LevelDbStorage(DirectoryStructure.WalletDirectory)
+                ?? throw new ArgumentNullException(nameof(LevelDbStorage));
+
+            _pinEntrySlidingPanel = MainWindow.Instance.PinEntrySlidingPanel
+                ?? throw new ArgumentNullException(nameof(PinEntrySlidingPanel));
         }
 
         public static string GenerateMnemonic()
@@ -36,54 +69,62 @@ namespace BlockSense.Desktop.Services.Implementations
         public Task<WalletData?> LoadWalletAsync(CancellationToken cancellationToken = default)
             => _dbStorage.GetAsync<WalletData>(WalletKey, cancellationToken);
 
-        public async Task<WalletData> CreateWalletAsync(
-            string mnemonic,
-            string pin,
-            CancellationToken cancellationToken = default)
+        public async Task<WalletData> CreateWalletAsync(Mnemonic mnemonic, string pin, CancellationToken cancellationToken = default)
         {
-            var parsed = new Mnemonic(mnemonic.Trim(), Wordlist.English);
-
-            if (!parsed.IsValidChecksum)
-                throw new ArgumentException("Invalid mnemonic checksum.", nameof(mnemonic));
-
-            var wallet = Build(parsed, pin);
+            var wallet = Build(mnemonic, pin);
             await _dbStorage.PutAsync(WalletKey, wallet, cancellationToken);
+
+
             return wallet;
-        }
-
-        public async Task<ExchangeRateResponse?> GetRateAsync(string fromAssetSymbol, string toAssetSymbol, CancellationToken cancellationToken = default)
-        {
-            var result = await _apiClient
-                .AddBearerToken()
-                .GetAsync<ExchangeRateResponse>($"/api/crypto/exchange-rate/{fromAssetSymbol}/{toAssetSymbol}", cancellationToken);
-
-            if (result.IsSuccess && result is ApiResult<ExchangeRateResponse>.Success success)
-            {
-                return success.Data;
-            }
-
-            return null;
         }
 
         public async Task<bool> WalletExistsAsync(CancellationToken cancellationToken = default)
             => await _dbStorage.GetAsync<WalletData>(WalletKey, cancellationToken) is not null;
 
-        public Task DeleteWalletAsync(CancellationToken cancellationToken = default)
-            => _dbStorage.DeleteAsync(WalletKey, cancellationToken);
-
-        public bool ValidatePin(WalletData wallet, string pin)
+        public async Task DeleteWalletAsync(CancellationToken cancellationToken = default)
         {
-            try
+            _currentWalletProvider.Clear();
+            await _dbStorage.DeleteAsync(WalletKey, cancellationToken);
+        }
+
+        public async Task UnlockWalletAsync(CancellationToken cancellationToken = default)
+        {
+            // Load wallet into the provider cache if it isn't already there.
+            if (!_currentWalletProvider.HasWallet)
             {
-                var pinBytes = Encoding.UTF8.GetBytes(pin);
-                var key = Pbkdf2Deriver.DeriveBytes(pinBytes, wallet.Salt);
-                _aes256GcmEncryptor.Decrypt(key, wallet.Iv, wallet.EncryptedSeed);
-                return true;
+                var stored = await LoadWalletAsync(cancellationToken);
+
+                if (stored is null)
+                {
+                    return;
+                }
+
+                _currentWalletProvider.Set(stored);
             }
-            catch
+
+            _pinEntrySlidingPanel.ShowPanel(async pin =>
             {
-                return false;
-            }
+                var seed = _currentWalletProvider.DecryptSeed(pin);
+
+                if (seed is null)
+                {
+                    await _pinEntrySlidingPanel.ShowErrorState();
+                    return;
+                }
+
+                try
+                {
+                    _bitcoinProvider.Initialize(seed);
+                    _ethereumProvider.Initialize(seed);
+
+                    _pinEntrySlidingPanel.HidePanel();
+                    await _navigationManager.NavigateToAsync<CryptoWalletView>();
+                }
+                finally
+                {
+                    CryptographicOperations.ZeroMemory(seed);
+                }
+            });
         }
 
         private WalletData Build(Mnemonic mnemonic, string pin)

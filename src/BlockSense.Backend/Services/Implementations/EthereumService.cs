@@ -56,7 +56,7 @@ namespace BlockSense.Backend.Services.Implementations
 
             var response = await _cryptoApiClient.GetAsync<EthTxListEnvelope>(path, cancellationToken);
             var data = response.Data;
-            var transactions = data.Item    .Select(MapTransaction);
+            var transactions = data.Items.Select(MapTransaction);
 
             return new TransactionListResponse
             {

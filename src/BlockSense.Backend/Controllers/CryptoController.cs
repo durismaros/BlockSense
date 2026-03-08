@@ -18,7 +18,7 @@ namespace BlockSense.Backend.Controllers
 
         [HttpGet("exchange-rate/{fromAssetSymbol}/{toAssetSymbol}")]
         [Authorize]
-        public async Task<IActionResult> GetBalance(string fromAssetSymbol, string toAssetSymbol, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetExchangeRate(string fromAssetSymbol, string toAssetSymbol, CancellationToken cancellationToken)
         {
             var balance = await _exchangeRateService.GetRateAsync(fromAssetSymbol, toAssetSymbol, cancellationToken);
             return Ok(balance);

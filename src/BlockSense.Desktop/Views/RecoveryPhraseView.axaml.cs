@@ -9,19 +9,20 @@ using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Implementations;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
+using NBitcoin;
 using System;
 
 namespace BlockSense.Desktop;
 
 public partial class RecoveryPhraseView : UserControl
 {
-    private readonly ICurrentWalletProvider _walletProvider;
+    private readonly ICurrentWalletProvider _currentWalletProvider;
     private readonly NavigationManager _navigationManager;
     private readonly string _mnemonic;
 
     public RecoveryPhraseView()
     {
-        _walletProvider = App.ServiceProvider.GetRequiredService<ICurrentWalletProvider>()
+        _currentWalletProvider = App.ServiceProvider.GetRequiredService<ICurrentWalletProvider>()
             ?? throw new ArgumentNullException(nameof(ICurrentWalletProvider));
 
         _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
@@ -43,7 +44,7 @@ public partial class RecoveryPhraseView : UserControl
 
     private async void ToPinEntryViewClick(object? sender, RoutedEventArgs e)
     {
-        _walletProvider.SetCreationContext(_mnemonic, isImport: false);
+        PinEntryView.Mnemonic = new Mnemonic(_mnemonic, Wordlist.English);
 
         await _navigationManager.NavigateToAsync<PinEntryView>();
     }

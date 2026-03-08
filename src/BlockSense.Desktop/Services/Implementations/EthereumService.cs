@@ -53,6 +53,21 @@ namespace BlockSense.Desktop.Services.Implementations
             return null;
         }
 
+        public async Task<ExchangeRateResponse?> GetExchangeRateAsync(string toAssetSymbol, CancellationToken cancellationToken = default)
+        {
+            var result = await _apiClient
+                .AddBearerToken()
+                .GetAsync<ExchangeRateResponse>($"/api/crypto/exchange-rate/ETH/{toAssetSymbol}", cancellationToken);
+
+            if (result.IsSuccess && result is ApiResult<ExchangeRateResponse>.Success success)
+            {
+                return success.Data;
+            }
+
+
+            return null;
+        }
+
         public async Task<BroadcastTransactionResponse?> BroadcastAsync(BroadcastTransactionRequest request, CancellationToken cancellationToken = default)
         {
             var result = await _apiClient

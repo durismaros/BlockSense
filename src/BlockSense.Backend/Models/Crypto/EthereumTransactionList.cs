@@ -7,7 +7,7 @@
 
     internal sealed class EthTxListData
     {
-        public required List<EthTxItem> Item { get; set; }
+        public required List<EthTxItem> Items { get; set; }
     }
 
     internal sealed class EthTxItem

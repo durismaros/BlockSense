@@ -6,7 +6,6 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Styling;
-using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
 using NBitcoin;
@@ -20,9 +19,6 @@ public partial class RecoveryPhraseImportView : UserControl
 {
     private readonly NavigationManager _navigationManager;
     private readonly List<TextBox> _wordInputs = new();
-
-    private static readonly HashSet<string> _bip39Words =
-        Wordlist.English.GetWords().ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     public RecoveryPhraseImportView()
     {
@@ -43,8 +39,6 @@ public partial class RecoveryPhraseImportView : UserControl
 
     private async void ToPinEntryViewClick(object? sender, RoutedEventArgs e)
     {
-        _walletProvider.SetCreationContext(string.Join(" ", GetMnemonicWords()), isImport: true);
-
         await _navigationManager.NavigateToAsync<PinEntryView>();
     }
 
@@ -151,6 +145,19 @@ public partial class RecoveryPhraseImportView : UserControl
         SubmitButton.Click -= ToPinEntryViewClick;
     }
 
-    public IReadOnlyList<string> GetMnemonicWords()
-        => _wordInputs.Select(tb => tb.Text?.Trim() ?? string.Empty).ToList();
+    public void SetValidMnemonic()
+    {
+        var phrase = string.Join(" ",
+            _wordInputs.Select(tb => tb.Text?.Trim() ?? string.Empty));
+
+        var mnemonic = new Mnemonic(phrase, Wordlist.English);
+
+        if (mnemonic.IsValidChecksum)
+        {
+            PinEntryView.Mnemonic = mnemonic;
+            return;
+        }
+
+        // Show error;
+    }
 }

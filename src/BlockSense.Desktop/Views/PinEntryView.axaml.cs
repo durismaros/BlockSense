@@ -6,12 +6,12 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
-using BlockSense.Desktop.Models.Wallet;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace BlockSense.Desktop;
@@ -21,6 +21,9 @@ public partial class PinEntryView : UserControl
     private const int PIN_LENGTH = 6;
 
     private readonly IWalletService _walletService;
+    private readonly ICurrentWalletProvider _currentWalletProvider;
+    private readonly IBitcoinProvider _bitcoinProvider;
+    private readonly IEthereumProvider _ethereumProvider;
     private readonly NavigationManager _navigationManager;
     private readonly PinEntrySlidingPanel _pinEntrySlidingPanel;
 
@@ -38,10 +41,25 @@ public partial class PinEntryView : UserControl
 
     private string _currentPin = string.Empty;
 
+    public static NBitcoin.Mnemonic? Mnemonic
+    {
+        get;
+        set;
+    }
+
     public PinEntryView()
     {
         _walletService = App.ServiceProvider.GetRequiredService<IWalletService>()
             ?? throw new ArgumentNullException(nameof(IWalletService));
+
+        _currentWalletProvider = App.ServiceProvider.GetRequiredService<ICurrentWalletProvider>()
+            ?? throw new ArgumentNullException(nameof(ICurrentWalletProvider));
+
+        _bitcoinProvider = App.ServiceProvider.GetRequiredService<IBitcoinProvider>()
+            ?? throw new ArgumentNullException(nameof(IBitcoinProvider));
+
+        _ethereumProvider = App.ServiceProvider.GetRequiredService<IEthereumProvider>()
+            ?? throw new ArgumentNullException(nameof(IEthereumProvider));
 
         _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
             ?? throw new ArgumentNullException(nameof(NavigationManager));
@@ -52,56 +70,72 @@ public partial class PinEntryView : UserControl
         InitializeComponent();
         SetupPinDots();
 
-        this.Focusable = true;
-
+        Focusable = true;
         AttachedToVisualTree += OnAttachedToVisualTree;
         DetachedFromVisualTree += OnDetachedFromVisualTree;
     }
 
-    private async void ToWalletSelectionViewClick(object? sender, RoutedEventArgs e)
+    private async void OnHomeClicked(object? sender, RoutedEventArgs e)
     {
         await _navigationManager.NavigateToAsync<WalletSelectionView>();
     }
 
-    private async void VerifyPinClick(object? sender, RoutedEventArgs e)
+    private void OnConfirmPinClicked(object? sender, RoutedEventArgs e)
     {
-        if (_currentPin.Length != PIN_LENGTH) return;
-
-        _pinEntrySlidingPanel.ShowPanel(async confirmPin =>
+        if (_currentPin.Length != PIN_LENGTH)
         {
-            if (confirmPin != _currentPin)
+            return;
+        }
+
+        var chosenPin = _currentPin;
+
+        _pinEntrySlidingPanel.ShowPanel(async confirmedPin =>
+        {
+            if (confirmedPin != chosenPin)
             {
                 await _pinEntrySlidingPanel.ShowErrorState();
-                return;
+                return; // panel stays open for another attempt
             }
 
-            // PINs match — save wallet and proceed
-            await SaveWalletAndContinueAsync(_currentPin);
+            await SaveAndContinueAsync(chosenPin);
         });
     }
 
-    private async Task SaveWalletAndContinueAsync(string pin)
+    private async Task SaveAndContinueAsync(string pin)
     {
         try
         {
-            var pendingContext = _walletProvider.CreationContext
-                ?? throw new ArgumentNullException(nameof(WalletCreationContext));
+            if (Mnemonic is null || !Mnemonic.IsValidChecksum)
+                throw new InvalidOperationException("Invalid or missing mnemonic.");
 
-            var wallet = pendingContext.IsImport
-                ? await _walletService.ImportWalletAsync(pendingContext.Mnemonic, pin)
-                : await _walletService.CreateWalletAsync(pendingContext.Mnemonic, pin);
+            var wallet = await _walletService.CreateWalletAsync(Mnemonic, pin);
+            _currentWalletProvider.Set(wallet);
 
-            _walletProvider.SetWallet(wallet);
-            _walletProvider.ClearCreationContext();
+            var seed = _currentWalletProvider.DecryptSeed(pin);
+            if (seed is not null)
+            {
+                try
+                {
+                    _bitcoinProvider.Initialize(seed);
+                    _ethereumProvider.Initialize(seed);
+                }
+                finally
+                {
+                    CryptographicOperations.ZeroMemory(seed);
+                }
+            }
 
             _pinEntrySlidingPanel.HidePanel();
-
             await _navigationManager.NavigateToAsync<CryptoWalletView>();
         }
         catch
         {
             _pinEntrySlidingPanel.HidePanel();
             await _navigationManager.NavigateToAsync<WalletSelectionView>();
+        }
+        finally
+        {
+            Mnemonic = null;
         }
     }
 
@@ -267,8 +301,8 @@ public partial class PinEntryView : UserControl
         _currentPin = string.Empty;
 
         this.KeyDown += OnKeyDown;
-        HomeButton.Click += ToWalletSelectionViewClick;
-        ConfirmPinButton.Click += VerifyPinClick;
+        HomeButton.Click += OnHomeClicked;
+        ConfirmPinButton.Click += OnConfirmPinClicked;
     }
 
     private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
@@ -276,7 +310,7 @@ public partial class PinEntryView : UserControl
         _currentPin = string.Empty;
 
         this.KeyDown -= OnKeyDown;
-        HomeButton.Click -= ToWalletSelectionViewClick;
-        ConfirmPinButton.Click -= VerifyPinClick;
+        HomeButton.Click -= OnHomeClicked;
+        ConfirmPinButton.Click -= OnConfirmPinClicked;
     }
 }

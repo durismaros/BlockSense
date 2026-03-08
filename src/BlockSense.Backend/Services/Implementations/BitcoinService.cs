@@ -52,10 +52,10 @@ namespace BlockSense.Backend.Services.Implementations
                 $"?limit=5";
 
             var confirmedResponse = await _cryptoApiClient.GetAsync<BtcTxListEnvelope>(confirmedPath, cancellationToken);
-            var confirmedTxs = confirmedResponse.Data.Item;
+            var confirmedTxs = confirmedResponse.Data.Items;
 
             var unconfirmedResponse = await _cryptoApiClient.GetAsync<BtcTxListEnvelope>(unconfirmedPath, cancellationToken);
-            var unconfirmedTxs = unconfirmedResponse.Data.Item;
+            var unconfirmedTxs = unconfirmedResponse.Data.Items;
 
             var transactions = confirmedTxs
                 .Select(tx => MapTransaction(tx, address, TransactionStatus.Confirmed))
@@ -107,7 +107,7 @@ namespace BlockSense.Backend.Services.Implementations
             return new TransactionDto
             {
                 TxHash = tx.Hash ?? tx.Id,
-                Fee = ParseDecimal(tx.Fee.Amount),
+                Fee = ParseDecimal(tx.Fee?.Amount ?? "0"),
                 FromAddress = tx.Senders?.FirstOrDefault()?.Address ?? "Unknown",
                 ToAddress = tx.Recipients?.FirstOrDefault()?.Address ?? "Unknown",
                 Amount = amount,

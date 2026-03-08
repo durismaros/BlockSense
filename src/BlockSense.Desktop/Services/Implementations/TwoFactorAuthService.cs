@@ -5,7 +5,6 @@ using BlockSense.Contracts.DTOs.User;
 using BlockSense.Desktop.Models.Api;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
-using Org.BouncyCastle.Cms;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -51,7 +50,7 @@ namespace BlockSense.Desktop.Services.Implementations
             throw new InvalidOperationException();
         }
 
-        public async Task EnableAsync(string setupKey, CancellationToken cancellationToken = default)
+        public Task EnableAsync(string setupKey, CancellationToken cancellationToken = default)
         {
             _twoFactorSlidingPanel.ShowPanel(async code =>
             {
@@ -81,9 +80,11 @@ namespace BlockSense.Desktop.Services.Implementations
                         break;
                 }
             });
+
+            return Task.CompletedTask;
         }
 
-        public async Task DisableAsync(CancellationToken cancellationToken = default)
+        public Task DisableAsync(CancellationToken cancellationToken = default)
         {
             _twoFactorSlidingPanel.BackUpToggleButton.IsVisible = false;
             _twoFactorSlidingPanel.ShowPanel(async code =>
@@ -114,6 +115,8 @@ namespace BlockSense.Desktop.Services.Implementations
                         break;
                 }
             });
+
+            return Task.CompletedTask;
         }
 
         public async Task GenerateBackupCodesAsync(CancellationToken cancellationToken = default)

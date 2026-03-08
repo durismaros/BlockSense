@@ -42,12 +42,12 @@ namespace BlockSense.Backend.Services.Implementations
 
             var exchangeRate = new ExchangeRateResponse
             {
-                FromAssetId = response.Data.Items.FromAssetId,
-                FromAssetSymbol = response.Data.Items.FromAssetSymbol,
-                Rate = ParseDecimal(response.Data.Items.Rate),
-                ToAssetId = response.Data.Items.ToAssetId,
-                ToAssetSymbol = response.Data.Items.ToAssetSymbol,
-                CachedAt = DateTimeOffset.FromUnixTimeSeconds(response.Data.Items.CalculationTimestamp).UtcDateTime
+                FromAssetId = response.Data.Item.FromAssetId,
+                FromAssetSymbol = response.Data.Item.FromAssetSymbol,
+                Rate = ParseDecimal(response.Data.Item.Rate),
+                ToAssetId = response.Data.Item.ToAssetId,
+                ToAssetSymbol = response.Data.Item.ToAssetSymbol,
+                CachedAt = DateTimeOffset.FromUnixTimeSeconds(response.Data.Item.CalculationTimestamp).UtcDateTime
             };
 
             _exchangeRateCache[key] = exchangeRate;
@@ -70,7 +70,7 @@ namespace BlockSense.Backend.Services.Implementations
 
         private sealed class ExchangeRateData
         {
-            public required ExchangeRateItem Items { get; set; }
+            public required ExchangeRateItem Item { get; set; }
         }
 
         private sealed class ExchangeRateItem

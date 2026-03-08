@@ -20,8 +20,10 @@ namespace BlockSense.Desktop.Services.Implementations
 
         public BitcoinService(IApiClient apiClient)
         {
-            _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
-            _network = Network.Main ?? throw new ArgumentNullException(nameof(Network));
+            _apiClient = apiClient
+                ?? throw new ArgumentNullException(nameof(apiClient));
+
+            _network = Network.TestNet;
         }
 
         public async Task<WalletBalanceResponse?> GetBalanceAsync(string address, CancellationToken cancellationToken = default)
@@ -48,6 +50,21 @@ namespace BlockSense.Desktop.Services.Implementations
             {
                 return success.Data;
             }
+
+            return null;
+        }
+
+        public async Task<ExchangeRateResponse?> GetExchangeRateAsync(string toAssetSymbol, CancellationToken cancellationToken = default)
+        {
+            var result = await _apiClient
+                .AddBearerToken()
+                .GetAsync<ExchangeRateResponse>($"/api/crypto/exchange-rate/BTC/{toAssetSymbol}", cancellationToken);
+
+            if (result.IsSuccess && result is ApiResult<ExchangeRateResponse>.Success success)
+            {
+                return success.Data;
+            }
+
 
             return null;
         }
