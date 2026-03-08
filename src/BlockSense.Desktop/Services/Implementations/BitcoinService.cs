@@ -121,7 +121,8 @@ namespace BlockSense.Desktop.Services.Implementations
             _bitcoinProvider.Set(
                 balance.Balance,
                 rate.Rate,
-                txs.Transactions.ToList().AsReadOnly());
+                txs.Transactions.ToList().AsReadOnly(),
+                txs.Utxos.ToList().AsReadOnly());
         }
 
         public async Task SignAndBroadcastAsync(
@@ -146,7 +147,7 @@ namespace BlockSense.Desktop.Services.Implementations
                         Seed = decryptedSeed,
                         ToAddress = toAddress,
                         AmountBtc = amount,
-                        BalanceBtc = _bitcoinProvider.Balance,
+                        Utxos = _bitcoinProvider.Utxos,
                         FeeBtc = BitcoinFees.Default
                     });
 
@@ -192,14 +193,14 @@ namespace BlockSense.Desktop.Services.Implementations
                 var source = key.PubKey.GetAddress(ScriptPubKeyType.Legacy, BitcoinChain.CurrentNetwork);
                 var destination = BitcoinAddress.Create(request.ToAddress, BitcoinChain.CurrentNetwork);
 
-                var fundingCoin = new Coin(
-                    fromTxHash: uint256.Zero,
-                    fromOutputIndex: 0,
-                    amount: Money.Coins(request.BalanceBtc),
-                    scriptPubKey: source.ScriptPubKey);
+                var coins = request.Utxos.Select(u => new Coin(
+                    fromTxHash: uint256.Parse(u.TransactionId),
+                    fromOutputIndex: (uint)u.OutputIndex,
+                    amount: Money.Coins(u.Amount),
+                    scriptPubKey: source.ScriptPubKey));
 
                 var tx = BitcoinChain.CurrentNetwork.CreateTransactionBuilder()
-                    .AddCoins(fundingCoin)
+                    .AddCoins(coins)
                     .AddKeys(key)
                     .Send(destination, Money.Coins(request.AmountBtc))
                     .SetChange(source)

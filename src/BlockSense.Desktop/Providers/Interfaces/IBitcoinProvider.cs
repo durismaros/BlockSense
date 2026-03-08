@@ -26,10 +26,15 @@ namespace BlockSense.Desktop.Providers.Interfaces
             get;
         }
 
+        IReadOnlyList<UtxoDto> Utxos
+        {
+            get;
+        }
+
         event Action? OnChanged;
 
         void Initialize(string address);
-        void Set(decimal balance, decimal exchangeRate, IReadOnlyList<TransactionDto> transactions);
+        void Set(decimal balance, decimal exchangeRate, IReadOnlyList<TransactionDto> transactions, IReadOnlyList<UtxoDto> utxos);
         void Clear();
     }
 }

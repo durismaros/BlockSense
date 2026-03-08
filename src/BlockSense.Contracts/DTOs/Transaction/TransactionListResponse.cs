@@ -19,5 +19,11 @@
             get;
             init;
         }
+
+        public required IEnumerable<UtxoDto> Utxos
+        {
+            get;
+            init;
+        }
     }
 }

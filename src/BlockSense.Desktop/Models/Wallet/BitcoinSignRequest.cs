@@ -1,4 +1,7 @@
-﻿namespace BlockSense.Desktop.Models.Wallet
+﻿using BlockSense.Contracts.DTOs.Transaction;
+using System.Collections.Generic;
+
+namespace BlockSense.Desktop.Models.Wallet
 {
     public sealed record BitcoinSignRequest
     {
@@ -10,6 +13,6 @@
 
         public required decimal FeeBtc { get; init; }
 
-        public required decimal BalanceBtc { get; init; }
+        public required IReadOnlyList<UtxoDto> Utxos { get; set; }
     }
 }

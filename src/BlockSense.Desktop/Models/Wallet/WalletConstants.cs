@@ -18,8 +18,8 @@ namespace BlockSense.Desktop.Models.Wallet
     {
         public static readonly Network CurrentNetwork = Network.TestNet;
 
-        // Testnet = "m/44'/1'/0'/0"
-        public static readonly KeyPath DerivationPath = new("m/44'/0'/0'/0");
+        // Mainnet = "m/44'/0'/0'/0"
+        public static readonly KeyPath DerivationPath = new("m/44'/1'/0'/0");
     }
 
     public static class EthereumChain

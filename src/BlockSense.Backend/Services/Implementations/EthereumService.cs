@@ -62,13 +62,14 @@ namespace BlockSense.Backend.Services.Implementations
             {
                 Address = address,
                 Total = transactions.Count(),
-                Transactions = transactions
+                Transactions = transactions,
+                Utxos = new List<UtxoDto>()
             };
         }
 
         public async Task<BroadcastTransactionResponse> BroadcastAsync(BroadcastTransactionRequest request, CancellationToken cancellationToken = default)
         {
-            var path = $"transactions/evm/ethereum/{_cryptoConfig.Ethereum.Network}/broadcast";
+            var path = $"/broadcast-transactions/bitcoin/{_cryptoConfig.Ethereum.Network}";
             var body = new
             {
                 data = new
