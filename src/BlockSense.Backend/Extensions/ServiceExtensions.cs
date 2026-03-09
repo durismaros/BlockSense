@@ -60,6 +60,7 @@ namespace BlockSense.Backend.Extensions
             services.AddScoped<IInvitationRepository, InvitationRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<ITotpCredentialRepository, TotpCredentialRepository>();
+            services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
 
 
             return services;
@@ -73,6 +74,7 @@ namespace BlockSense.Backend.Extensions
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<ITwoFactorAuthService, TwoFactorAuthService>();
+            services.AddScoped<IActivityLogService, ActivityLogService>();
 
             services.AddKeyedScoped<ICryptoService, BitcoinService>("bitcoin");
             services.AddKeyedScoped<ICryptoService, EthereumService>("ethereum");

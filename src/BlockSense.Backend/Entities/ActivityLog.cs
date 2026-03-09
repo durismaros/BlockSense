@@ -28,7 +28,7 @@ namespace BlockSense.Backend.Entities
             init;
         }
 
-        public IReadOnlyDictionary<string, object?>? Context
+        public string? Context
         {
             get;
             init;

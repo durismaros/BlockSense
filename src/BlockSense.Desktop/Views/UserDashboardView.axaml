@@ -838,50 +838,18 @@
 						</StackPanel>
 					</Border>
 
-					<!-- Activity Log Card-->
+					<!-- Activity Log Card -->
 					<Border Classes="card" Grid.Row="1" Grid.ColumnSpan="2">
 						<StackPanel>
 
-							<!-- Header -->
-							<TextBlock
-							Text="Recent Activity"
-							Foreground="#4A4238"
-							FontSize="18"
-							FontWeight="Medium"
-							Margin="0 0 0 10"/>
+							<TextBlock Text="Recent Activity"
+									   Foreground="#4A4238"
+									   FontSize="18"
+									   FontWeight="Medium"
+									   Margin="0 0 0 10"/>
 
-							<!-- Table definition -->
-							<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*,Auto" Margin="0 10">
-								<!-- Columns -->
-								<TextBlock Grid.Row="0" Grid.Column="0" Text="Date" FontWeight="SemiBold" Foreground="#8B6B4A"/>
-								<TextBlock Grid.Row="0" Grid.Column="1" Text="Activity" FontWeight="SemiBold" Foreground="#8B6B4A"/>
-								<TextBlock Grid.Row="0" Grid.Column="2" Text="Status" FontWeight="SemiBold" Foreground="#8B6B4A"/>
+							<StackPanel x:Name="RecentActivityPanel" Spacing="0" Margin="0 10"/>
 
-								<Separator Grid.Row="1" Grid.ColumnSpan="3" Margin="0 10"/>
-
-								<!-- Row 1 -->
-								<TextBlock Grid.Row="2" Grid.Column="0" Text="Apr 15, 2025" Foreground="#5D4B35" Margin="0 0 20 0"/>
-								<TextBlock Grid.Row="2" Grid.Column="1" Text="Password Changed" Foreground="#5D4B35"/>
-								<Border Grid.Row="2" Grid.Column="2" Classes="status">
-									<TextBlock Text="Completed" Height="16" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-								</Border>
-
-								<!-- Row 2 -->
-								<TextBlock Grid.Row="3" Grid.Column="0" Text="Apr 12, 2025" Foreground="#5D4B35" Margin="0 15 20 0"/>
-								<TextBlock Grid.Row="3" Grid.Column="1" Text="New Device Login" Foreground="#5D4B35" Margin="0 15 0 0"/>
-								<Border Grid.Row="3" Grid.Column="2" Classes="status" Margin="0 15 0 0">
-									<TextBlock Text="Verified" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-								</Border>
-
-								<!-- Row 3 -->
-								<TextBlock Grid.Row="4" Grid.Column="0" Text="Apr 10, 2025" Foreground="#5D4B35" Margin="0 15 20 0"/>
-								<TextBlock Grid.Row="4" Grid.Column="1" Text="Wallet Backup" Foreground="#5D4B35" Margin="0 15 0 0"/>
-								<Border Grid.Row="4" Grid.Column="2" Classes="status" Margin="0 15 0 0">
-									<TextBlock Text="Completed" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-								</Border>
-							</Grid>
-
-							<!-- ── Full Activity Log Button (now named) ── -->
 							<Button x:Name="ViewFullActivityLogButton"
 									Width="200"
 									Height="40"
@@ -892,28 +860,21 @@
 									BorderBrush="#6D4C41"
 									BorderThickness="1"
 									CornerRadius="8">
-
 								<StackPanel Orientation="Horizontal"
 											HorizontalAlignment="Center"
 											VerticalAlignment="Center"
 											Spacing="8">
-
 									<Viewbox Width="14" Height="14" VerticalAlignment="Center">
 										<Path Data="M3,3H21V5H3V3M3,7H15V9H3V7M3,11H21V13H3V11M3,15H15V17H3V15M3,19H21V21H3V19Z"
 											  Fill="#5D3F36" Stretch="Uniform"/>
 									</Viewbox>
-
 									<TextBlock Text="View Full Activity Log"
-											   HorizontalAlignment="Center"
-											   VerticalAlignment="Center"
 											   FontWeight="Medium"
 											   Foreground="#5D3F36"/>
 								</StackPanel>
-
 								<Button.Styles>
 									<Style Selector="Button:pointerover ContentPresenter">
 										<Setter Property="Background" Value="Transparent"/>
-										<Setter Property="BorderBrush" Value="#6D4C41"/>
 									</Style>
 								</Button.Styles>
 							</Button>

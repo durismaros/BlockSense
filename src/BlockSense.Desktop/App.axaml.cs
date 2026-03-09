@@ -82,6 +82,7 @@ namespace BlockSense.Desktop
             services.AddScoped<ISessionService, SessionService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<ITwoFactorAuthService, TwoFactorAuthService>();
+            services.AddScoped<IActivityLogService, ActivityLogService>();
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IBitcoinService, BitcoinService>();
             services.AddScoped<IEthereumService, EthereumService>();

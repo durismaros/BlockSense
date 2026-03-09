@@ -5,7 +5,6 @@ using BlockSense.Desktop.Providers.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static BlockSense.Contracts.Definitions.ActivityActions;
 
 namespace BlockSense.Desktop.Providers.Implementations
 {
@@ -21,6 +20,12 @@ namespace BlockSense.Desktop.Providers.Implementations
         {
             get;
             private set; 
+        }
+
+        public IReadOnlyList<ActivityLogDto> RecentActivity
+        {
+            get;
+            private set;
         }
 
         public IEnumerable<InvitationDto> Invitations
@@ -39,8 +44,7 @@ namespace BlockSense.Desktop.Providers.Implementations
         {
             add
             {
-                _onCurrentUserChanged += value;
-                value?.Invoke();
+                _onCurrentUserChanged += value; value?.Invoke();
             }
             remove
             {
@@ -54,44 +58,46 @@ namespace BlockSense.Desktop.Providers.Implementations
         {
             Profile = default!;
             ActiveDevices = Array.Empty<SessionDto>();
+            RecentActivity = Array.Empty<ActivityLogDto>();
             Invitations = Array.Empty<InvitationDto>();
-            TwoFactorBackupCodes = null;
         }
 
-        public void Set(UserDashboardDto userDashboardDto)
+        public void Set(UserDashboardDto dashboard)
         {
-            Profile = userDashboardDto.Profile;
-            ActiveDevices = userDashboardDto.ActiveTokens.ToList();
-            Invitations = userDashboardDto.UserInvitations;
-
+            Profile = dashboard.Profile;
+            ActiveDevices = dashboard.ActiveTokens.ToList();
+            RecentActivity = dashboard.RecentActivity.ToList();
+            Invitations = dashboard.UserInvitations;
             _onCurrentUserChanged?.Invoke();
         }
 
-        public void SetProfile(UserSummaryDto userSummaryDto)
+        public void SetProfile(UserSummaryDto profile)
         {
-            Profile = userSummaryDto;
-
+            Profile = profile;
             _onCurrentUserChanged?.Invoke();
         }
 
         public void SetActiveDevices(IList<SessionDto> activeDevices)
         {
             ActiveDevices = activeDevices;
-
             _onCurrentUserChanged?.Invoke();
         }
 
         public void SetInvitations(IEnumerable<InvitationDto> invitations)
         {
             Invitations = invitations;
+            _onCurrentUserChanged?.Invoke();
+        }
 
+        public void SetRecentActivity(IReadOnlyList<ActivityLogDto> entries)
+        {
+            RecentActivity = entries;
             _onCurrentUserChanged?.Invoke();
         }
 
         public void SetTwoFactorBackupCodes(IEnumerable<string>? backupCodes)
         {
             TwoFactorBackupCodes = backupCodes;
-
             _onCurrentUserChanged?.Invoke();
         }
 
@@ -99,8 +105,8 @@ namespace BlockSense.Desktop.Providers.Implementations
         {
             Profile = default!;
             ActiveDevices = Array.Empty<SessionDto>();
+            RecentActivity = Array.Empty<ActivityLogDto>();
             Invitations = Array.Empty<InvitationDto>();
-
             _onCurrentUserChanged?.Invoke();
         }
     }

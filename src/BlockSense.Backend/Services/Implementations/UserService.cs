@@ -2,8 +2,10 @@
 using BlockSense.Backend.Entities;
 using BlockSense.Backend.Exceptions.Generic;
 using BlockSense.Backend.Exceptions.Registration;
+using BlockSense.Backend.Repositories.Implementations;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
+using BlockSense.Backend.Utilities;
 using BlockSense.Contracts.Cryptography.Hashing;
 using BlockSense.Contracts.DTOs.Invitation;
 using BlockSense.Contracts.DTOs.Registration;
@@ -26,6 +28,7 @@ namespace BlockSense.Backend.Services.Implementations
         private readonly IInvitationRepository _invitationRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly ITotpCredentialRepository _totpCredentialRepository;
+        private readonly IActivityLogRepository _activityLogRepository;
         private readonly DatabaseContext _databaseContext;
         private readonly Argon2idHasher _argon2IdHasher;
 
@@ -41,12 +44,14 @@ namespace BlockSense.Backend.Services.Implementations
             IInvitationRepository invitationRepository,
             IRefreshTokenRepository refreshTokenRepository,
             ITotpCredentialRepository totpCredentialRepository,
+            IActivityLogRepository activityLogRepository,
             DatabaseContext databaseContext)
         {
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _invitationRepository = invitationRepository ?? throw new ArgumentNullException(nameof(invitationRepository));
             _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
             _totpCredentialRepository = totpCredentialRepository ?? throw new ArgumentNullException(nameof(totpCredentialRepository));
+            _activityLogRepository = activityLogRepository ?? throw new ArgumentNullException(nameof(activityLogRepository));
             _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
             _argon2IdHasher = new Argon2idHasher() ?? throw new ArgumentNullException(nameof(Argon2idHasher));
         }
@@ -155,6 +160,9 @@ namespace BlockSense.Backend.Services.Implementations
             var activeTokens =
                 await _refreshTokenRepository.GetActiveByUserIdAsync(userId, cancellationToken);
 
+            var recentActivity =
+                await _activityLogRepository.GetPagedByUserIdAsync(userId, page: 1, pageSize: 3, cancellationToken);
+
             var invitationCodes =
                 await _invitationRepository.GetByIssuedToIdAsync(userId, cancellationToken);
 
@@ -167,10 +175,15 @@ namespace BlockSense.Backend.Services.Implementations
                     .ToList()
                     .AsReadOnly(),
 
+                RecentActivity = recentActivity
+                    .Select(MapToActivityLogDto)
+                    .ToList()
+                    .AsReadOnly(),
+                
                 UserInvitations = invitationCodes
                     .Select(MapToInvitationDto)
                     .ToList()
-                    .AsReadOnly()
+                    .AsReadOnly(),
             };
         }
 
@@ -198,10 +211,12 @@ namespace BlockSense.Backend.Services.Implementations
 
         private static SessionDto MapToSessionDto(RefreshToken token)
         {
+            var maskedId = IpAddressMasker.Mask(token.IpAddress);
+
             return new SessionDto
             {
                 TokenHash = token.TokenHash,
-                IpAddress = MaskIp(token.IpAddress),
+                IpAddress = maskedId,
                 IssuedAt = token.IssuedAt,
                 ExpiresAt = token.ExpiresAt
             };
@@ -220,6 +235,19 @@ namespace BlockSense.Backend.Services.Implementations
             };
         }
 
+        private static ActivityLogDto MapToActivityLogDto(ActivityLog activityLog)
+        {
+            return new ActivityLogDto
+            {
+                Id = activityLog.Id,
+                Type = activityLog.Type,
+                UserId = activityLog.UserId,
+                Action = activityLog.Action,
+                ActivityMessage = ActivityMessageMapper.Map(activityLog.Action, activityLog.Context),
+                OccurredAt = activityLog.OccurredAt
+            };
+        }
+
         private static InvitationStatus GetInvitationStatus(InvitationCode invitation)
         {
             if (invitation.IsRevoked)
@@ -232,43 +260,6 @@ namespace BlockSense.Backend.Services.Implementations
                 return InvitationStatus.Expired;
 
             return InvitationStatus.Active;
-        }
-
-        private static string MaskIp(string ipString)
-        {
-            if (!IPAddress.TryParse(ipString, out var ip))
-            {
-                return ipString;
-            }
-
-            if (ip.IsIPv4MappedToIPv6)
-            {
-                ip = ip.MapToIPv4();
-            }
-
-            switch (ip.AddressFamily)
-            {
-                case AddressFamily.InterNetwork:
-                    return MaskIpv4(ip);
-
-                case AddressFamily.InterNetworkV6:
-                    return MaskIpv6(ip);
-
-                default:
-                    return ipString;
-            }
-        }
-
-        private static string MaskIpv4(IPAddress ip)
-        {
-            var bytes = ip.GetAddressBytes();
-            return $"{bytes[0]}.{bytes[1]}.{bytes[2]}.*";
-        }
-
-        private static string MaskIpv6(IPAddress ip)
-        {
-            var bytes = ip.GetAddressBytes();
-            return $"{bytes[0]}:{bytes[1]}:{bytes[2]}:{bytes[3]}:*";
         }
     }
 }

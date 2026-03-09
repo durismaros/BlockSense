@@ -6,7 +6,6 @@ using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using NBitcoin;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
@@ -71,7 +70,7 @@ namespace BlockSense.Desktop.Services.Implementations
         {
             var result = await _apiClient
                 .AddBearerToken()
-                .GetAsync<ExchangeRateResponse>($"/api/crypto/exchange-rate/BTC/{toAssetSymbol}", cancellationToken);
+                .GetAsync<ExchangeRateResponse>($"api/crypto/exchange-rate/BTC/{toAssetSymbol}", cancellationToken);
 
             if (result.IsSuccess && result is ApiResult<ExchangeRateResponse>.Success success)
             {
@@ -97,12 +96,6 @@ namespace BlockSense.Desktop.Services.Implementations
             return null;
         }
 
-        public void Initialize(byte[] seed)
-        {
-            var address = DeriveAddress(seed);
-            _bitcoinProvider.Initialize(address);
-        }
-
         public async Task RefreshAsync(CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(_bitcoinProvider.Address))
@@ -126,10 +119,7 @@ namespace BlockSense.Desktop.Services.Implementations
                 txs.Utxos.ToList().AsReadOnly());
         }
 
-        public async Task SignAndBroadcastAsync(
-            string toAddress,
-            decimal amount,
-            CancellationToken cancellationToken = default)
+        public async Task SignAndBroadcastAsync(string toAddress, decimal amount, CancellationToken cancellationToken = default)
         {
             _pinEntrySlidingPanel.ShowPanel(async pin =>
             {
@@ -156,33 +146,88 @@ namespace BlockSense.Desktop.Services.Implementations
                         new BroadcastTransactionRequest { SignedTransactionHex = signedHex },
                         cancellationToken);
 
+                    if (result is null)
+                    {
+                        MainWindow.Instance.ShowNotification(
+                            "Broadcast Failed",
+                            "Could not broadcast transaction. Please try again.");
+
+                        return;
+                    }
+
                     MainWindow.Instance.ShowNotification(
                         "Transaction Broadcast",
-                        $"Transaction {result?.TransactionId} broadcasted");
+                        $"Transaction {result.TransactionId} broadcasted successfully.");
                 }
                 catch (FormatException)
                 {
                     MainWindow.Instance.ShowNotification(
                         "Invalid Address",
-                        "Please enter a valid address.");
+                        "Please enter a valid Bitcoin address.");
                 }
                 catch (NotEnoughFundsException)
                 {
                     MainWindow.Instance.ShowNotification(
                         "Not Enough Funds",
-                        "");
+                        "Your balance is too low to cover this amount and fees.");
                 }
                 catch (Exception ex)
                 {
-                    MainWindow.Instance.ShowNotification("Error", ex.Message);
+                    MainWindow.Instance.ShowNotification(
+                        "Signing Error",
+                        ex.Message);
                 }
                 finally
                 {
                     _pinEntrySlidingPanel.HidePanel();
-
                     CryptographicOperations.ZeroMemory(decryptedSeed);
                 }
             });
+        }
+
+        public string SignTransaction(BitcoinSignRequest request)
+        {
+            var privateKeyBytes = DerivePrivateKey(request.Seed);
+
+            try
+            {
+                var key = new Key(privateKeyBytes);
+
+                var source = key.PubKey.GetAddress(ScriptPubKeyType.Legacy, BitcoinChain.CurrentNetwork);
+                var destination = BitcoinAddress.Create(request.ToAddress, BitcoinChain.CurrentNetwork);
+
+                var coins = request.Utxos.Select(u =>
+                    new Coin(
+                        new OutPoint(uint256.Parse(u.TransactionId), (uint)u.OutputIndex),
+                        new TxOut(Money.Coins(u.Amount), source.ScriptPubKey)));
+
+                var builder = BitcoinChain.CurrentNetwork.CreateTransactionBuilder()
+                    .AddCoins(coins)
+                    .AddKeys(key)
+                    .Send(destination, Money.Coins(request.AmountBtc))
+                    .SetChange(source)
+                    .SendFees(Money.Coins(request.FeeBtc));
+
+                var tx = builder.BuildTransaction(sign: true);
+
+                if (!builder.Verify(tx, out var errors))
+                {
+                    throw new InvalidOperationException(
+                        $"Transaction verification failed: {string.Join(", ", errors.Select(e => e.ToString()))}");
+                }
+
+                return tx.ToHex();
+            }
+            finally
+            {
+                CryptographicOperations.ZeroMemory(privateKeyBytes);
+            }
+        }
+
+        public void Initialize(byte[] seed)
+        {
+            var address = DeriveAddress(seed);
+            _bitcoinProvider.Initialize(address);
         }
 
         public string DeriveAddress(byte[] seed)
@@ -197,52 +242,6 @@ namespace BlockSense.Desktop.Services.Implementations
         {
             var derived = ExtKey.CreateFromSeed(seed).Derive(BitcoinChain.DerivationPath);
             return derived.PrivateKey.ToBytes();
-        }
-
-        public string SignTransaction(BitcoinSignRequest request)
-        {
-            var privateKeyBytes = DerivePrivateKey(request.Seed);
-
-            try
-            {
-                var key = new Key(privateKeyBytes);
-
-                var source = key.PubKey.GetAddress(ScriptPubKeyType.Legacy, BitcoinChain.CurrentNetwork);
-                var destination = BitcoinAddress.Create(request.ToAddress, BitcoinChain.CurrentNetwork);
-
-                var coins = BuildCoins(request, source);
-
-                var tx = BitcoinChain.CurrentNetwork.CreateTransactionBuilder()
-                    .AddCoins(coins)
-                    .AddKeys(key)
-                    .Send(destination, Money.Coins(request.AmountBtc))
-                    .SetChange(source)
-                    .SendFees(Money.Coins(request.FeeBtc))
-                    .BuildTransaction(sign: true);
-
-                return tx.ToHex();
-            }
-            finally
-            {
-                CryptographicOperations.ZeroMemory(privateKeyBytes);
-            }
-        }
-
-        private static IEnumerable<Coin> BuildCoins(BitcoinSignRequest request, BitcoinAddress source)
-        {
-            return request.Utxos.SelectMany(u =>
-            {
-                var txHash = uint256.Parse(u.TransactionId);
-                var amount = Money.Coins(u.Amount);
-                var script = source.ScriptPubKey;
-
-                // Try both vout 0 and vout 1 since we don't know the real index
-                return new[]
-                {
-                    new Coin(txHash, 0, amount, script),
-                    new Coin(txHash, 1, amount, script)
-                };
-            });
         }
     }
 }

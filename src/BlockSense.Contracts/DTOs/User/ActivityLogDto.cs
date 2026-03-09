@@ -1,4 +1,6 @@
-﻿namespace BlockSense.Contracts.DTOs.User
+﻿using BlockSense.Contracts.Enums;
+
+namespace BlockSense.Contracts.DTOs.User
 {
     public sealed class ActivityLogDto
     {
@@ -8,7 +10,7 @@
             init;
         }
 
-        public required string Type
+        public required ActivityType Type
         {
             get;
             init;

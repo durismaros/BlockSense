@@ -32,80 +32,44 @@ public partial class UserDashboardView : UserControl
 
     public UserDashboardView()
     {
-        _twoFactorAuthService = App.ServiceProvider.GetRequiredService<ITwoFactorAuthService>()
-            ?? throw new ArgumentNullException(nameof(ITwoFactorAuthService));
-
-        _tokenService = App.ServiceProvider.GetRequiredService<ITokenService>()
-            ?? throw new ArgumentNullException(nameof(ITokenService));
-
-        _sessionService = App.ServiceProvider.GetRequiredService<ISessionService>()
-            ?? throw new ArgumentNullException(nameof(ISessionService));
-
-        _currentUserProvider = App.ServiceProvider.GetRequiredService<ICurrentUserProvider>()
-            ?? throw new ArgumentNullException(nameof(ICurrentUserProvider));
-
-        _refreshTokenProvider = App.ServiceProvider.GetRequiredService<IRefreshTokenProvider>()
-            ?? throw new ArgumentNullException(nameof(IRefreshTokenProvider));
-
-        _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
-            ?? throw new ArgumentNullException(nameof(NavigationManager));
-
-        _invitationManagerWindow = App.ServiceProvider.GetRequiredService<InvitationManagerWindow>()
-            ?? throw new ArgumentNullException(nameof(InvitationManagerWindow));
+        _twoFactorAuthService = App.ServiceProvider.GetRequiredService<ITwoFactorAuthService>();
+        _tokenService = App.ServiceProvider.GetRequiredService<ITokenService>();
+        _sessionService = App.ServiceProvider.GetRequiredService<ISessionService>();
+        _currentUserProvider = App.ServiceProvider.GetRequiredService<ICurrentUserProvider>();
+        _refreshTokenProvider = App.ServiceProvider.GetRequiredService<IRefreshTokenProvider>();
+        _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>();
+        _invitationManagerWindow = App.ServiceProvider.GetRequiredService<InvitationManagerWindow>();
 
         InitializeComponent();
 
         _currentUserProvider.OnCurrentUserChanged += OnCurrentUserChanged;
 
         HomeButton.Click += ToHomeViewClick;
-
         OpenInvitationManagerButton.Click += OpenInvitationManagerButtonClick;
-
         ManageSecuritySettingsButton.Click += OpenSecurityManagerClick;
         CloseSecuriyManagerButton.Click += CloseSecurityManagerClick;
-
         ManageActiveDevicesButton.Click += OpenDeviceManagerClick;
         CloseDeviceManagerButton.Click += CloseDeviceManagerClick;
-
         EnableTwoFactorButton.PointerPressed += EnableTwoFactorClick;
         GenerateBackupCodesButton.Click += GenerateBackupCodesClick;
         DownloadBackupCodesButton.Click += DownloadBackupCodesClick;
-
         DisableTwoFactorCheckButton.Click += DisableTwoFactorCheckClick;
         DisableTwoFactorButton.Click += DisableTwoFactorClick;
-
         LogOutAllDevicesButton.Click += LogOutAllDevicesClick;
         ConfirmLogOutAllDevicesButton.Click += ConfirmLogOutAllDevicesClick;
-
         ViewFullActivityLogButton.Click += OpenActivityLogClick;
-
         ActivityLogOverlay.CloseRequested += CloseActivityLogAsync;
     }
 
     private void OnCurrentUserChanged()
     {
-        UsernameTextBlock.Text =
-            _currentUserProvider.Profile.Username;
-
-        EmailTextBlock.Text =
-            _currentUserProvider.Profile.Email;
-
-        UserIdTextBlock.Text =
-            _currentUserProvider.Profile.UserId.ToString();
-
-        SetAccountBadges(_currentUserProvider.Profile.Role);
-
-        CreationDateTextBlock.Text =
-            DateTimeFormatter.ToOrdinalDate(_currentUserProvider.Profile.CreatedAt);
-
-        InvitedByTextBlock.Text =
-            _currentUserProvider.Profile.InvitedBy;
-
-        UpdatedAtTextBlock.Text =
-            $"Updated: {DateTimeFormatter.ToOrdinalDate(_currentUserProvider.Profile.UpdatedAt)}";
-
-        TwoFaStatusTextBlock.Text =
-            _currentUserProvider.Profile.TwoFactorEnabled ? "Enabled" : "Disabled";
+        UsernameTextBlock.Text = _currentUserProvider.Profile.Username;
+        EmailTextBlock.Text = _currentUserProvider.Profile.Email;
+        UserIdTextBlock.Text = _currentUserProvider.Profile.UserId.ToString();
+        CreationDateTextBlock.Text = DateTimeFormatter.ToOrdinalDate(_currentUserProvider.Profile.CreatedAt);
+        InvitedByTextBlock.Text = _currentUserProvider.Profile.InvitedBy;
+        UpdatedAtTextBlock.Text = $"Updated: {DateTimeFormatter.ToOrdinalDate(_currentUserProvider.Profile.UpdatedAt)}";
+        TwoFaStatusTextBlock.Text = _currentUserProvider.Profile.TwoFactorEnabled ? "Enabled" : "Disabled";
 
         ActiveDevicesTextBlock.Text =
             FormatDeviceCount(_currentUserProvider.ActiveDevices.Count);
@@ -113,15 +77,88 @@ public partial class UserDashboardView : UserControl
         TotalInvitedUsersTextBlock.Text =
             FormatInvitationCount(_currentUserProvider.Invitations.Count(i => i.Status == InvitationStatus.Used));
 
+        SetAccountBadges(_currentUserProvider.Profile.Role);
+        UpdateRecentActivityCard();
         UpdateSecurityManagerCard();
-
         UpdateActiveDevices();
     }
 
-    private async void ToHomeViewClick(object? sender, RoutedEventArgs e)
+    private void UpdateRecentActivityCard()
     {
-        await _navigationManager.NavigateToAsync<HomeView>();
+        RecentActivityPanel.Children.Clear();
+
+        var entries = _currentUserProvider.RecentActivity;
+
+        if (entries.Count == 0)
+        {
+            RecentActivityPanel.Children.Add(new TextBlock
+            {
+                Text = "No recent activity.",
+                Foreground = new SolidColorBrush(Color.Parse("#9E8572")),
+                FontSize = 13,
+                FontStyle = FontStyle.Italic,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Avalonia.Thickness(0, 8)
+            });
+            return;
+        }
+
+        foreach (var log in entries)
+        {
+            RecentActivityPanel.Children.Add(new Border
+            {
+                Height = 1,
+                Background = new SolidColorBrush(Color.Parse("#EDE7DE"))
+            });
+
+            var row = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("160 *"),
+                Margin = new Avalonia.Thickness(0, 8)
+            };
+
+            var date = new TextBlock
+            {
+                Text = DateTimeFormatter.ToOrdinalDate(log.OccurredAt),
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.Parse("#9E8572")),
+                FontStyle = FontStyle.Italic,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(date, 0);
+
+            var msg = new TextBlock
+            {
+                Text = log.ActivityMessage,
+                FontSize = 13,
+                Foreground = new SolidColorBrush(Color.Parse("#4A4238")),
+                FontWeight = FontWeight.Medium,
+                TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Avalonia.Thickness(12, 0)
+            };
+            Grid.SetColumn(msg, 1);
+
+            row.Children.Add(date);
+            row.Children.Add(msg);
+            RecentActivityPanel.Children.Add(row);
+        }
     }
+
+    private async void OpenActivityLogClick(object? sender, RoutedEventArgs e)
+    {
+        ActivityLogOverlay.IsVisible = true;
+        await Animations.FadeInAnimation.RunAsync(ActivityLogOverlay);
+    }
+
+    private async Task CloseActivityLogAsync()
+    {
+        await Animations.FadeOutAnimation.RunAsync(ActivityLogOverlay);
+        ActivityLogOverlay.IsVisible = false;
+    }
+
+    private async void ToHomeViewClick(object? sender, RoutedEventArgs e)
+        => await _navigationManager.NavigateToAsync<HomeView>();
 
     private async void OpenInvitationManagerButtonClick(object? sender, RoutedEventArgs e)
     {
@@ -147,6 +184,74 @@ public partial class UserDashboardView : UserControl
         SecurityManagerCard.IsVisible = false;
     }
 
+    private async void UpdateSecurityManagerCard()
+    {
+        if (_currentUserProvider.Profile.TwoFactorEnabled)
+        {
+            ShowTwoFactorEnabledState();
+            return;
+        }
+
+        await ShowTwoFactorDisabledStateAsync();
+    }
+
+    private void ShowTwoFactorEnabledState()
+    {
+        TwoFactorEnabledContent.IsVisible = true;
+        TwoFactorDisabledContent.IsVisible = false;
+        DownloadBackupCodesButton.IsVisible = _currentUserProvider.TwoFactorBackupCodes?.Any() == true;
+    }
+
+    private async Task ShowTwoFactorDisabledStateAsync()
+    {
+        TwoFactorEnabledContent.IsVisible = false;
+        TwoFactorDisabledContent.IsVisible = true;
+
+        var setup = await _twoFactorAuthService.GetSetupInitAsync();
+        TwoFactorQRCodeImage.Source = new Bitmap(new MemoryStream(setup.QRCodeData));
+        SetupKeyTextBlock.Text = setup.SetupKey;
+    }
+
+    private async void EnableTwoFactorClick(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+        => await _twoFactorAuthService.EnableAsync(SetupKeyTextBlock.Text ?? string.Empty);
+
+    private async void DisableTwoFactorClick(object? sender, RoutedEventArgs e)
+        => await _twoFactorAuthService.DisableAsync();
+
+    private async void DisableTwoFactorCheckClick(object? sender, RoutedEventArgs e)
+    {
+        if (DisableTwoFactorButton.IsVisible) return;
+        DisableTwoFactorButton.IsVisible = true;
+        await Animations.FadeInAnimation.RunAsync(DisableTwoFactorButton);
+    }
+
+    private async void GenerateBackupCodesClick(object? sender, RoutedEventArgs e)
+        => await _twoFactorAuthService.GenerateBackupCodesAsync();
+
+    private async void DownloadBackupCodesClick(object? sender, RoutedEventArgs e)
+    {
+        var backupCodes = _currentUserProvider.TwoFactorBackupCodes;
+        if (backupCodes?.Any() != true) return;
+
+        if (TopLevel.GetTopLevel(this)?.StorageProvider is not { } storageProvider) return;
+
+        var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save Backup Codes",
+            SuggestedFileName = "backup-codes.txt",
+            FileTypeChoices = new[]
+            {
+                new FilePickerFileType("Text File") { Patterns = new[] { "*.txt" } }
+            }
+        });
+
+        if (file is null) return;
+
+        await using var stream = await file.OpenWriteAsync();
+        await using var writer = new StreamWriter(stream);
+        await writer.WriteAsync(string.Join(Environment.NewLine, backupCodes));
+    }
+
     private async void OpenDeviceManagerClick(object? sender, RoutedEventArgs e)
     {
         DeviceManagerCard.IsVisible = true;
@@ -159,128 +264,12 @@ public partial class UserDashboardView : UserControl
         DeviceManagerCard.IsVisible = false;
     }
 
-    private async void GenerateBackupCodesClick(object? sender, RoutedEventArgs e)
-    {
-        await _twoFactorAuthService.GenerateBackupCodesAsync();
-    }
-
-    private async void DownloadBackupCodesClick(object? sender, RoutedEventArgs e)
-    {
-        var backupCodes = _currentUserProvider.TwoFactorBackupCodes;
-
-        if (backupCodes is null || backupCodes.Count() is 0)
-            return;
-
-        if (TopLevel.GetTopLevel(this)?.StorageProvider is not { } storageProvider)
-            return;
-
-        var saveOptions = new FilePickerSaveOptions
-        {
-            Title = "Save Backup Codes",
-            SuggestedFileName = "*.txt",
-            FileTypeChoices = new[]
-            {
-                new FilePickerFileType("Text File")
-                {
-                    Patterns = new[] { "*.txt" }
-                },
-                new FilePickerFileType("All Files")
-                {
-                    Patterns = new[] { "*.*" }
-                }
-            }
-        };
-        var file = await storageProvider.SaveFilePickerAsync(saveOptions);
-
-        if (file is null)
-            return;
-
-        var content = string.Join(
-            Environment.NewLine,
-            backupCodes);
-
-        await using var stream = await file.OpenWriteAsync();
-        await using var writer = new StreamWriter(stream);
-        await writer.WriteAsync(content);
-    }
-
-    private async void DisableTwoFactorCheckClick(object? sender, RoutedEventArgs e)
-    {
-        if (DisableTwoFactorButton.IsVisible)
-        {
-            return;
-        }
-
-        DisableTwoFactorButton.IsVisible = true;
-        await Animations.FadeInAnimation.RunAsync(DisableTwoFactorButton);
-    }
-
-    private async void EnableTwoFactorClick(object? sender, RoutedEventArgs e)
-    {
-        var setupKey = SetupKeyTextBlock.Text ?? string.Empty;
-
-        await _twoFactorAuthService.EnableAsync(setupKey);
-    }
-
-    private async void DisableTwoFactorClick(object? sender, RoutedEventArgs e)
-    {
-        await _twoFactorAuthService.DisableAsync();
-    }
-
-    private async void UpdateSecurityManagerCard()
-    {
-        if (_currentUserProvider.Profile.TwoFactorEnabled)
-        {
-            ShowTwoFactorEnabledState();
-            return;
-        }
-
-        await ShowTwoFactorDisabledStateAsync();
-    }
-
-    private void SetAccountBadges(UserRole role)
-    {
-        AccountBadgesStackPanel.Children.Clear();
-
-        switch (role)
-        {
-            case UserRole.Standard:
-                AccountBadgesStackPanel.Children.Add(CreateBadge("user"));
-                break;
-
-            case UserRole.Administrator:
-                AccountBadgesStackPanel.Children.Add(CreateBadge("user"));
-                AccountBadgesStackPanel.Children.Add(CreateBadge("admin"));
-                break;
-
-            case UserRole.Founder:
-                AccountBadgesStackPanel.Children.Add(CreateBadge("user"));
-                AccountBadgesStackPanel.Children.Add(CreateBadge("admin"));
-                AccountBadgesStackPanel.Children.Add(CreateBadge("founder"));
-                break;
-        }
-
-        Border CreateBadge(string text)
-        {
-            return new Border()
-            {
-                Classes = { "badge" },
-                Child = new TextBlock()
-                {
-                    Classes = { "badgeText" },
-                    Text = text
-                }
-            };
-        }
-    }
-
     private async void UpdateActiveDevices()
     {
         DevicesPanel.Children.Clear();
 
-        var tokenHash =
-            Sha256Hasher.ComputeBase64(
-                Convert.FromBase64String(await _refreshTokenProvider.GetAsync()));
+        var tokenHash = Sha256Hasher.ComputeBase64(
+            Convert.FromBase64String(await _refreshTokenProvider.GetAsync()));
 
         foreach (var device in _currentUserProvider.ActiveDevices)
             DevicesPanel.Children.Add(CreateDeviceCard(device, device.TokenHash == tokenHash));
@@ -296,68 +285,37 @@ public partial class UserDashboardView : UserControl
             ? CreateDefaultButton("Sign Out", confirmButton)
             : CreateDefaultButton("Revoke", confirmButton);
 
-        var leftStack = new StackPanel
+        var leftStack = new StackPanel { Spacing = 10 };
+
+        if (isCurrentDevice)
         {
-            Spacing = 10,
-            Children =
+            leftStack.Children.Add(new TextBlock
             {
-                new ContentControl { Classes = { "deviceIp" },       Tag = device.IpAddress }
-            }
-        };
+                Text = "This Device",
+                Classes = { "deviceLabel" },
+                Foreground = new SolidColorBrush(Color.Parse("#4CAF50"))
+            });
+        }
 
-        // Dates grid
-        var datesGrid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("* *"),
-        };
+        leftStack.Children.Add(new ContentControl { Classes = { "deviceIp" }, Tag = device.IpAddress });
 
-        var issuedAt = new ContentControl
-        {
-            Classes = { "deviceIssuedAt" },
-            Tag = DateTimeFormatter.ToOrdinalDate(device.IssuedAt)
-        };
+        var datesGrid = new Grid { ColumnDefinitions = new ColumnDefinitions("* *") };
+        var issuedAt = new ContentControl { Classes = { "deviceIssuedAt" }, Tag = DateTimeFormatter.ToOrdinalDate(device.IssuedAt) };
+        var expiresAt = new ContentControl { Classes = { "deviceExpiresAt" }, Tag = DateTimeFormatter.ToOrdinalDate(device.ExpiresAt) };
         Grid.SetColumn(issuedAt, 0);
-
-        var expiresAt = new ContentControl
-        {
-            Classes = { "deviceExpiresAt" },
-            Tag = DateTimeFormatter.ToOrdinalDate(device.ExpiresAt)
-        };
         Grid.SetColumn(expiresAt, 1);
-
         datesGrid.Children.Add(issuedAt);
         datesGrid.Children.Add(expiresAt);
         leftStack.Children.Add(datesGrid);
 
-        if (isCurrentDevice)
-        {
-            leftStack.Children.Insert(
-                0,
-                new TextBlock
-                {
-                    Text = "This Device",
-                    Classes = { "deviceLabel" },
-                    Foreground = new SolidColorBrush(Color.Parse("#4CAF50"))
-                });
-        }
-
-        var grid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("* Auto")
-        };
-
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("* Auto") };
         Grid.SetColumn(defaultButton, 1);
         Grid.SetColumn(confirmButton, 1);
-
         grid.Children.Add(leftStack);
         grid.Children.Add(defaultButton);
         grid.Children.Add(confirmButton);
 
-        return new Border
-        {
-            Classes = { "deviceCard" },
-            Child = grid
-        };
+        return new Border { Classes = { "deviceCard" }, Child = grid };
     }
 
     private Button CreateDefaultButton(string label, Button confirmButton)
@@ -376,13 +334,11 @@ public partial class UserDashboardView : UserControl
             }
         };
 
-        button.Click += async (s, e) =>
+        button.Click += async (_, _) =>
         {
             confirmButton.IsVisible = true;
             await Animations.FadeInAnimation.RunAsync(confirmButton);
-
             await Task.Delay(3000);
-
             await Animations.FadeOutAnimation.RunAsync(confirmButton);
             confirmButton.IsVisible = false;
         };
@@ -413,70 +369,43 @@ public partial class UserDashboardView : UserControl
     }
 
     private async Task ConfirmRevokeAsync(string tokenHash)
-    {
-        var request = new SessionRevokeRequest
-        {
-            TokenHash = tokenHash
-        };
-
-        await _tokenService.RevokeAsync(
-            request,
-            CancellationToken.None);
-    }
+        => await _tokenService.RevokeAsync(new SessionRevokeRequest { TokenHash = tokenHash }, CancellationToken.None);
 
     private async void LogOutAllDevicesClick(object? sender, RoutedEventArgs e)
     {
         ConfirmLogOutAllDevicesButton.IsVisible = true;
         await Animations.FadeInAnimation.RunAsync(ConfirmLogOutAllDevicesButton);
-
         await Task.Delay(3000);
-
         await Animations.FadeOutAnimation.RunAsync(ConfirmLogOutAllDevicesButton);
         ConfirmLogOutAllDevicesButton.IsVisible = false;
     }
 
     private async void ConfirmLogOutAllDevicesClick(object? sender, RoutedEventArgs e)
+        => await _tokenService.RevokeAllAsync(new RevokeAllSessionsRequest(), CancellationToken.None);
+
+    private void SetAccountBadges(UserRole role)
     {
-        await _tokenService.RevokeAllAsync(new RevokeAllSessionsRequest(), cancellationToken: CancellationToken.None);
-    }
+        AccountBadgesStackPanel.Children.Clear();
 
-    private void ShowTwoFactorEnabledState()
-    {
-        TwoFactorEnabledContent.IsVisible = true;
-        TwoFactorDisabledContent.IsVisible = false;
+        var badges = role switch
+        {
+            UserRole.Standard => new[] { "user" },
+            UserRole.Administrator => new[] { "user", "admin" },
+            UserRole.Founder => new[] { "user", "admin", "founder" },
+            _ => Array.Empty<string>()
+        };
 
-        DownloadBackupCodesButton.IsVisible =
-            _currentUserProvider.TwoFactorBackupCodes?.Count() > 0;
-    }
-
-    private async Task ShowTwoFactorDisabledStateAsync()
-    {
-        TwoFactorEnabledContent.IsVisible = false;
-        TwoFactorDisabledContent.IsVisible = true;
-
-        var setup = await _twoFactorAuthService.GetSetupInitAsync();
-
-        TwoFactorQRCodeImage.Source =
-            new Bitmap(new MemoryStream(setup.QRCodeData));
-
-        SetupKeyTextBlock.Text = setup.SetupKey;
-    }
-
-    private async void OpenActivityLogClick(object? sender, RoutedEventArgs e)
-    {
-        ActivityLogOverlay.IsVisible = true;
-        await Animations.FadeInAnimation.RunAsync(ActivityLogOverlay);
-    }
-
-    private async Task CloseActivityLogAsync()
-    {
-        await Animations.FadeOutAnimation.RunAsync(ActivityLogOverlay);
-        ActivityLogOverlay.IsVisible = false;
+        foreach (var badge in badges)
+            AccountBadgesStackPanel.Children.Add(new Border
+            {
+                Classes = { "badge" },
+                Child = new TextBlock { Classes = { "badgeText" }, Text = badge }
+            });
     }
 
     private static string FormatDeviceCount(int count)
         => $"{count} {(count == 1 ? "Device" : "Devices")}";
 
     private static string FormatInvitationCount(int count)
-    => $"{count} {(count != 1 ? "Users" : "User")}";
+        => $"{count} {(count == 1 ? "User" : "Users")}";
 }

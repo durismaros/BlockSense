@@ -1,5 +1,4 @@
 ﻿using BlockSense.Backend.Data.Configurations;
-using BlockSense.Backend.Exceptions;
 using BlockSense.Backend.Exceptions.Generic;
 using Microsoft.Extensions.Options;
 using System.Text.Json;

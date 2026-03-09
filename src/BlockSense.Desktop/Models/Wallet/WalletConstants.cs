@@ -4,7 +4,7 @@ namespace BlockSense.Desktop.Models.Wallet
 {
     public static class BitcoinFees
     {
-        public const decimal Default = 0.0001m;
+        public const decimal Default = 0.00002260m;
     }
 
     public static class EthereumFees
@@ -18,7 +18,7 @@ namespace BlockSense.Desktop.Models.Wallet
     {
         public static readonly Network CurrentNetwork = Network.TestNet;
 
-        // Mainnet = "m/44'/0'/0'/0"
+        // Mainnet = "m/44'/0'/0'/0/0"
         public static readonly KeyPath DerivationPath = new("m/44'/1'/0'/0");
     }
 

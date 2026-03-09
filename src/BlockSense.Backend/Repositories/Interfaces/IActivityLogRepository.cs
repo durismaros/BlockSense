@@ -6,12 +6,10 @@ namespace BlockSense.Backend.Repositories.Interfaces
     {
         Task InsertAsync(ActivityLog entity, CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<ActivityLog>> GetByUserAsync(uint userId, int limit = 50, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<ActivityLog>> GetPagedByUserIdAsync(uint userId, int page, int pageSize, CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<ActivityLog>> GetBySystemAsync(int limit = 50, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<ActivityLog>> GetLatestAsync(uint userId, ulong afterId, CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<ActivityLog>> GetByCronAsync(int limit = 50, CancellationToken cancellationToken = default);
-
-        Task<IReadOnlyList<ActivityLog>> GetRecentAsync(int limit = 50, CancellationToken cancellationToken = default);
+        Task<ulong> CountByUserIdAsync(uint userId, CancellationToken cancellationToken = default);
     }
 }

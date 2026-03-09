@@ -7,6 +7,7 @@ using BlockSense.Contracts.DTOs.Transaction;
 using BlockSense.Contracts.DTOs.Wallet;
 using BlockSense.Contracts.Enums;
 using Microsoft.Extensions.Options;
+using System.Globalization;
 
 namespace BlockSense.Backend.Services.Implementations
 {
@@ -65,13 +66,6 @@ namespace BlockSense.Backend.Services.Implementations
             var allTransactions = confirmedTxs.Concat(unconfirmedTxs).ToList();
             var utxos = ExtractUtxos(allTransactions, address);
 
-            foreach (var x in utxos)
-            {
-                Console.WriteLine(x.TransactionId);
-                Console.WriteLine(x.OutputIndex);
-                Console.WriteLine(x.Amount);
-            }
-
             return new TransactionListResponse
             {
                 Address = address,
@@ -116,14 +110,12 @@ namespace BlockSense.Backend.Services.Implementations
             var amount = received - sent;
 
             var fromAddress = tx.Inputs?.FirstOrDefault(i =>
-                i.Addresses?.Contains(wallet) == true)?.Addresses?.First()
-                ?? tx.Inputs?.FirstOrDefault()?.Addresses?.FirstOrDefault()
-                ?? "Unknown";
+                    i.Addresses?.Contains(wallet) == true)?.Addresses?.First()
+                        ?? tx.Inputs?.FirstOrDefault()?.Addresses?.FirstOrDefault() ?? "Unknown";
 
             var toAddress = tx.Outputs?.FirstOrDefault(o =>
-                o.Addresses?.Contains(wallet) == false)?.Addresses?.FirstOrDefault()
-                ?? tx.Outputs?.FirstOrDefault()?.Addresses?.FirstOrDefault()
-                ?? "Unknown";
+                    o.Addresses?.Contains(wallet) == false)?.Addresses?.FirstOrDefault()
+                        ?? tx.Outputs?.FirstOrDefault()?.Addresses?.FirstOrDefault() ?? "Unknown";
 
             return new TransactionDto
             {
@@ -140,30 +132,27 @@ namespace BlockSense.Backend.Services.Implementations
 
         private static List<UtxoDto> ExtractUtxos(IEnumerable<BtcTxItem> transactions, string address)
         {
-            var txList = transactions.ToList();
-
-            // Build set of all spent outputs across all transactions
-            var spentOutputs = txList
-                .SelectMany(tx => tx.Inputs
-                    .Where(i => i.TransactionId is not null)
-                    .Select(i => (i.TransactionId!, i.OutputIndex)))
-                .ToHashSet();
-
-            // An output is a UTXO if it pays to our address, is not spent,
-            // and is not referenced by any input in our transaction history
-            return txList
+            var unspentOutputs = transactions
                 .SelectMany(tx => tx.Outputs
-                    .Select((output, index) => (TxId: tx.Hash ?? tx.Id, Index: index, Output: output))
+                    .Select((output, index) => (tx.Hash, Index: index, Output: output))
                     .Where(x =>
                         x.Output.Addresses?.Contains(address) == true &&
-                        !x.Output.IsSpent &&
-                        !spentOutputs.Contains((x.TxId, x.Index)))
+                        !x.Output.IsSpent)
                     .Select(x => new UtxoDto
                     {
-                        TransactionId = x.TxId,
+                        TransactionId = x.Hash,
                         OutputIndex = x.Index,
                         Amount = ParseDecimal(x.Output.Value?.Amount ?? "0")
-                    }))
+                    }));
+
+            var spentKeys = transactions
+                .SelectMany(tx => tx.Inputs
+                    .Where(i => i.Addresses?.Contains(address) == true)
+                    .Select(i => (i.TransactionId, i.OutputIndex)))
+                .ToHashSet();
+
+            return unspentOutputs
+                .Where(u => !spentKeys.Contains((u.TransactionId, u.OutputIndex)))
                 .ToList();
         }
 

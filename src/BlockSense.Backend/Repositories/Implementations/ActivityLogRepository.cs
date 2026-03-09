@@ -1,10 +1,12 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Entities;
+using BlockSense.Backend.Repositories.Interfaces;
+using Dapper;
 using MySql.Data.MySqlClient;
 
 namespace BlockSense.Backend.Repositories.Implementations
 {
-    public sealed class ActivityLogRepository
+    public sealed class ActivityLogRepository : IActivityLogRepository
     {
         private readonly DatabaseContext _databaseContext;
 
@@ -33,14 +35,99 @@ namespace BlockSense.Backend.Repositories.Implementations
 
             var parameters = new[]
             {
-                new MySqlParameter("@Type",       MySqlDbType.Enum)          { Value = log.Type.ToString().ToLowerInvariant() },
-                new MySqlParameter("@UserId",     MySqlDbType.UInt32)        { Value = log.UserId },
-                new MySqlParameter("@Action",     MySqlDbType.VarChar, 255)  { Value = log.Action },
-                new MySqlParameter("@Context",    MySqlDbType.JSON)          { Value = (object?)log.Context ?? DBNull.Value },
-                new MySqlParameter("@OccurredAt", MySqlDbType.DateTime)      { Value = log.OccurredAt }
+                new MySqlParameter("@Type",       MySqlDbType.Enum)         { Value = log.Type.ToString().ToLowerInvariant() },
+                new MySqlParameter("@UserId",     MySqlDbType.UInt32)       { Value = (object?)log.UserId ?? DBNull.Value },
+                new MySqlParameter("@Action",     MySqlDbType.VarChar, 255) { Value = log.Action },
+                new MySqlParameter("@Context",    MySqlDbType.JSON)         { Value = (object?)log.Context ?? DBNull.Value },
+                new MySqlParameter("@OccurredAt", MySqlDbType.DateTime)     { Value = log.OccurredAt }
             };
 
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
+        }
+
+        public async Task<IReadOnlyList<ActivityLog>> GetPagedByUserIdAsync(
+            uint userId,
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            const string sql = """
+                SELECT
+                    id          AS Id,
+                    type        AS Type,
+                    user_id     AS UserId,
+                    action      AS Action,
+                    context     AS Context,
+                    occurred_at AS OccurredAt
+                FROM activity_logs
+                WHERE user_id = @UserId
+                ORDER BY occurred_at DESC, id DESC
+                LIMIT @PageSize OFFSET @Offset;
+                """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@UserId",   MySqlDbType.UInt32) { Value = userId },
+                new MySqlParameter("@PageSize", MySqlDbType.Int32)  { Value = pageSize },
+                new MySqlParameter("@Offset",   MySqlDbType.Int32)  { Value = (page - 1) * pageSize }
+            };
+
+            await using var reader =
+                await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
+
+            return SqlMapper.Parse<ActivityLog>(reader)
+                .AsList().AsReadOnly();
+        }
+
+        public async Task<IReadOnlyList<ActivityLog>> GetLatestAsync(
+            uint userId,
+            ulong afterId,
+            CancellationToken cancellationToken = default)
+        {
+            const string sql = """
+                SELECT
+                    id          AS Id,
+                    type        AS Type,
+                    user_id     AS UserId,
+                    action      AS Action,
+                    context     AS Context,
+                    occurred_at AS OccurredAt
+                FROM activity_logs
+                WHERE user_id = @UserId
+                  AND id > @AfterId
+                ORDER BY occurred_at DESC, id DESC;
+                """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@UserId",  MySqlDbType.UInt32) { Value = userId },
+                new MySqlParameter("@AfterId", MySqlDbType.UInt64) { Value = afterId }
+            };
+
+            await using var reader =
+                await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
+
+            return SqlMapper.Parse<ActivityLog>(reader)
+                .AsList().AsReadOnly();
+        }
+
+        public async Task<ulong> CountByUserIdAsync(uint userId, CancellationToken cancellationToken = default)
+        {
+            const string sql = """
+                SELECT COUNT(*)
+                FROM activity_logs
+                WHERE user_id = @UserId;
+                """;
+
+            var parameters = new[]
+            {
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
+            };
+
+            await using var reader =
+                await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
+
+            return SqlMapper.Parse<ulong>(reader).FirstOrDefault();
         }
     }
 }

@@ -72,7 +72,7 @@ namespace BlockSense.Desktop.Services.Implementations
 
         public async Task CreateWalletAsync(Mnemonic mnemonic, string pin, CancellationToken cancellationToken = default)
         {
-            var seed = mnemonic.DeriveExtKey().PrivateKey.ToBytes();
+            var seed = mnemonic.DeriveSeed();
             var wallet = Build(seed, pin);
 
             try

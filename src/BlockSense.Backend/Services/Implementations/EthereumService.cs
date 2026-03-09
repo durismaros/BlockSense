@@ -69,7 +69,7 @@ namespace BlockSense.Backend.Services.Implementations
 
         public async Task<BroadcastTransactionResponse> BroadcastAsync(BroadcastTransactionRequest request, CancellationToken cancellationToken = default)
         {
-            var path = $"/broadcast-transactions/bitcoin/{_cryptoConfig.Ethereum.Network}";
+            var path = $"/broadcast-transactions/ethereum/{_cryptoConfig.Ethereum.Network}";
             var body = new
             {
                 data = new

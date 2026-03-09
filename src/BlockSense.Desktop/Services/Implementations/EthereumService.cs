@@ -112,12 +112,6 @@ namespace BlockSense.Desktop.Services.Implementations
             return null;
         }
 
-        public void Initialize(byte[] seed)
-        {
-            var address = DeriveAddress(seed);
-            _ethereumProvider.Initialize(address);
-        }
-
         public async Task RefreshAsync(CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(_ethereumProvider.Address))
@@ -138,13 +132,8 @@ namespace BlockSense.Desktop.Services.Implementations
                 txs.Transactions.ToList().AsReadOnly());
         }
 
-        public async Task SignAndBroadcastAsync(
-            string toAddress,
-            decimal amount,
-            CancellationToken cancellationToken = default)
+        public async Task SignAndBroadcastAsync(string toAddress, decimal amount, CancellationToken cancellationToken = default)
         {
-            byte[]? seed = null;
-
             _pinEntrySlidingPanel.ShowPanel(async pin =>
             {
                 var decryptedSeed = _currentWalletProvider.DecryptSeed(pin);
@@ -155,46 +144,92 @@ namespace BlockSense.Desktop.Services.Implementations
                     return;
                 }
 
-                seed = decryptedSeed;
+                var nonce = await GetNextAvailableNonce(_ethereumProvider.Address, cancellationToken);
+
+                if (nonce is null)
+                {
+                    return;
+                }
+
+                try
+                {
+                    var signedHex = SignTransaction(new EthereumSignRequest
+                    {
+                        Seed = decryptedSeed,
+                        ToAddress = toAddress,
+                        AmountEth = amount,
+                        Nonce = nonce.Value,
+                        GasPriceGwei = EthereumFees.DefaultGasPriceGwei,
+                        GasLimit = EthereumFees.DefaultGasLimit,
+                        ChainId = EthereumChain.CurrentNetwork
+                    });
+
+                    var result = await BroadcastAsync(
+                        new BroadcastTransactionRequest { SignedTransactionHex = signedHex },
+                        cancellationToken);
+
+                    if (result is null)
+                    {
+                        MainWindow.Instance.ShowNotification(
+                            "Broadcast Failed",
+                            "Could not broadcast transaction. Please try again.");
+
+                        return;
+                    }
+
+                    MainWindow.Instance.ShowNotification(
+                        "Transaction Broadcast",
+                        $"Transaction {result?.TransactionId} broadcasted");
+                }
+                catch (Exception ex)
+                {
+                    MainWindow.Instance.ShowNotification(
+                        "Signing Error",
+                        ex.Message);
+                }
+                finally
+                {
+                    CryptographicOperations.ZeroMemory(decryptedSeed);
+                }
             });
+        }
 
-            if (seed is null)
-            {
-                return;
-            }
-
-            var nonce = await GetNextAvailableNonce(_ethereumProvider.Address, cancellationToken);
-
-            if (nonce is null)
-            {
-                return;
-            }
+        public string SignTransaction(EthereumSignRequest request)
+        {
+            var privateKeyBytes = DerivePrivateKey(request.Seed);
 
             try
             {
-                var signedHex = SignTransaction(new EthereumSignRequest
-                {
-                    Seed = seed,
-                    ToAddress = toAddress,
-                    AmountEth = amount,
-                    Nonce = nonce.Value,
-                    GasPriceGwei = EthereumFees.DefaultGasPriceGwei,
-                    GasLimit = EthereumFees.DefaultGasLimit,
-                    ChainId = EthereumChain.CurrentNetwork
-                });
+                var amountWei = ToWei(request.AmountEth);
+                var gasPriceWei = GweiToWei(request.GasPriceGwei);
 
-                var result = await BroadcastAsync(
-                    new BroadcastTransactionRequest { SignedTransactionHex = signedHex },
-                    cancellationToken);
+                var signer = new LegacyTransactionSigner();
 
-                MainWindow.Instance.ShowNotification(
-                    "Transaction Broadcast",
-                    $"Transaction {result?.TransactionId} broadcasted");
+                var signedHex = signer.SignTransaction(
+                    privateKey: privateKeyBytes.ToHex(prefix: false),
+                    to: request.ToAddress,
+                    amount: amountWei,
+                    nonce: new BigInteger(request.Nonce),
+                    gasPrice: gasPriceWei,
+                    gasLimit: new BigInteger(request.GasLimit),
+                    data: string.Empty,
+                    chainId: new BigInteger(request.ChainId)
+                );
+
+                Console.WriteLine(signedHex);
+
+                return signedHex;
             }
             finally
             {
-                CryptographicOperations.ZeroMemory(seed);
+                CryptographicOperations.ZeroMemory(privateKeyBytes);
             }
+        }
+
+        public void Initialize(byte[] seed)
+        {
+            var address = DeriveAddress(seed);
+            _ethereumProvider.Initialize(address);
         }
 
         public string DeriveAddress(byte[] seed)
@@ -216,35 +251,6 @@ namespace BlockSense.Desktop.Services.Implementations
         {
             var derived = ExtKey.CreateFromSeed(seed).Derive(EthereumChain.DerivationPath);
             return derived.PrivateKey.ToBytes();
-        }
-
-        public string SignTransaction(EthereumSignRequest request)
-        {
-            var privateKeyBytes = DerivePrivateKey(request.Seed);
-
-            try
-            {
-                var amountWei = ToWei(request.AmountEth);
-                var gasPriceWei = GweiToWei(request.GasPriceGwei);
-
-                var signer = new LegacyTransactionSigner();
-
-                var signedHex = signer.SignTransaction(
-                    privateKey: privateKeyBytes.ToHex(prefix: false),
-                    chainId: new BigInteger(request.ChainId),
-                    to: request.ToAddress,
-                    amount: amountWei,
-                    nonce: new BigInteger(request.Nonce),
-                    gasPrice: gasPriceWei,
-                    gasLimit: new BigInteger(request.GasLimit),
-                    data: string.Empty);
-
-                return signedHex;
-            }
-            finally
-            {
-                CryptographicOperations.ZeroMemory(privateKeyBytes);
-            }
         }
 
         private static BigInteger ToWei(decimal eth)

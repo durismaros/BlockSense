@@ -10,17 +10,22 @@ namespace BlockSense.Desktop.Providers.Interfaces
     {
         UserSummaryDto Profile
         {
-            get;
+            get; 
         }
 
         IList<SessionDto> ActiveDevices
         {
-            get;
+            get; 
+        }
+
+        IReadOnlyList<ActivityLogDto> RecentActivity
+        {
+            get; 
         }
 
         IEnumerable<InvitationDto> Invitations
         {
-            get;
+            get; 
         }
 
         IEnumerable<string>? TwoFactorBackupCodes
@@ -28,44 +33,14 @@ namespace BlockSense.Desktop.Providers.Interfaces
             get;
         }
 
-        /// <summary>
-        /// Raised whenever any dashboard data changes.
-        /// </summary>
         event Action? OnCurrentUserChanged;
 
-        /// <summary>
-        /// Sets the dashboard data from backend response.
-        /// </summary>
-        /// <param name="userDashboardDto"></param>
-        void Set(UserDashboardDto userDashboardDto);
-
-        /// <summary>
-        /// Sets the user summary data from backend response.
-        /// </summary>
-        /// <param name="userSummaryDto"></param>
-        void SetProfile(UserSummaryDto userSummaryDto);
-
-        /// <summary>
-        /// Sets the user active devices from backend response.
-        /// </summary>
-        /// <param name="userSummaryDto"></param>
+        void Set(UserDashboardDto dashboard);
+        void SetProfile(UserSummaryDto profile);
         void SetActiveDevices(IList<SessionDto> activeDevices);
-
-        /// <summary>
-        /// Sets the user invitations from backend response.
-        /// </summary>
-        /// <param name="userSummaryDto"></param>
         void SetInvitations(IEnumerable<InvitationDto> invitations);
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="backupCodes"></param>
+        void SetRecentActivity(IReadOnlyList<ActivityLogDto> entries);
         void SetTwoFactorBackupCodes(IEnumerable<string>? backupCodes);
-
-        /// <summary>
-        /// Clears all stored user data (e.g. on logout).
-        /// </summary>
         void Clear();
     }
 }

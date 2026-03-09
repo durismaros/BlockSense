@@ -13,6 +13,6 @@ namespace BlockSense.Desktop.Models.Wallet
 
         public required decimal FeeBtc { get; init; }
 
-        public required IReadOnlyList<UtxoDto> Utxos { get; set; }
+        public required IReadOnlyList<UtxoDto> Utxos { get; init; }
     }
 }
