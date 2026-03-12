@@ -7,23 +7,50 @@
 
     <UserControl.Styles>
 
-        <!-- Sheet -->
         <Style Selector="Border.Sheet">
-            <Setter Property="Background"    Value="#FBF7F1"/>
-            <Setter Property="CornerRadius"  Value="20 20 0 0"/>
-            <Setter Property="BoxShadow"     Value="0 -4 40 0 #30000000"/>
-            <Setter Property="Padding"       Value="32 28 32 20"/>
+            <Setter Property="Background"   Value="#FBF7F1"/>
+            <Setter Property="CornerRadius" Value="20 20 0 0"/>
+            <Setter Property="BoxShadow"    Value="0 -4 40 0 #30000000"/>
+            <Setter Property="Padding"      Value="32 28 32 20"/>
         </Style>
 
-        <!-- Table header -->
+        <Style Selector="Border.FilterChip">
+            <Setter Property="CornerRadius" Value="20"/>
+            <Setter Property="Padding"      Value="12 5"/>
+            <Setter Property="Cursor"       Value="Hand"/>
+            <Setter Property="Background"   Value="#EDE7DE"/>
+        </Style>
+
+        <Style Selector="Border.FilterChipActive">
+            <Setter Property="CornerRadius" Value="20"/>
+            <Setter Property="Padding"      Value="12 5"/>
+            <Setter Property="Cursor"       Value="Hand"/>
+            <Setter Property="Background"   Value="#8B6B4A"/>
+        </Style>
+
+        <Style Selector="TextBlock.ChipLabel">
+            <Setter Property="FontSize"          Value="11"/>
+            <Setter Property="FontWeight"        Value="SemiBold"/>
+            <Setter Property="Foreground"        Value="#6D4C41"/>
+            <Setter Property="LetterSpacing"     Value="0.4"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="TextBlock.ChipLabelActive">
+            <Setter Property="FontSize"          Value="11"/>
+            <Setter Property="FontWeight"        Value="SemiBold"/>
+            <Setter Property="Foreground"        Value="#F5E1C5"/>
+            <Setter Property="LetterSpacing"     Value="0.4"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
         <Style Selector="TextBlock.TableHead">
-            <Setter Property="FontSize"     Value="11"/>
-            <Setter Property="FontWeight"   Value="SemiBold"/>
-            <Setter Property="Foreground"   Value="#8B6B4A"/>
+            <Setter Property="FontSize"      Value="11"/>
+            <Setter Property="FontWeight"    Value="SemiBold"/>
+            <Setter Property="Foreground"    Value="#8B6B4A"/>
             <Setter Property="LetterSpacing" Value="0.8"/>
         </Style>
 
-        <!-- Row: date -->
         <Style Selector="TextBlock.RowDate">
             <Setter Property="FontSize"          Value="12"/>
             <Setter Property="Foreground"        Value="#9E8572"/>
@@ -31,7 +58,6 @@
             <Setter Property="FontStyle"         Value="Italic"/>
         </Style>
 
-        <!-- Row: message -->
         <Style Selector="TextBlock.RowAction">
             <Setter Property="FontSize"          Value="13"/>
             <Setter Property="Foreground"        Value="#4A4238"/>
@@ -40,7 +66,6 @@
             <Setter Property="TextTrimming"      Value="CharacterEllipsis"/>
         </Style>
 
-        <!-- Type pill -->
         <Style Selector="Border.TypePill">
             <Setter Property="CornerRadius"        Value="10"/>
             <Setter Property="Padding"             Value="9 3"/>
@@ -49,18 +74,16 @@
         </Style>
 
         <Style Selector="TextBlock.TypePillText">
-            <Setter Property="FontSize"     Value="10"/>
-            <Setter Property="FontWeight"   Value="SemiBold"/>
+            <Setter Property="FontSize"      Value="10"/>
+            <Setter Property="FontWeight"    Value="SemiBold"/>
             <Setter Property="LetterSpacing" Value="0.5"/>
         </Style>
 
-        <!-- Row divider -->
         <Style Selector="Border.RowDivider">
             <Setter Property="Height"     Value="1"/>
             <Setter Property="Background" Value="#EDE7DE"/>
         </Style>
 
-        <!-- Pager buttons -->
         <Style Selector="Button.PagerBtn">
             <Setter Property="Width"        Value="30"/>
             <Setter Property="Height"       Value="30"/>
@@ -85,18 +108,15 @@
 
     <Panel Background="#CC1A0F0A">
 
-        <Border x:Name="SheetBorder"
-                Classes="Sheet"
-                Margin="0 60 0 0">
+        <Border Classes="Sheet" Margin="0 60 0 0">
 
-            <Grid RowDefinitions="Auto Auto * Auto">
+            <Grid RowDefinitions="Auto Auto Auto * Auto">
 
                 <!-- Header -->
                 <Grid Grid.Row="0"
                       ColumnDefinitions="Auto * Auto"
                       Margin="0 0 0 20">
 
-                    <!-- Icon + Title -->
                     <StackPanel Grid.Column="0"
                                 Orientation="Horizontal"
                                 Spacing="12"
@@ -131,7 +151,6 @@
                                 Spacing="8"
                                 VerticalAlignment="Center">
 
-                        <!-- Refresh -->
                         <Grid>
                             <Button x:Name="RefreshButton"
                                     Width="32" Height="32"
@@ -168,7 +187,6 @@
                             </Border>
                         </Grid>
 
-                        <!-- Close -->
                         <Button x:Name="CloseActivityLogButton"
                                 Width="32" Height="32"
                                 CornerRadius="16"
@@ -190,22 +208,43 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Column headers -->
-                <Grid Grid.Row="1" ColumnDefinitions="160 * 80" Margin="0 0 0 0">
-                    <TextBlock Grid.Column="0" Classes="TableHead" Text="DATE"/>
-                    <TextBlock Grid.Column="1" Classes="TableHead" Text="ACTIVITY" Margin="12 0 0 0"/>
-                    <TextBlock Grid.Column="2" Classes="TableHead" Text="TYPE"/>
-                </Grid>
+                <!-- Filter chips -->
+                <StackPanel Grid.Row="1"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            Margin="0 0 0 16">
+                    <Border x:Name="ChipAll"    Classes="FilterChipActive">
+                        <TextBlock x:Name="ChipAllLabel"    Classes="ChipLabelActive" Text="All"/>
+                    </Border>
+                    <Border x:Name="ChipUser"   Classes="FilterChip">
+                        <TextBlock x:Name="ChipUserLabel"   Classes="ChipLabel" Text="User"/>
+                    </Border>
+                    <Border x:Name="ChipSystem" Classes="FilterChip">
+                        <TextBlock x:Name="ChipSystemLabel" Classes="ChipLabel" Text="System"/>
+                    </Border>
+                    <Border x:Name="ChipCron"   Classes="FilterChip">
+                        <TextBlock x:Name="ChipCronLabel"   Classes="ChipLabel" Text="Cron"/>
+                    </Border>
+                </StackPanel>
+
+                <!-- Column headers + divider -->
+                <StackPanel Grid.Row="2" Margin="0 0 0 4">
+                    <Grid ColumnDefinitions="160 * 80" Margin="0 0 0 12">
+                        <TextBlock Grid.Column="0" Classes="TableHead" Text="DATE"/>
+                        <TextBlock Grid.Column="1" Classes="TableHead" Text="ACTIVITY" Margin="12 0 0 0"/>
+                        <TextBlock Grid.Column="2" Classes="TableHead" Text="TYPE"/>
+                    </Grid>
+                </StackPanel>
 
                 <!-- Rows -->
-                <ScrollViewer Grid.Row="2"
+                <ScrollViewer Grid.Row="3"
                               VerticalScrollBarVisibility="Auto"
                               Margin="0 4 0 0">
                     <StackPanel x:Name="LogRowsPanel" Spacing="0"/>
                 </ScrollViewer>
 
                 <!-- Pager -->
-                <Grid Grid.Row="3"
+                <Grid Grid.Row="4"
                       ColumnDefinitions="* Auto *"
                       Margin="0 14 0 4">
 

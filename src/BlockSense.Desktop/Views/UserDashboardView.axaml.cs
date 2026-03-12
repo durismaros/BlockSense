@@ -113,7 +113,7 @@ public partial class UserDashboardView : UserControl
 
             var row = new Grid
             {
-                ColumnDefinitions = new ColumnDefinitions("160 *"),
+                ColumnDefinitions = new ColumnDefinitions("160 * 90"),
                 Margin = new Avalonia.Thickness(0, 8)
             };
 
@@ -139,8 +139,28 @@ public partial class UserDashboardView : UserControl
             };
             Grid.SetColumn(msg, 1);
 
+            var (bgHex, fgHex) = ActivityTypeColors(log.Type);
+            var pill = new Border
+            {
+                CornerRadius = new Avalonia.CornerRadius(10),
+                Padding = new Avalonia.Thickness(9, 3),
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Background = new SolidColorBrush(Color.Parse(bgHex)),
+                Child = new TextBlock
+                {
+                    Text = log.Type.ToString().ToUpperInvariant(),
+                    FontSize = 10,
+                    FontWeight = FontWeight.SemiBold,
+                    LetterSpacing = 0.5,
+                    Foreground = new SolidColorBrush(Color.Parse(fgHex))
+                }
+            };
+            Grid.SetColumn(pill, 2);
+
             row.Children.Add(date);
             row.Children.Add(msg);
+            row.Children.Add(pill);
             RecentActivityPanel.Children.Add(row);
         }
     }
@@ -402,6 +422,14 @@ public partial class UserDashboardView : UserControl
                 Child = new TextBlock { Classes = { "badgeText" }, Text = badge }
             });
     }
+
+    private static (string bg, string fg) ActivityTypeColors(ActivityType type) => type switch
+    {
+        ActivityType.User => ("#E8F5E9", "#2E7D32"),
+        ActivityType.System => ("#E3F2FD", "#1565C0"),
+        ActivityType.Cron => ("#FFF8E1", "#F57F17"),
+        _ => ("#EDE7DE", "#6D4C41")
+    };
 
     private static string FormatDeviceCount(int count)
         => $"{count} {(count == 1 ? "Device" : "Devices")}";

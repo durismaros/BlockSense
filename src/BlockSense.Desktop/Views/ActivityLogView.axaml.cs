@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using BlockSense.Contracts.DTOs.User;
+using BlockSense.Contracts.Enums;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.Formatting;
@@ -19,11 +20,15 @@ public partial class ActivityLogView : UserControl
     private readonly IActivityLogService _activityLogService;
     private readonly ICurrentUserProvider _currentUserProvider;
 
-    private List<ActivityLogDto> _currentPage = [];
+    private List<ActivityLogDto> _allLogs = [];
+    private List<ActivityLogDto> _filteredLogs = [];
+
+    private string _activeTypeFilter = "all";
+
     private ulong _newestKnownId = 0;
-    private ulong _totalCount = 0;
     private int _currentPageNum = 1;
-    private int _totalPages = 1;
+
+    private int TotalFilteredPages => Math.Max(1, (int)Math.Ceiling(_filteredLogs.Count / (double)PageSize));
 
     private const int PageSize = 20;
 
@@ -35,34 +40,40 @@ public partial class ActivityLogView : UserControl
         _currentUserProvider = App.ServiceProvider.GetRequiredService<ICurrentUserProvider>();
 
         InitializeComponent();
-        LoadAsync();
         WireEvents();
+        LoadAsync();
     }
 
     public async void LoadAsync()
     {
         _currentPageNum = 1;
-        await FetchAndRenderAsync();
+        await FetchAllAndRenderAsync();
     }
 
     private void WireEvents()
     {
         CloseActivityLogButton.Click += async (_, _) => await RequestClose();
-
-        PrevPageButton.Click += async (_, _) =>
-        {
-            if (_currentPageNum > 1) { _currentPageNum--; await FetchAndRenderAsync(); }
-        };
-
-        NextPageButton.Click += async (_, _) =>
-        {
-            if (_currentPageNum < _totalPages) { _currentPageNum++; await FetchAndRenderAsync(); }
-        };
-
         RefreshButton.Click += async (_, _) => await FetchAfterIdAsync();
+
+        PrevPageButton.Click += (_, _) =>
+        {
+            if (_currentPageNum > 1) { _currentPageNum--; RenderPage(); }
+        };
+
+        NextPageButton.Click += (_, _) =>
+        {
+            if (_currentPageNum < TotalFilteredPages) { _currentPageNum++; RenderPage(); }
+        };
+
+        ChipAll.PointerPressed += (_, _) => SetTypeFilter("all");
+        ChipUser.PointerPressed += (_, _) => SetTypeFilter("user");
+        ChipSystem.PointerPressed += (_, _) => SetTypeFilter("system");
+        ChipCron.PointerPressed += (_, _) => SetTypeFilter("cron");
     }
 
-    private async Task FetchAndRenderAsync()
+    // ── Data fetching ─────────────────────────────────────────────────
+
+    private async Task FetchAllAndRenderAsync()
     {
         _cts.Cancel();
         _cts = new CancellationTokenSource();
@@ -72,77 +83,114 @@ public partial class ActivityLogView : UserControl
 
         try
         {
-            var result = await _activityLogService.GetPageAsync(
-                page: _currentPageNum,
-                pageSize: PageSize,
-                cancellationToken: token);
+            var allLogs = new List<ActivityLogDto>();
+            int page = 1;
 
-            if (token.IsCancellationRequested) return;
-
-            if (result is null)
+            while (true)
             {
-                ShowError("Failed to load activity logs.");
-                return;
+                var result = await _activityLogService.GetPageAsync(
+                    page: page,
+                    pageSize: 100,
+                    cancellationToken: token);
+
+                if (token.IsCancellationRequested) return;
+                if (result is null) { ShowError("Failed to load activity logs."); return; }
+
+                allLogs.AddRange(result.Entries);
+
+                if (page >= result.TotalPages) break;
+                page++;
             }
 
-            _currentPage = [.. result.Entries];
-            _totalPages = result.TotalPages;
-            _totalCount = result.TotalCount;
+            _allLogs = [.. allLogs.OrderByDescending(l => l.OccurredAt)];
 
-            if (_currentPageNum == 1 && _currentPage.Count > 0)
+            if (_allLogs.Count > 0)
             {
-                var topId = _currentPage.Max(l => l.Id);
-
-                if (topId > _newestKnownId)
-                    _newestKnownId = topId;
-
-                // Keep dashboard in sync
-                _currentUserProvider.SetRecentActivity(
-                    _currentPage.Take(3).ToList().AsReadOnly());
+                _newestKnownId = _allLogs.Max(l => l.Id);
+                _currentUserProvider.SetRecentActivity(_allLogs.Take(3).ToList().AsReadOnly());
             }
 
-            RenderPage();
-            UpdatePager();
-
-            LogCountTextBlock.Text = $"{_totalCount:N0} {(_totalCount == 1 ? "entry" : "entries")}";
+            _currentPageNum = 1;
+            ApplyFilters();
             RefreshBadge.IsVisible = false;
         }
         catch (OperationCanceledException) { /* superseded */ }
         finally
         {
-
             SetLoadingState(false);
-            RefreshButton.IsEnabled = true;
         }
     }
 
     private async Task FetchAfterIdAsync()
     {
-        if (_newestKnownId == 0)
-        {
-            await FetchAndRenderAsync();
-            return;
-        }
+        if (_newestKnownId == 0) { await FetchAllAndRenderAsync(); return; }
 
         RefreshButton.IsEnabled = false;
 
         var newer = await _activityLogService.GetLatestAsync(_newestKnownId);
 
-        if (newer.Count == 0)
-        {
-            RefreshButton.IsEnabled = true;
-            return;
-        }
+        if (newer.Count == 0) { RefreshButton.IsEnabled = true; return; }
 
-        _currentPageNum = 1;
-        await FetchAndRenderAsync();
+        await FetchAllAndRenderAsync();
     }
+
+    // ── Filtering ─────────────────────────────────────────────────────
+
+    private void SetTypeFilter(string type)
+    {
+        _activeTypeFilter = type;
+        _currentPageNum = 1;
+        UpdateChipStyles();
+        ApplyFilters();
+    }
+
+    private void UpdateChipStyles()
+    {
+        (Border chip, TextBlock label, string key)[] chips =
+        [
+            (ChipAll,    ChipAllLabel,    "all"),
+            (ChipUser,   ChipUserLabel,   "user"),
+            (ChipSystem, ChipSystemLabel, "system"),
+            (ChipCron,   ChipCronLabel,   "cron"),
+        ];
+
+        foreach (var (chip, label, key) in chips)
+        {
+            bool active = key == _activeTypeFilter;
+            chip.Classes.Clear();
+            chip.Classes.Add(active ? "FilterChipActive" : "FilterChip");
+            label.Classes.Clear();
+            label.Classes.Add(active ? "ChipLabelActive" : "ChipLabel");
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        var query = _allLogs.AsEnumerable();
+
+        if (_activeTypeFilter != "all")
+            query = query.Where(l =>
+                l.Type.ToString().Equals(_activeTypeFilter, StringComparison.OrdinalIgnoreCase));
+
+        _filteredLogs = [.. query];
+
+        LogCountTextBlock.Text = $"{_filteredLogs.Count:N0} {(_filteredLogs.Count == 1 ? "entry" : "entries")}";
+
+        RenderPage();
+    }
+
+    // ── Rendering ─────────────────────────────────────────────────────
 
     private void RenderPage()
     {
         LogRowsPanel.Children.Clear();
 
-        if (_currentPage.Count == 0)
+        var page = _filteredLogs
+            .Skip((_currentPageNum - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+
+        if (page.Count == 0)
         {
             LogRowsPanel.Children.Add(new TextBlock
             {
@@ -153,24 +201,28 @@ public partial class ActivityLogView : UserControl
                 Margin = new Avalonia.Thickness(0, 20),
                 HorizontalAlignment = HorizontalAlignment.Center
             });
-            return;
+        }
+        else
+        {
+            foreach (var log in page)
+                LogRowsPanel.Children.Add(CreateRow(log));
         }
 
-        foreach (var log in _currentPage)
-            LogRowsPanel.Children.Add(CreateRow(log));
+        UpdatePager();
     }
 
     private void UpdatePager()
     {
-        PrevPageButton.IsEnabled = _currentPageNum > 1;
-        NextPageButton.IsEnabled = _currentPageNum < _totalPages;
+        int total = TotalFilteredPages;
 
-        PagerInfoTextBlock.Text = $"Page {_currentPageNum} of {_totalPages}";
+        PrevPageButton.IsEnabled = _currentPageNum > 1;
+        NextPageButton.IsEnabled = _currentPageNum < total;
+        PagerInfoTextBlock.Text = $"Page {_currentPageNum} of {total}";
 
         PageNumbersPanel.Children.Clear();
 
         int start = Math.Max(1, _currentPageNum - 2);
-        int end = Math.Min(_totalPages, start + 4);
+        int end = Math.Min(total, start + 4);
         start = Math.Max(1, end - 4);
 
         for (int p = start; p <= end; p++)
@@ -188,43 +240,13 @@ public partial class ActivityLogView : UserControl
                     FontWeight = FontWeight.Medium,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center,
-                    Foreground = new SolidColorBrush(
-                        Color.Parse(isCurrent ? "#F5E1C5" : "#6D4C41"))
+                    Foreground = new SolidColorBrush(Color.Parse(isCurrent ? "#F5E1C5" : "#6D4C41"))
                 }
             };
 
-            btn.Click += async (_, _) =>
-            {
-                _currentPageNum = page;
-                RenderPage();
-            };
-
+            btn.Click += (_, _) => { _currentPageNum = page; RenderPage(); };
             PageNumbersPanel.Children.Add(btn);
         }
-    }
-
-    private void SetLoadingState(bool loading)
-    {
-        if (loading)
-        {
-            LogCountTextBlock.Text = "Loading...";
-        }
-
-        RefreshButton.IsEnabled = !loading;
-    }
-
-    private void ShowError(string message)
-    {
-        LogRowsPanel.Children.Clear();
-        LogRowsPanel.Children.Add(new TextBlock
-        {
-            Text = message,
-            Foreground = new SolidColorBrush(Color.Parse("#C62828")),
-            FontSize = 13,
-            Margin = new Avalonia.Thickness(0, 20),
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-        });
     }
 
     private static Control CreateRow(ActivityLogDto log)
@@ -253,7 +275,7 @@ public partial class ActivityLogView : UserControl
         };
         Grid.SetColumn(msgBlock, 1);
 
-        var (bgHex, fgHex) = TypeColors(log.Type.ToString());
+        var (bgHex, fgHex) = TypeColors(log.Type);
         var pill = new Border
         {
             Classes = { "TypePill" },
@@ -274,13 +296,34 @@ public partial class ActivityLogView : UserControl
         return wrapper;
     }
 
-    private static (string bg, string fg) TypeColors(string type) => type switch
+    // ── Helpers ───────────────────────────────────────────────────────
+
+    private static (string bg, string fg) TypeColors(ActivityType type) => type switch
     {
-        "user" => ("#E8F5E9", "#2E7D32"),
-        "system" => ("#E3F2FD", "#1565C0"),
-        "cron" => ("#FFF8E1", "#F57F17"),
+        ActivityType.User => ("#E8F5E9", "#2E7D32"),
+        ActivityType.System => ("#E3F2FD", "#1565C0"),
+        ActivityType.Cron => ("#FFF8E1", "#F57F17"),
         _ => ("#EDE7DE", "#6D4C41")
     };
+
+    private void SetLoadingState(bool loading)
+    {
+        if (loading) LogCountTextBlock.Text = "Loading…";
+        RefreshButton.IsEnabled = !loading;
+    }
+
+    private void ShowError(string message)
+    {
+        LogRowsPanel.Children.Clear();
+        LogRowsPanel.Children.Add(new TextBlock
+        {
+            Text = message,
+            Foreground = new SolidColorBrush(Color.Parse("#C62828")),
+            FontSize = 13,
+            Margin = new Avalonia.Thickness(0, 20),
+            HorizontalAlignment = HorizontalAlignment.Center
+        });
+    }
 
     public event Func<Task>? CloseRequested;
 
