@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace BlockSense.Backend.Exceptions.Handlers
 {
     /// <summary>
-    /// Global exception handler responsible for catching unhandled exceptions and returning a <see cref="ProblemDetails"/> response.
+    /// Global exception handler responsible for catching unhandled exceptions and returning
+    /// a standardized <see cref="ProblemDetails"/> response with a 500 Internal Server Error status.
     /// </summary>
     public sealed class GlobalExceptionHandler : IExceptionHandler
     {
@@ -26,14 +27,18 @@ namespace BlockSense.Backend.Exceptions.Handlers
         /// <param name="httpContext">The current HTTP context associated with the request.</param>
         /// <param name="exception">The unhandled exception thrown during request execution.</param>
         /// <param name="cancellationToken">Token used to cancel the operation if the request is aborted.</param>
-        /// <returns><c>true</c> if the exception was successfully handled and a response was written, 
-        /// <c>false</c> if the response has already started and handling is not possible.</returns>
+        /// <returns>
+        /// <c>true</c> if the exception was successfully handled and a response was written;
+        /// <c>false</c> if the response has already started and handling is not possible.
+        /// </returns>
         public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {
             if (httpContext.Response.HasStarted)
             {
                 return false;
             }
+
+            _logger.LogError(exception, "Unhandled exception occurred while processing request {Path}.", httpContext.Request.Path);
 
             httpContext.Response.ContentType = "application/problem+json";
             httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
@@ -43,8 +48,7 @@ namespace BlockSense.Backend.Exceptions.Handlers
                 Type = StandardizedCodes.Generic.InternalServerError,
                 Title = "Internal Server Error",
                 Status = StatusCodes.Status500InternalServerError,
-                Detail = "An unexpected server error occurred while processing your request. " +
-                         "Please try again later or contact support with the trace ID.",
+                Detail = "An unexpected server error occurred while processing your request. Please try again later or contact support with the trace ID.",
                 Instance = httpContext.Request.Path,
                 Extensions =
                 {

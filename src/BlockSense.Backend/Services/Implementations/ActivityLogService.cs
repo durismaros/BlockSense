@@ -6,10 +6,18 @@ using BlockSense.Contracts.DTOs.User;
 
 namespace BlockSense.Backend.Services.Implementations
 {
-    public class ActivityLogService : IActivityLogService
+    /// <summary>
+    /// Provides operations for retrieving user activity logs.
+    /// </summary>
+    public sealed class ActivityLogService : IActivityLogService
     {
         private readonly IActivityLogRepository _activityLogRepository;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="ActivityLogService"/> with required dependencies.
+        /// </summary>
+        /// <param name="activityLogRepository">The repository for activity log entity operations.</param>
+        /// <exception cref="ArgumentNullException">Thrown if any dependency is <c>null</c>.</exception>
         public ActivityLogService(IActivityLogRepository activityLogRepository)
         {
             _activityLogRepository = activityLogRepository
@@ -23,16 +31,16 @@ namespace BlockSense.Backend.Services.Implementations
             int pageSize,
             CancellationToken cancellationToken = default)
         {
-            var entriesTask = await _activityLogRepository
+            var entries = await _activityLogRepository
                 .GetPagedByUserIdAsync(userId, page, pageSize, cancellationToken);
 
-            var countTask = await _activityLogRepository
+            var totalCount = await _activityLogRepository
                 .CountByUserIdAsync(userId, cancellationToken);
 
             return new ActivityLogPageDto
             {
-                Entries = entriesTask.Select(MapToDto).ToList().AsReadOnly(),
-                TotalCount = countTask,
+                Entries = entries.Select(MapToDto).ToList().AsReadOnly(),
+                TotalCount = totalCount,
                 Page = page,
                 PageSize = pageSize
             };
@@ -47,9 +55,7 @@ namespace BlockSense.Backend.Services.Implementations
             var logs = await _activityLogRepository
                 .GetLatestAsync(userId, afterId, cancellationToken);
 
-            return logs
-                .Select(MapToDto)
-                .ToList().AsReadOnly();
+            return logs.Select(MapToDto).ToList().AsReadOnly();
         }
 
         private static ActivityLogDto MapToDto(ActivityLog log) => new()

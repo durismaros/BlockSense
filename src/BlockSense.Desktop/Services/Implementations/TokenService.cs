@@ -11,6 +11,10 @@ using System.Threading.Tasks;
 
 namespace BlockSense.Desktop.Services.Implementations
 {
+    /// <summary>
+    /// Implements <see cref="ITokenService"/> to manage session token revocation
+    /// for the current user, including single and bulk revocation with two-factor authentication support.
+    /// </summary>
     public sealed class TokenService : ITokenService
     {
         private readonly IApiClient _apiClient;
@@ -18,7 +22,17 @@ namespace BlockSense.Desktop.Services.Implementations
         private readonly ICurrentUserProvider _currentUserProvider;
         private readonly TwoFactorSlidingPanel _twoFactorSlidingPanel;
 
-        public TokenService(IApiClient apiClient, ISessionService sessionService, ICurrentUserProvider currentUserProvider)
+        /// <summary>
+        /// Initializes a new instance of <see cref="TokenService"/>.
+        /// </summary>
+        /// <param name="apiClient">The API client used to communicate with the backend.</param>
+        /// <param name="sessionService">The session service used to sign the user out after all sessions are revoked.</param>
+        /// <param name="currentUserProvider">The provider for accessing and updating the current user's state.</param>
+        /// <exception cref="ArgumentNullException">Thrown if any required dependency is null.</exception>
+        public TokenService(
+            IApiClient apiClient,
+            ISessionService sessionService,
+            ICurrentUserProvider currentUserProvider)
         {
             _apiClient = apiClient
                 ?? throw new ArgumentNullException(nameof(apiClient));
@@ -33,6 +47,7 @@ namespace BlockSense.Desktop.Services.Implementations
                 ?? throw new ArgumentNullException(nameof(MainWindow.Instance.TwoFactorSlidingPanel));
         }
 
+        /// <inheritdoc/>
         public async Task RevokeAsync(SessionRevokeRequest request, CancellationToken cancellationToken = default)
         {
             var response = await _apiClient
@@ -45,20 +60,16 @@ namespace BlockSense.Desktop.Services.Implementations
             switch (response)
             {
                 case ApiResult<object>.Success:
-                    _twoFactorSlidingPanel.HidePanel();
-
-                    _currentUserProvider.SetActiveDevices(_currentUserProvider.ActiveDevices
-                        .Where(d => d.TokenHash != request.TokenHash)
-                        .ToList());
-
+                    HandleRevokeSuccess(request);
                     break;
 
-                case ApiResult.Failure error:
-                    await HandleRevokeFailureAsync(error, request, cancellationToken);
+                case ApiResult.Failure failure:
+                    await HandleRevokeFailureAsync(failure, request, cancellationToken);
                     break;
             }
         }
 
+        /// <inheritdoc/>
         public async Task RevokeAllAsync(RevokeAllSessionsRequest request, CancellationToken cancellationToken = default)
         {
             var response = await _apiClient
@@ -72,44 +83,32 @@ namespace BlockSense.Desktop.Services.Implementations
             {
                 case ApiResult<object>.Success:
                     _twoFactorSlidingPanel.HidePanel();
-                    await _sessionService.SignOutAsync();
+                    await _sessionService.SignOutAsync(cancellationToken);
                     break;
 
-                case ApiResult.Failure error:
-                    await HandleRevokeAllFailureAsync(error, cancellationToken);
+                case ApiResult.Failure failure:
+                    await HandleRevokeAllFailureAsync(failure, cancellationToken);
                     break;
             }
         }
 
-        private async Task HandleRevokeAllFailureAsync(ApiResult.Failure error, CancellationToken cancellationToken)
+        private void HandleRevokeSuccess(SessionRevokeRequest request)
         {
-            switch (error.ProblemDetails.Type)
-            {
-                case StandardizedCodes.Authentication.TwoFactorRequired:
-                    _twoFactorSlidingPanel.ShowPanel(async code =>
-                    {
-                        await RevokeAllAsync(new RevokeAllSessionsRequest { TwoFactorCode = code }, cancellationToken);
-                    });
-                    break;
+            _twoFactorSlidingPanel.HidePanel();
 
-                case StandardizedCodes.TwoFactorAuthentication.Invalid:
-                    await _twoFactorSlidingPanel.ShowErrorState();
-                    break;
+            var updatedDevices = _currentUserProvider.ActiveDevices
+                .Where(device => device.TokenHash != request.TokenHash)
+                .ToList();
 
-                default:
-                    MainWindow.Instance.ShowNotification(
-                        error.ProblemDetails.Title,
-                        error.ProblemDetails.Detail);
-                    break;
-            }
+            _currentUserProvider.SetActiveDevices(updatedDevices);
         }
 
         private async Task HandleRevokeFailureAsync(
-            ApiResult.Failure error,
+            ApiResult.Failure failure,
             SessionRevokeRequest originalRequest,
             CancellationToken cancellationToken)
         {
-            switch (error.ProblemDetails.Type)
+            switch (failure.ProblemDetails.Type)
             {
                 case StandardizedCodes.Authentication.TwoFactorRequired:
                     _twoFactorSlidingPanel.ShowPanel(async code =>
@@ -123,11 +122,37 @@ namespace BlockSense.Desktop.Services.Implementations
                     break;
 
                 default:
-                    MainWindow.Instance.ShowNotification(
-                        error.ProblemDetails.Title,
-                        error.ProblemDetails.Detail);
+                    ShowErrorNotification(failure);
                     break;
             }
+        }
+
+        private async Task HandleRevokeAllFailureAsync(ApiResult.Failure failure, CancellationToken cancellationToken)
+        {
+            switch (failure.ProblemDetails.Type)
+            {
+                case StandardizedCodes.Authentication.TwoFactorRequired:
+                    _twoFactorSlidingPanel.ShowPanel(async code =>
+                    {
+                        await RevokeAllAsync(new RevokeAllSessionsRequest { TwoFactorCode = code }, cancellationToken);
+                    });
+                    break;
+
+                case StandardizedCodes.TwoFactorAuthentication.Invalid:
+                    await _twoFactorSlidingPanel.ShowErrorState();
+                    break;
+
+                default:
+                    ShowErrorNotification(failure);
+                    break;
+            }
+        }
+
+        private static void ShowErrorNotification(ApiResult.Failure failure)
+        {
+            MainWindow.Instance.ShowNotification(
+                failure.ProblemDetails.Title,
+                failure.ProblemDetails.Detail);
         }
     }
 }

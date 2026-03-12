@@ -2,7 +2,6 @@
 using BlockSense.Backend.Entities;
 using BlockSense.Backend.Exceptions.Generic;
 using BlockSense.Backend.Exceptions.Registration;
-using BlockSense.Backend.Repositories.Implementations;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Backend.Utilities;
@@ -13,14 +12,12 @@ using BlockSense.Contracts.DTOs.Session;
 using BlockSense.Contracts.DTOs.User;
 using BlockSense.Contracts.Enums;
 using MySql.Data.MySqlClient;
-using System.Net;
-using System.Net.Sockets;
 using System.Text;
 
 namespace BlockSense.Backend.Services.Implementations
 {
     /// <summary>
-    /// Implements user-related operations, including account registration, with transactional safety and invitation validation.
+    /// Implements user-related operations, including account registration, profile retrieval, and dashboard data aggregation.
     /// </summary>
     public sealed class UserService : IUserService
     {
@@ -37,7 +34,10 @@ namespace BlockSense.Backend.Services.Implementations
         /// </summary>
         /// <param name="userRepository">The repository for user entity operations.</param>
         /// <param name="invitationRepository">The repository for invitation entity operations.</param>
-        /// <param name="databaseContext">The database context used to execute SQL queries.</param>
+        /// <param name="refreshTokenRepository">The repository for refresh token entity operations.</param>
+        /// <param name="totpCredentialRepository">The repository for TOTP credential entity operations.</param>
+        /// <param name="activityLogRepository">The repository for activity log entity operations.</param>
+        /// <param name="databaseContext">The database context used to manage transactions.</param>
         /// <exception cref="ArgumentNullException">Thrown if any dependency is <c>null</c>.</exception>
         public UserService(
             IUserRepository userRepository,
@@ -53,67 +53,32 @@ namespace BlockSense.Backend.Services.Implementations
             _totpCredentialRepository = totpCredentialRepository ?? throw new ArgumentNullException(nameof(totpCredentialRepository));
             _activityLogRepository = activityLogRepository ?? throw new ArgumentNullException(nameof(activityLogRepository));
             _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
-            _argon2IdHasher = new Argon2idHasher() ?? throw new ArgumentNullException(nameof(Argon2idHasher));
+            _argon2IdHasher = new Argon2idHasher();
         }
 
         /// <inheritdoc/>
         public async Task<RegistrationResponse> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken = default)
         {
-            request = request with
-            {
-                Username = request.Username.Trim(),
-                Email = request.Email.Trim().ToLowerInvariant(),
-                InvitationCode = request.InvitationCode.Trim(),
-            };
+            var normalizedRequest = NormalizeRegistrationRequest(request);
 
             await _databaseContext.BeginTransactionAsync(cancellationToken: cancellationToken);
 
             try
             {
-                var invitation =
-                    await _invitationRepository.GetByCodeForUpdateAsync(request.InvitationCode, cancellationToken);
+                var invitation = await GetValidInvitationAsync(normalizedRequest.InvitationCode, cancellationToken);
+                var user = BuildNewUser(normalizedRequest);
 
-                if (invitation is null || !invitation.IsValid)
-                {
-                    throw new InvalidInvitationCodeException();
-                }
+                uint userId = await _userRepository.CreateAsync(user, cancellationToken);
 
-                var user = BuildNewUser(request);
-
-                uint userId =
-                    await _userRepository.CreateAsync(user, cancellationToken);
-
-                await _invitationRepository.RedeemAsync(
-                    invitation.Id,
-                    userId,
-                    cancellationToken);
-
+                await _invitationRepository.RedeemAsync(invitation.Id, userId, cancellationToken);
                 await _databaseContext.CommitTransactionAsync(cancellationToken);
 
-                return new RegistrationResponse
-                {
-                    UserId = userId,
-                    Username = user.Username,
-                    Email = user.Email,
-                    UserRole = user.Role,
-                    CreatedAt = user.CreatedAt
-                };
+                return BuildRegistrationResponse(userId, user);
             }
             catch (MySqlException ex) when (ex.Number == 1062)
             {
                 await _databaseContext.RollbackTransactionAsync(cancellationToken);
-
-                if (ex.Message.Contains("uq_users_username"))
-                {
-                    throw new UsernameTakenException();
-                }
-
-                if (ex.Message.Contains("uq_users_email"))
-                {
-                    throw new EmailTakenException();
-                }
-
-                throw;
+                throw ResolveUniqueConstraintException(ex);
             }
             catch
             {
@@ -122,22 +87,14 @@ namespace BlockSense.Backend.Services.Implementations
             }
         }
 
+        /// <inheritdoc/>
         public async Task<UserSummaryDto> GetUserSummaryAsync(uint userId, CancellationToken cancellationToken = default)
         {
-            var user =
-                await _userRepository.GetByIdAsync(userId, cancellationToken);
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken)
+                ?? throw new NotFoundException();
 
-            if (user is null)
-            {
-                throw new NotFoundException();
-            }
-
-            var invitedBy =
-                await _userRepository.GetInviterUsernameAsync(userId, cancellationToken)
-                ?? "Unknown";
-
-            var twoFaEnabled =
-                await _totpCredentialRepository.ExistsAsync(userId);
+            var invitedBy = await _userRepository.GetInviterUsernameAsync(userId, cancellationToken) ?? "Unknown";
+            var twoFactorEnabled = await _totpCredentialRepository.ExistsAsync(userId, cancellationToken);
 
             return new UserSummaryDto
             {
@@ -148,51 +105,48 @@ namespace BlockSense.Backend.Services.Implementations
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt,
                 InvitedBy = invitedBy,
-                TwoFactorEnabled = twoFaEnabled
+                TwoFactorEnabled = twoFactorEnabled
             };
         }
 
+        /// <inheritdoc/>
         public async Task<UserDashboardDto> GetUserDashboardAsync(uint userId, CancellationToken cancellationToken = default)
         {
-            var userSummary =
-                await GetUserSummaryAsync(userId, cancellationToken);
-
-            var activeTokens =
-                await _refreshTokenRepository.GetActiveByUserIdAsync(userId, cancellationToken);
-
-            var recentActivity =
-                await _activityLogRepository.GetPagedByUserIdAsync(userId, page: 1, pageSize: 3, cancellationToken);
-
-            var invitationCodes =
-                await _invitationRepository.GetByIssuedToIdAsync(userId, cancellationToken);
+            var profile = await GetUserSummaryAsync(userId, cancellationToken);
+            var activeSessions = await _refreshTokenRepository.GetActiveByUserIdAsync(userId, cancellationToken);
+            var recentActivity = await _activityLogRepository.GetPagedByUserIdAsync(userId, page: 1, pageSize: 3, cancellationToken);
+            var invitations = await _invitationRepository.GetByIssuedToIdAsync(userId, cancellationToken);
 
             return new UserDashboardDto
             {
-                Profile = userSummary,
-
-                ActiveTokens = activeTokens
-                    .Select(MapToSessionDto)
-                    .ToList()
-                    .AsReadOnly(),
-
-                RecentActivity = recentActivity
-                    .Select(MapToActivityLogDto)
-                    .ToList()
-                    .AsReadOnly(),
-                
-                UserInvitations = invitationCodes
-                    .Select(MapToInvitationDto)
-                    .ToList()
-                    .AsReadOnly(),
+                Profile = profile,
+                ActiveTokens = activeSessions.Select(MapToSessionDto).ToList().AsReadOnly(),
+                RecentActivity = recentActivity.Select(MapToActivityLogDto).ToList().AsReadOnly(),
+                UserInvitations = invitations.Select(MapToInvitationDto).ToList().AsReadOnly()
             };
+        }
+
+        private static RegistrationRequest NormalizeRegistrationRequest(RegistrationRequest request) =>
+            request with
+            {
+                Username = request.Username.Trim(),
+                Email = request.Email.Trim().ToLowerInvariant(),
+                InvitationCode = request.InvitationCode.Trim()
+            };
+
+        private async Task<InvitationCode> GetValidInvitationAsync(string code, CancellationToken cancellationToken)
+        {
+            var invitation = await _invitationRepository.GetByCodeForUpdateAsync(code, cancellationToken);
+
+            if (invitation is null || !invitation.IsValid)
+                throw new InvalidInvitationCodeException();
+
+            return invitation;
         }
 
         private User BuildNewUser(RegistrationRequest request)
         {
-            var hash = _argon2IdHasher.Derive(
-                Encoding.UTF8.GetBytes(request.Password),
-                out byte[] salt);
-
+            var hash = _argon2IdHasher.Derive(Encoding.UTF8.GetBytes(request.Password), out byte[] salt);
             var now = DateTime.UtcNow;
 
             return new User
@@ -209,55 +163,59 @@ namespace BlockSense.Backend.Services.Implementations
             };
         }
 
-        private static SessionDto MapToSessionDto(RefreshToken token)
+        private static RegistrationResponse BuildRegistrationResponse(uint userId, User user) => new()
         {
-            var maskedId = IpAddressMasker.Mask(token.IpAddress);
+            UserId = userId,
+            Username = user.Username,
+            Email = user.Email,
+            UserRole = user.Role,
+            CreatedAt = user.CreatedAt
+        };
 
-            return new SessionDto
-            {
-                TokenHash = token.TokenHash,
-                IpAddress = maskedId,
-                IssuedAt = token.IssuedAt,
-                ExpiresAt = token.ExpiresAt
-            };
+        private static Exception ResolveUniqueConstraintException(MySqlException ex)
+        {
+            if (ex.Message.Contains("uq_users_username"))
+                return new UsernameTakenException();
+
+            if (ex.Message.Contains("uq_users_email"))
+                return new EmailTakenException();
+
+            return ex;
         }
 
-        private static InvitationDto MapToInvitationDto(InvitationCode invitation)
+        private static SessionDto MapToSessionDto(RefreshToken token) => new()
         {
-            return new InvitationDto
-            {
-                Code = invitation.Code,
-                RedeemedBy = invitation.RedeemedByUsername,
-                CreatedAt = invitation.CreatedAt,
-                ExpiresAt = invitation.ExpiresAt,
-                Status = GetInvitationStatus(invitation),
-                IsRevoked = invitation.IsRevoked
-            };
-        }
+            TokenHash = token.TokenHash,
+            IpAddress = IpAddressMasker.Mask(token.IpAddress),
+            IssuedAt = token.IssuedAt,
+            ExpiresAt = token.ExpiresAt
+        };
 
-        private static ActivityLogDto MapToActivityLogDto(ActivityLog activityLog)
+        private static InvitationDto MapToInvitationDto(InvitationCode invitation) => new()
         {
-            return new ActivityLogDto
-            {
-                Id = activityLog.Id,
-                Type = activityLog.Type,
-                UserId = activityLog.UserId,
-                Action = activityLog.Action,
-                ActivityMessage = ActivityMessageMapper.Map(activityLog.Action, activityLog.Context),
-                OccurredAt = activityLog.OccurredAt
-            };
-        }
+            Code = invitation.Code,
+            RedeemedBy = invitation.RedeemedByUsername,
+            CreatedAt = invitation.CreatedAt,
+            ExpiresAt = invitation.ExpiresAt,
+            Status = ResolveInvitationStatus(invitation),
+            IsRevoked = invitation.IsRevoked
+        };
 
-        private static InvitationStatus GetInvitationStatus(InvitationCode invitation)
+        private static ActivityLogDto MapToActivityLogDto(ActivityLog log) => new()
         {
-            if (invitation.IsRevoked)
-                return InvitationStatus.Revoked;
+            Id = log.Id,
+            Type = log.Type,
+            UserId = log.UserId,
+            Action = log.Action,
+            ActivityMessage = ActivityMessageMapper.Map(log.Action, log.Context),
+            OccurredAt = log.OccurredAt
+        };
 
-            if (invitation.IsRedeemed)
-                return InvitationStatus.Used;
-
-            if (DateTime.UtcNow >= invitation.ExpiresAt)
-                return InvitationStatus.Expired;
+        private static InvitationStatus ResolveInvitationStatus(InvitationCode invitation)
+        {
+            if (invitation.IsRevoked) return InvitationStatus.Revoked;
+            if (invitation.IsRedeemed) return InvitationStatus.Used;
+            if (DateTime.UtcNow >= invitation.ExpiresAt) return InvitationStatus.Expired;
 
             return InvitationStatus.Active;
         }

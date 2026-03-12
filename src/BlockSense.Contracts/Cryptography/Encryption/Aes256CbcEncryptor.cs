@@ -12,12 +12,12 @@ namespace BlockSense.Contracts.Cryptography.Encryption
     public sealed class Aes256CbcEncryptor
     {
         /// <summary>
-        /// Size of the AES-256 key in bytes (32 bytes = 256 bits).
+        /// Required AES-256 key size in bytes (32 bytes = 256 bits).
         /// </summary>
         private const int KeySize = 32;
 
         /// <summary>
-        /// Recommended size of the Initialization Vector (IV) for AES-CBC in bytes (16 bytes = 128 bits).
+        /// Required IV size in bytes for AES-CBC (16 bytes = 128 bits).
         /// </summary>
         private const int IvSize = 16;
 
@@ -28,17 +28,13 @@ namespace BlockSense.Contracts.Cryptography.Encryption
         /// <param name="iv">The 16-byte initialization vector.</param>
         /// <param name="plainText">The plaintext data to encrypt.</param>
         /// <returns>The encrypted data as a byte array.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="key"/>, <paramref name="iv"/>, or <paramref name="plainText"/> is null.</exception>
-        /// <exception cref="ArgumentException">Thrown if <paramref name="key"/> or <paramref name="iv"/> lengths are invalid.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="key"/>, <paramref name="iv"/>, or <paramref name="plainText"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="key"/> or <paramref name="iv"/> lengths are invalid.</exception>
         public byte[] Encrypt(byte[] key, byte[] iv, byte[] plainText)
         {
             ValidateParameters(key, iv, plainText);
 
-            var cipher = new PaddedBufferedBlockCipher(new CbcBlockCipher(new AesEngine()), new Pkcs7Padding());
-            var parameters = new ParametersWithIV(new KeyParameter(key), iv);
-
-            cipher.Init(true, parameters);
-
+            var cipher = InitializeCipher(key, iv, forEncryption: true);
             return cipher.DoFinal(plainText);
         }
 
@@ -49,38 +45,43 @@ namespace BlockSense.Contracts.Cryptography.Encryption
         /// <param name="iv">The 16-byte initialization vector.</param>
         /// <param name="cipherText">The encrypted data to decrypt.</param>
         /// <returns>The decrypted plaintext as a byte array.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="key"/>, <paramref name="iv"/>, or <paramref name="cipherText"/> is null.</exception>
-        /// <exception cref="ArgumentException">Thrown if <paramref name="key"/> or <paramref name="iv"/> lengths are invalid.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="key"/>, <paramref name="iv"/>, or <paramref name="cipherText"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="key"/> or <paramref name="iv"/> lengths are invalid.</exception>
         public byte[] Decrypt(byte[] key, byte[] iv, byte[] cipherText)
         {
             ValidateParameters(key, iv, cipherText);
 
-            var cipher = new PaddedBufferedBlockCipher(new CbcBlockCipher(new AesEngine()), new Pkcs7Padding());
-            var parameters = new ParametersWithIV(new KeyParameter(key), iv);
-
-            cipher.Init(false, parameters);
-
+            var cipher = InitializeCipher(key, iv, forEncryption: false);
             return cipher.DoFinal(cipherText);
         }
 
         /// <summary>
-        /// Validates key, IV, and input data for AES-256-CBC operations.
+        /// Initializes and configures an AES-CBC cipher instance for encryption or decryption.
         /// </summary>
-        /// <param name="key">Encryption key.</param>
-        /// <param name="iv">Initialization vector.</param>
-        /// <param name="data">Data to process (plaintext or ciphertext).</param>
+        /// <param name="key">The 32-byte encryption key.</param>
+        /// <param name="iv">The 16-byte initialization vector.</param>
+        /// <param name="forEncryption">True to configure for encryption; false for decryption.</param>
+        /// <returns>An initialized <see cref="PaddedBufferedBlockCipher"/> ready for data processing.</returns>
+        private static PaddedBufferedBlockCipher InitializeCipher(byte[] key, byte[] iv, bool forEncryption)
+        {
+            var cipher = new PaddedBufferedBlockCipher(new CbcBlockCipher(new AesEngine()), new Pkcs7Padding());
+            cipher.Init(forEncryption, new ParametersWithIV(new KeyParameter(key), iv));
+            return cipher;
+        }
+
+        /// <summary>
+        /// Validates key, IV, and data parameters for AES-256-CBC operations.
+        /// </summary>
+        /// <param name="key">The encryption key to validate.</param>
+        /// <param name="iv">The initialization vector to validate.</param>
+        /// <param name="data">The data to validate (plaintext or ciphertext).</param>
         /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
         /// <exception cref="ArgumentException">Thrown when key or IV lengths are invalid.</exception>
         private static void ValidateParameters(byte[] key, byte[] iv, byte[] data)
         {
-            if (key is null)
-                throw new ArgumentNullException(nameof(key));
-
-            if (iv is null)
-                throw new ArgumentNullException(nameof(iv));
-
-            if (data is null)
-                throw new ArgumentNullException(nameof(data));
+            if (key is null) throw new ArgumentNullException(nameof(key));
+            if (iv is null) throw new ArgumentNullException(nameof(iv));
+            if (data is null) throw new ArgumentNullException(nameof(data));
 
             if (key.Length != KeySize)
                 throw new ArgumentException($"AES-256 key must be {KeySize} bytes.", nameof(key));

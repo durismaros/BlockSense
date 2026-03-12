@@ -2,10 +2,13 @@
 
 namespace BlockSense.Contracts.DTOs.Session
 {
-    public sealed record class SessionRevokeRequest
+    /// <summary>
+    /// Represents a request to revoke an active device session.
+    /// </summary>
+    public sealed record SessionRevokeRequest
     {
         /// <summary>
-        /// Unique identifier of the device session (Raw value of the refresh token).
+        /// The hashed value of the refresh token identifying the session to revoke.
         /// </summary>
         [Required(ErrorMessage = "Token hash value is required.")]
         public required string TokenHash
@@ -15,7 +18,7 @@ namespace BlockSense.Contracts.DTOs.Session
         }
 
         /// <summary>
-        /// The 6-digit authenticator code provided by the user.
+        /// The optional 6-digit two-factor authentication code provided by the user.
         /// </summary>
         [RegularExpression(@"^\d{6}$", ErrorMessage = "The 2FA code must consist of 6 digits.")]
         public string? TwoFactorCode

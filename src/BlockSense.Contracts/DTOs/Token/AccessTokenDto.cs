@@ -6,7 +6,7 @@
     public sealed record AccessTokenDto
     {
         /// <summary>
-        /// The JWT or opaque token string used for API authentication.
+        /// The JWT token string used for API authentication.
         /// </summary>
         public required string Token
         {
@@ -15,7 +15,7 @@
         }
 
         /// <summary>
-        /// The UTC time at which this token expires.
+        /// The UTC timestamp at which this token expires.
         /// </summary>
         public required DateTime ExpiresAt
         {

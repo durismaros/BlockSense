@@ -4,44 +4,52 @@ using System.Text.Json;
 
 namespace BlockSense.Backend.Utilities
 {
+    /// <summary>
+    /// Maps activity log action codes and their optional context into human-readable messages.
+    /// </summary>
     public static class ActivityMessageMapper
     {
+        /// <summary>
+        /// Produces a human-readable message for the given activity action and its JSON context.
+        /// Returns the raw action string if no mapping is found.
+        /// </summary>
+        /// <param name="action">The activity action code (see <see cref="ActivityActions"/>).</param>
+        /// <param name="contextJson">Optional JSON string representing the activity context.</param>
+        /// <returns>A human-readable description of the activity.</returns>
         public static string Map(string action, string? contextJson)
         {
-            var context = Deserialize(contextJson);
+            var context = DeserializeContext(contextJson);
 
             return action switch
             {
-                ActivityActions.Device.Authenticated => DeviceAuthenticated(context),
-                ActivityActions.Device.Revoked => DeviceRevoked(context),
+                ActivityActions.Device.Authenticated => FormatDeviceAuthenticated(context),
+                ActivityActions.Device.Revoked => FormatDeviceRevoked(context),
 
-                ActivityActions.TwoFactorAuthentication.Enabled => TwoFaEnabled(context),
-                ActivityActions.TwoFactorAuthentication.Disabled => TwoFaDisabled(context),
+                ActivityActions.TwoFactorAuthentication.Enabled => FormatTwoFaEnabled(context),
+                ActivityActions.TwoFactorAuthentication.Disabled => FormatTwoFaDisabled(context),
                 ActivityActions.TwoFactorAuthentication.BackupCodesGenerated => "Two-factor backup codes were regenerated.",
 
-                ActivityActions.Profile.UsernameChanged => ProfileUsernameChanged(context),
-                ActivityActions.Profile.EmailChanged => ProfileEmailChanged(context),
+                ActivityActions.Profile.UsernameChanged => FormatUsernameChanged(context),
+                ActivityActions.Profile.EmailChanged => FormatEmailChanged(context),
                 ActivityActions.Profile.PasswordChanged => "Account password was changed.",
                 ActivityActions.Profile.PictureChanged => "Profile picture was updated.",
 
                 ActivityActions.User.Registered => "Account was created.",
-                ActivityActions.User.RoleUpdated => UserRoleUpdated(context),
-                ActivityActions.User.Deleted => UserDeleted(context),
-                ActivityActions.User.Restored => UserRestored(context),
+                ActivityActions.User.RoleUpdated => FormatRoleUpdated(context),
+                ActivityActions.User.Deleted => FormatUserDeleted(context),
+                ActivityActions.User.Restored => FormatUserRestored(context),
 
-                ActivityActions.Invitation.CodeGenerated => InvitationGenerated(context),
-                ActivityActions.Invitation.CodeRedeemed => InvitationRedeemed(context),
+                ActivityActions.Invitation.CodeGenerated => FormatInvitationGenerated(context),
+                ActivityActions.Invitation.CodeRedeemed => FormatInvitationRedeemed(context),
 
                 _ => action
             };
         }
 
-        private static ActivityLogContext? Deserialize(string? json)
+        private static ActivityLogContext? DeserializeContext(string? json)
         {
             if (string.IsNullOrWhiteSpace(json))
-            {
                 return null;
-            }
 
             try
             {
@@ -53,18 +61,16 @@ namespace BlockSense.Backend.Utilities
             }
         }
 
-        private static string DeviceAuthenticated(ActivityLogContext? context)
+        private static string FormatDeviceAuthenticated(ActivityLogContext? context)
         {
             if (context?.IpAddress is not string ipString)
-            {
                 return "A new device was authenticated.";
-            }
 
-            var ip = IpAddressMasker.Mask(ipString);
-            return $"New device with IP {ip} authenticated.";
+            var maskedIp = IpAddressMasker.Mask(ipString);
+            return $"New device with IP {maskedIp} authenticated.";
         }
 
-        private static string DeviceRevoked(ActivityLogContext? context)
+        private static string FormatDeviceRevoked(ActivityLogContext? context)
         {
             var reason = context?.Reason;
             return reason is not null
@@ -72,7 +78,7 @@ namespace BlockSense.Backend.Utilities
                 : "A device session was revoked.";
         }
 
-        private static string TwoFaEnabled(ActivityLogContext? context)
+        private static string FormatTwoFaEnabled(ActivityLogContext? context)
         {
             var method = context?.TwoFactorMethod;
             return method is not null
@@ -80,7 +86,7 @@ namespace BlockSense.Backend.Utilities
                 : "Two-factor authentication was enabled.";
         }
 
-        private static string TwoFaDisabled(ActivityLogContext? context)
+        private static string FormatTwoFaDisabled(ActivityLogContext? context)
         {
             var method = context?.TwoFactorMethod;
             return method is not null
@@ -88,78 +94,70 @@ namespace BlockSense.Backend.Utilities
                 : "Two-factor authentication was disabled.";
         }
 
-        private static string ProfileUsernameChanged(ActivityLogContext? context)
+        private static string FormatUsernameChanged(ActivityLogContext? context)
         {
-            var oldVal = context?.OldValue;
-            var newVal = context?.NewValue;
+            var oldValue = context?.OldValue;
+            var newValue = context?.NewValue;
 
-            return (oldVal, newVal) switch
+            return (oldValue, newValue) switch
             {
-                (not null, not null) => $"Username changed from \"{oldVal}\" to \"{newVal}\".",
-                (null, not null) => $"Username changed to \"{newVal}\".",
+                (not null, not null) => $"Username changed from \"{oldValue}\" to \"{newValue}\".",
+                (null, not null) => $"Username changed to \"{newValue}\".",
                 _ => "Username was changed."
             };
         }
 
-        private static string ProfileEmailChanged(ActivityLogContext? context)
+        private static string FormatEmailChanged(ActivityLogContext? context)
         {
-            var oldVal = context?.OldValue;
-            var newVal = context?.NewValue;
+            var oldValue = context?.OldValue;
+            var newValue = context?.NewValue;
 
-            return (oldVal, newVal) switch
+            return (oldValue, newValue) switch
             {
-                (not null, not null) => $"Email changed from \"{oldVal}\" to \"{newVal}\".",
-                (null, not null) => $"Email changed to \"{newVal}\".",
+                (not null, not null) => $"Email changed from \"{oldValue}\" to \"{newValue}\".",
+                (null, not null) => $"Email changed to \"{newValue}\".",
                 _ => "Email address was changed."
             };
         }
 
-        private static string UserRoleUpdated(ActivityLogContext? context)
+        private static string FormatRoleUpdated(ActivityLogContext? context)
         {
-            var oldVal = context?.OldValue;
-            var newVal = context?.NewValue;
-            var target = context?.TargetUserId;
+            var oldValue = context?.OldValue;
+            var newValue = context?.NewValue;
+            var subject = context?.TargetUserId is uint id ? $"User #{id}" : "A user";
 
-            var who = target is not null ? $"User #{target}" : "A user";
-
-            return (oldVal, newVal) switch
+            return (oldValue, newValue) switch
             {
-                (not null, not null) => $"{who}'s role was changed from {oldVal} to {newVal}.",
-                (null, not null) => $"{who}'s role was set to {newVal}.",
-                _ => $"{who}'s role was updated."
+                (not null, not null) => $"{subject}'s role was changed from {oldValue} to {newValue}.",
+                (null, not null) => $"{subject}'s role was set to {newValue}.",
+                _ => $"{subject}'s role was updated."
             };
         }
 
-        private static string UserDeleted(ActivityLogContext? context)
+        private static string FormatUserDeleted(ActivityLogContext? context)
         {
-            var target = context?.TargetUserId;
-            var reason = context?.Reason;
-
-            var who = target is not null ? $"User #{target}" : "A user account";
-            var tail = reason is not null ? $" Reason: {reason}." : ".";
-            return $"{who} was deleted{tail}";
+            var subject = context?.TargetUserId is uint id ? $"User #{id}" : "A user account";
+            var suffix = context?.Reason is string reason ? $" Reason: {reason}." : ".";
+            return $"{subject} was deleted{suffix}";
         }
 
-        private static string UserRestored(ActivityLogContext? context)
+        private static string FormatUserRestored(ActivityLogContext? context)
         {
-            var target = context?.TargetUserId;
-            return target is not null
-                ? $"User #{target} was restored."
+            return context?.TargetUserId is uint id
+                ? $"User #{id} was restored."
                 : "A user account was restored.";
         }
 
-        private static string InvitationGenerated(ActivityLogContext? context)
+        private static string FormatInvitationGenerated(ActivityLogContext? context)
         {
-            var code = context?.InvitationCode;
-            return code is not null
+            return context?.InvitationCode is string code
                 ? $"Invitation code \"{code}\" was generated."
                 : "An invitation code was generated.";
         }
 
-        private static string InvitationRedeemed(ActivityLogContext? context)
+        private static string FormatInvitationRedeemed(ActivityLogContext? context)
         {
-            var code = context?.InvitationCode;
-            return code is not null
+            return context?.InvitationCode is string code
                 ? $"Invitation code \"{code}\" was redeemed."
                 : "An invitation code was redeemed.";
         }

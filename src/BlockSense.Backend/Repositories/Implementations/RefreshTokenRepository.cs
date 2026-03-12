@@ -6,10 +6,18 @@ using MySql.Data.MySqlClient;
 
 namespace BlockSense.Backend.Repositories.Implementations
 {
+    /// <summary>
+    /// MySQL implementation of <see cref="IRefreshTokenRepository"/>.
+    /// </summary>
     public sealed class RefreshTokenRepository : IRefreshTokenRepository
     {
         private readonly DatabaseContext _databaseContext;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="RefreshTokenRepository"/>.
+        /// </summary>
+        /// <param name="databaseContext">The database context used to execute queries.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="databaseContext"/> is null.</exception>
         public RefreshTokenRepository(DatabaseContext databaseContext)
         {
             _databaseContext = databaseContext
@@ -33,12 +41,12 @@ namespace BlockSense.Backend.Repositories.Implementations
                     is_revoked            AS IsRevoked
                 FROM refresh_tokens
                 WHERE token_hash = @TokenHash
-                LIMIT 1
+                LIMIT 1;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@TokenHash", MySqlDbType.VarChar) { Value = tokenHash },
+                new MySqlParameter("@TokenHash", MySqlDbType.VarChar) { Value = tokenHash }
             };
 
             await using var reader =
@@ -64,12 +72,12 @@ namespace BlockSense.Backend.Repositories.Implementations
                     is_revoked            AS IsRevoked
                 FROM refresh_tokens
                 WHERE hardware_fingerprint = @HardwareFingerprint
-                LIMIT 1
+                LIMIT 1;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@HardwareFingerprint", MySqlDbType.String) { Value = hardwareFingerprint },
+                new MySqlParameter("@HardwareFingerprint", MySqlDbType.String) { Value = hardwareFingerprint }
             };
 
             await using var reader =
@@ -94,15 +102,15 @@ namespace BlockSense.Backend.Repositories.Implementations
                     expires_at            AS ExpiresAt,
                     is_revoked            AS IsRevoked
                 FROM refresh_tokens
-                WHERE user_id   = @UserId
-                    AND is_revoked = 0
-                        AND expires_at > UTC_TIMESTAMP(6)
-                ORDER BY issued_at DESC
+                WHERE user_id    = @UserId
+                  AND is_revoked  = 0
+                  AND expires_at  > UTC_TIMESTAMP(6)
+                ORDER BY issued_at DESC;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId },
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
             };
 
             await using var reader =
@@ -162,7 +170,7 @@ namespace BlockSense.Backend.Repositories.Implementations
             const string sql = """
                 UPDATE refresh_tokens
                 SET is_revoked = 1
-                WHERE token_hash = @TokenHash
+                WHERE token_hash = @TokenHash;
                 """;
 
             var parameters = new[]
@@ -179,13 +187,13 @@ namespace BlockSense.Backend.Repositories.Implementations
             const string sql = """
                 UPDATE refresh_tokens
                 SET is_revoked = 1
-                WHERE user_id   = @UserId
-                    AND is_revoked = 0
+                WHERE user_id    = @UserId
+                  AND is_revoked  = 0;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId },
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
             };
 
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
@@ -196,8 +204,8 @@ namespace BlockSense.Backend.Repositories.Implementations
         {
             const string sql = """
                 DELETE FROM refresh_tokens
-                WHERE expires_at <= UTC_TIMESTAMP(6)
-            """;
+                WHERE expires_at <= UTC_TIMESTAMP(6);
+                """;
 
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters: null, cancellationToken);
         }

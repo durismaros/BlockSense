@@ -6,7 +6,7 @@
     public sealed record RefreshTokenDto
     {
         /// <summary>
-        /// The raw token data, optionally transferred to the client.
+        /// The raw refresh token string.
         /// </summary>
         public required string Token
         {
@@ -15,7 +15,7 @@
         }
 
         /// <summary>
-        /// The UTC date and time at which this token expires.
+        /// The UTC timestamp at which this token expires.
         /// </summary>
         public required DateTime ExpiresAt
         {

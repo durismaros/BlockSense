@@ -3,12 +3,12 @@
 namespace BlockSense.Contracts.DTOs.Authentication
 {
     /// <summary>
-    /// Represents the response returned by the backend after a successful user authentication.
+    /// Represents the response returned after a successful user authentication.
     /// </summary>
     public sealed record AuthResponse
     {
         /// <summary>
-        /// Access token issued for API authentication.
+        /// The access token issued for API authentication.
         /// </summary>
         public required AccessTokenDto AccessToken
         {
@@ -17,7 +17,7 @@ namespace BlockSense.Contracts.DTOs.Authentication
         }
 
         /// <summary>
-        /// Refresh token used to obtain new access tokens.
+        /// The refresh token used to obtain new access tokens when the current one expires.
         /// </summary>
         public required RefreshTokenDto RefreshToken
         {

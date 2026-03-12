@@ -12,6 +12,11 @@ using System.Threading.Tasks;
 
 namespace BlockSense.Desktop.Services.Implementations
 {
+    /// <summary>
+    /// Implements <see cref="ISessionService"/> to manage the user's authenticated session lifecycle,
+    /// including initialization, establishment, token refresh, and sign-out.
+    /// Schedules automatic access token refresh before expiry.
+    /// </summary>
     public sealed class SessionService : ISessionService, IDisposable
     {
         private readonly ILogger<SessionService> _logger;
@@ -21,8 +26,18 @@ namespace BlockSense.Desktop.Services.Implementations
         private readonly IAccessTokenProvider _accessTokenProvider;
         private readonly NavigationManager _navigationManager;
 
-        private Timer? _timer;
+        private Timer? _tokenRefreshTimer;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="SessionService"/>.
+        /// </summary>
+        /// <param name="logger">The logger used to record session lifecycle events.</param>
+        /// <param name="apiClient">The API client used to send token refresh requests.</param>
+        /// <param name="userService">The user service used to load the current user's data after session establishment.</param>
+        /// <param name="refreshTokenProvider">The provider used to persist and retrieve the refresh token.</param>
+        /// <param name="accessTokenProvider">The provider used to store the in-memory access token.</param>
+        /// <param name="navigationManager">The navigation manager used to redirect the user between views.</param>
+        /// <exception cref="ArgumentNullException">Thrown if any required dependency is null.</exception>
         public SessionService(
             ILogger<SessionService> logger,
             IApiClient apiClient,
@@ -31,12 +46,23 @@ namespace BlockSense.Desktop.Services.Implementations
             IAccessTokenProvider accessTokenProvider,
             NavigationManager navigationManager)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
-            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
-            _refreshTokenProvider = refreshTokenProvider ?? throw new ArgumentNullException(nameof(refreshTokenProvider));
-            _accessTokenProvider = accessTokenProvider ?? throw new ArgumentNullException(nameof(accessTokenProvider));
-            _navigationManager = navigationManager ?? throw new ArgumentNullException(nameof(navigationManager));
+            _logger = logger
+                ?? throw new ArgumentNullException(nameof(logger));
+
+            _apiClient = apiClient
+                ?? throw new ArgumentNullException(nameof(apiClient));
+
+            _userService = userService
+                ?? throw new ArgumentNullException(nameof(userService));
+
+            _refreshTokenProvider = refreshTokenProvider
+                ?? throw new ArgumentNullException(nameof(refreshTokenProvider));
+
+            _accessTokenProvider = accessTokenProvider
+                ?? throw new ArgumentNullException(nameof(accessTokenProvider));
+
+            _navigationManager = navigationManager
+                ?? throw new ArgumentNullException(nameof(navigationManager));
         }
 
         /// <inheritdoc/>
@@ -46,12 +72,12 @@ namespace BlockSense.Desktop.Services.Implementations
 
             if (!_refreshTokenProvider.Exists())
             {
-                _logger.LogInformation("No refresh token on disk [Navigating back to WelcomeView]");
+                _logger.LogInformation("No refresh token found on disk — navigating to WelcomeView");
                 await _navigationManager.NavigateToAsync<WelcomeView>();
                 return;
             }
 
-            _logger.LogInformation("Refresh token found [attempting to establish a new session]");
+            _logger.LogInformation("Refresh token found — attempting to restore session");
 
             var refreshed = await RefreshAccessTokenAsync(cancellationToken);
 
@@ -59,22 +85,19 @@ namespace BlockSense.Desktop.Services.Implementations
             {
                 await _userService.LoadCurrentUserAsync(cancellationToken);
 
-                _logger.LogInformation("Session established");
+                _logger.LogInformation("Session restored successfully — navigating to HomeView");
                 await _navigationManager.NavigateToAsync<HomeView>();
-
                 return;
             }
 
-            _logger.LogWarning("Attempt to establish a new session failed [Navigating back to AuthenticationView]");
+            _logger.LogWarning("Session restoration failed — navigating to AuthenticationView");
             await _navigationManager.NavigateToAsync<AuthenticationView>();
-
-            return;
         }
 
         /// <inheritdoc/>
         public async Task EstablishSessionAsync(AuthResponse response, CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation("Establishing user session");
+            _logger.LogInformation("Establishing new user session");
 
             await _refreshTokenProvider.SaveAsync(response.RefreshToken, cancellationToken);
             _accessTokenProvider.Set(response.AccessToken);
@@ -83,7 +106,7 @@ namespace BlockSense.Desktop.Services.Implementations
             ScheduleTokenRefresh(response.AccessToken.ExpiresAt);
 
             MainWindow.Instance.ShowNotification("Welcome Back", "Signed in successfully.");
-            _logger.LogInformation("Session established");
+            _logger.LogInformation("User session established successfully");
 
             await Task.Delay(1000, cancellationToken);
             await _navigationManager.NavigateToAsync<HomeView>();
@@ -92,16 +115,17 @@ namespace BlockSense.Desktop.Services.Implementations
         /// <inheritdoc/>
         public async Task<bool> RefreshAccessTokenAsync(CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation("Refreshing access token");
+            _logger.LogInformation("Attempting to refresh access token");
 
             string refreshToken;
+
             try
             {
                 refreshToken = await _refreshTokenProvider.GetAsync(cancellationToken);
             }
             catch (AuthenticationRequiredException)
             {
-                _logger.LogWarning("Refresh token is missing or expired");
+                _logger.LogWarning("Refresh token is missing or has expired");
                 return false;
             }
 
@@ -115,11 +139,11 @@ namespace BlockSense.Desktop.Services.Implementations
             switch (response)
             {
                 case ApiResult<AuthRefreshResponse>.Success success:
-                    HandleTokenRefreshSuccessAsync(success.Data, cancellationToken);
+                    HandleTokenRefreshSuccess(success.Data, cancellationToken);
                     return true;
 
-                case ApiResult.Failure error:
-                    HandleTokenRefreshFailureAsync(error, cancellationToken);
+                case ApiResult.Failure failure:
+                    HandleTokenRefreshFailure(failure);
                     return false;
             }
 
@@ -129,53 +153,53 @@ namespace BlockSense.Desktop.Services.Implementations
         /// <inheritdoc/>
         public async Task SignOutAsync(CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation("User signing out");
+            _logger.LogInformation("Signing out current user");
 
-            ClearSessionAsync();
+            ClearSession();
             await _navigationManager.NavigateToAsync<WelcomeView>();
 
-            MainWindow.Instance.ShowNotification(
-                "Signed Out",
-                "You have been signed out.");
+            MainWindow.Instance.ShowNotification("Signed Out", "You have been signed out.");
         }
 
-        private void ScheduleTokenRefresh(DateTime scheduledTime)
+        private void ScheduleTokenRefresh(DateTime expiresAt)
         {
             Dispose();
 
-            var delay = scheduledTime - DateTime.UtcNow;
+            var delay = expiresAt - DateTime.UtcNow;
 
             if (delay < TimeSpan.Zero)
             {
-                _logger.LogWarning("Token already expired — scheduling immediate refresh");
+                _logger.LogWarning("Access token is already expired — scheduling immediate refresh");
                 delay = TimeSpan.FromSeconds(1);
             }
 
-            _timer = new Timer(
+            _tokenRefreshTimer = new Timer(
                 callback: async _ => await OnTokenExpiredAsync(),
                 state: null,
                 dueTime: (int)delay.TotalMilliseconds,
                 period: Timeout.Infinite);
 
-            _logger.LogInformation("Token refresh scheduled for {ExpiresAt:O} (in {Delay})", scheduledTime, delay);
+            _logger.LogInformation(
+                "Token refresh scheduled for {ExpiresAt:O} (in {Delay})",
+                expiresAt, delay);
         }
 
         private async Task OnTokenExpiredAsync()
         {
             _logger.LogInformation("Access token expired — attempting automatic refresh");
 
-            var success = await RefreshAccessTokenAsync();
+            var refreshed = await RefreshAccessTokenAsync();
 
-            if (success)
+            if (refreshed)
             {
                 return;
             }
 
-            _logger.LogWarning("Automatic refresh failed — signing out user");
+            _logger.LogWarning("Automatic token refresh failed — signing user out");
             await SignOutAsync();
         }
 
-        private void HandleTokenRefreshSuccessAsync(AuthRefreshResponse response, CancellationToken cancellationToken)
+        private void HandleTokenRefreshSuccess(AuthRefreshResponse response, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Access token refreshed successfully");
 
@@ -183,35 +207,37 @@ namespace BlockSense.Desktop.Services.Implementations
             ScheduleTokenRefresh(response.AccessToken.ExpiresAt);
         }
 
-        private void HandleTokenRefreshFailureAsync(ApiResult.Failure error, CancellationToken cancellationToken)
+        private void HandleTokenRefreshFailure(ApiResult.Failure failure)
         {
-            _logger.LogWarning("Access token refresh was rejected by the server");
+            _logger.LogWarning(
+                "Access token refresh rejected by server — Type: {Type}",
+                failure.ProblemDetails.Type);
 
-            switch (error.ProblemDetails.Type)
+            switch (failure.ProblemDetails.Type)
             {
                 case StandardizedCodes.Authentication.AuthenticationRequired:
-                    ClearSessionAsync();
-                    break;
-
                 case StandardizedCodes.Authentication.InvalidClientContext:
-                    ClearSessionAsync();
+                    ClearSession();
                     break;
             }
 
             Dispose();
         }
 
-        private void ClearSessionAsync()
+        private void ClearSession()
         {
             _accessTokenProvider.Clear();
             _refreshTokenProvider.Clear();
             Dispose();
         }
 
+        /// <summary>
+        /// Disposes the token refresh timer if it is currently active.
+        /// </summary>
         public void Dispose()
         {
-            _timer?.Dispose();
-            _timer = null;
+            _tokenRefreshTimer?.Dispose();
+            _tokenRefreshTimer = null;
         }
     }
 }

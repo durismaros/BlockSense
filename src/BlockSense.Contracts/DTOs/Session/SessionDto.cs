@@ -6,7 +6,7 @@
     public sealed record SessionDto
     {
         /// <summary>
-        /// Unique identifier of the device session (Hashed value of the refresh token).
+        /// The hashed refresh token value that uniquely identifies this session.
         /// </summary>
         public required string TokenHash
         {
@@ -15,7 +15,7 @@
         }
 
         /// <summary>
-        /// IP address from which the token was initiated.
+        /// The IP address from which this session was initiated.
         /// </summary>
         public required string IpAddress
         {
@@ -24,7 +24,7 @@
         }
 
         /// <summary>
-        /// UTC timestamp when the token was issued.
+        /// The UTC timestamp when this session was issued.
         /// </summary>
         public required DateTime IssuedAt
         {
@@ -33,7 +33,7 @@
         }
 
         /// <summary>
-        /// UTC timestamp when the token expires.
+        /// The UTC timestamp when this session expires.
         /// </summary>
         public required DateTime ExpiresAt
         {

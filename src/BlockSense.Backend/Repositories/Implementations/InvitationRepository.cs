@@ -6,10 +6,18 @@ using MySql.Data.MySqlClient;
 
 namespace BlockSense.Backend.Repositories.Implementations
 {
+    /// <summary>
+    /// MySQL implementation of <see cref="IInvitationRepository"/>.
+    /// </summary>
     public sealed class InvitationRepository : IInvitationRepository
     {
         private readonly DatabaseContext _databaseContext;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="InvitationRepository"/>.
+        /// </summary>
+        /// <param name="databaseContext">The database context used to execute queries.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="databaseContext"/> is null.</exception>
         public InvitationRepository(DatabaseContext databaseContext)
         {
             _databaseContext = databaseContext
@@ -30,12 +38,12 @@ namespace BlockSense.Backend.Repositories.Implementations
                     is_revoked      AS IsRevoked
                 FROM invitation_codes
                 WHERE id = @Id
-                LIMIT 1
+                LIMIT 1;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@Id", MySqlDbType.UInt32) { Value = id },
+                new MySqlParameter("@Id", MySqlDbType.UInt32) { Value = id }
             };
 
             await using var reader =
@@ -58,7 +66,7 @@ namespace BlockSense.Backend.Repositories.Implementations
                     is_revoked      AS IsRevoked
                 FROM invitation_codes
                 WHERE code = @Code
-                LIMIT 1
+                LIMIT 1;
                 """;
 
             var parameters = new[]
@@ -118,19 +126,19 @@ namespace BlockSense.Backend.Repositories.Implementations
                 LEFT JOIN users u ON u.id = ic.redeemed_by_id
                 WHERE ic.issued_to_id = @IssuedToId
                 ORDER BY
-                    ic.redeemed_by_id IS NULL   DESC,
-                    ic.created_at               ASC
+                    ic.redeemed_by_id IS NULL DESC,
+                    ic.created_at             ASC;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@IssuedToId", MySqlDbType.UInt32) { Value = issuedToId },
+                new MySqlParameter("@IssuedToId", MySqlDbType.UInt32) { Value = issuedToId }
             };
 
             await using var reader =
                 await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
 
-            return SqlMapper.Parse<InvitationCode>(reader).ToList();
+            return SqlMapper.Parse<InvitationCode>(reader).AsList().AsReadOnly();
         }
 
         /// <inheritdoc/>
@@ -161,7 +169,7 @@ namespace BlockSense.Backend.Repositories.Implementations
                 new MySqlParameter("@RedeemedById", MySqlDbType.UInt32)     { Value = (object?)invitationCode.RedeemedById ?? DBNull.Value },
                 new MySqlParameter("@CreatedAt",    MySqlDbType.DateTime)   { Value = invitationCode.CreatedAt },
                 new MySqlParameter("@ExpiresAt",    MySqlDbType.DateTime)   { Value = invitationCode.ExpiresAt },
-                new MySqlParameter("@IsRevoked",    MySqlDbType.Bit)        { Value = invitationCode.IsRevoked },
+                new MySqlParameter("@IsRevoked",    MySqlDbType.Bit)        { Value = invitationCode.IsRevoked }
             };
 
             var insertId =
@@ -179,15 +187,15 @@ namespace BlockSense.Backend.Repositories.Implementations
                 WHERE id = @Id
                   AND redeemed_by_id IS NULL
                   AND is_revoked = 0
-                  AND expires_at > UTC_TIMESTAMP(6)
+                  AND expires_at > UTC_TIMESTAMP(6);
                 """;
-            
+
             var parameters = new[]
             {
                 new MySqlParameter("@Id",           MySqlDbType.UInt32) { Value = id },
-                new MySqlParameter("@RedeemedById", MySqlDbType.UInt32) { Value = redeemedById },
+                new MySqlParameter("@RedeemedById", MySqlDbType.UInt32) { Value = redeemedById }
             };
-            
+
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
         }
 
@@ -197,12 +205,12 @@ namespace BlockSense.Backend.Repositories.Implementations
             const string sql = """
                 UPDATE invitation_codes
                 SET is_revoked = 1
-                WHERE id = @Id
+                WHERE id = @Id;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@Id", MySqlDbType.UInt32) { Value = id },
+                new MySqlParameter("@Id", MySqlDbType.UInt32) { Value = id }
             };
 
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);

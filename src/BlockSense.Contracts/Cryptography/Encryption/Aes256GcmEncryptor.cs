@@ -11,17 +11,17 @@ namespace BlockSense.Contracts.Cryptography.Encryption
     public sealed class Aes256GcmEncryptor
     {
         /// <summary>
-        /// Size of the AES-256 key in bytes (32 bytes = 256 bits).
+        /// Required AES-256 key size in bytes (32 bytes = 256 bits).
         /// </summary>
         private const int KeySize = 32;
 
         /// <summary>
-        /// Recommended size of the Initialization Vector (IV) for AES-GCM in bytes (12 bytes = 96 bits).
+        /// Recommended IV size in bytes for AES-GCM (12 bytes = 96 bits).
         /// </summary>
         private const int IvSize = 12;
 
         /// <summary>
-        /// Size of the authentication tag in bytes (16 bytes = 128 bits), used to verify data integrity.
+        /// Authentication tag size in bytes (16 bytes = 128 bits).
         /// </summary>
         private const int TagSize = 16;
 
@@ -31,23 +31,15 @@ namespace BlockSense.Contracts.Cryptography.Encryption
         /// <param name="key">The 32-byte encryption key.</param>
         /// <param name="iv">The 12-byte initialization vector.</param>
         /// <param name="plainText">The plaintext data to encrypt.</param>
-        /// <returns>The ciphertext including the authentication tag.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="key"/>, <paramref name="iv"/>, or <paramref name="plainText"/> is null.</exception>
-        /// <exception cref="ArgumentException">Thrown if <paramref name="key"/> or <paramref name="iv"/> lengths are invalid.</exception>
+        /// <returns>The ciphertext including the appended authentication tag.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="key"/>, <paramref name="iv"/>, or <paramref name="plainText"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="key"/> or <paramref name="iv"/> lengths are invalid.</exception>
         public byte[] Encrypt(byte[] key, byte[] iv, byte[] plainText)
         {
             ValidateParameters(key, iv, plainText);
 
-            var cipher = new GcmBlockCipher(new AesEngine());
-            var parameters = new AeadParameters(new KeyParameter(key), TagSize * 8, iv);
-
-            cipher.Init(true, parameters);
-
-            var output = new byte[cipher.GetOutputSize(plainText.Length)];
-            int len = cipher.ProcessBytes(plainText, 0, plainText.Length, output, 0);
-            cipher.DoFinal(output, len);
-
-            return output;
+            var cipher = InitializeCipher(key, iv, forEncryption: true);
+            return ProcessData(cipher, plainText);
         }
 
         /// <summary>
@@ -57,42 +49,58 @@ namespace BlockSense.Contracts.Cryptography.Encryption
         /// <param name="iv">The 12-byte initialization vector.</param>
         /// <param name="cipherText">The ciphertext including the authentication tag.</param>
         /// <returns>The decrypted plaintext.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="key"/>, <paramref name="iv"/>, or <paramref name="cipherText"/> is null.</exception>
-        /// <exception cref="ArgumentException">Thrown if <paramref name="key"/> or <paramref name="iv"/> lengths are invalid.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="key"/>, <paramref name="iv"/>, or <paramref name="cipherText"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="key"/> or <paramref name="iv"/> lengths are invalid.</exception>
         public byte[] Decrypt(byte[] key, byte[] iv, byte[] cipherText)
         {
             ValidateParameters(key, iv, cipherText);
 
+            var cipher = InitializeCipher(key, iv, forEncryption: false);
+            return ProcessData(cipher, cipherText);
+        }
+
+        /// <summary>
+        /// Initializes and configures an AES-GCM cipher instance for encryption or decryption.
+        /// </summary>
+        /// <param name="key">The 32-byte encryption key.</param>
+        /// <param name="iv">The 12-byte initialization vector.</param>
+        /// <param name="forEncryption">True to configure for encryption; false for decryption.</param>
+        /// <returns>An initialized <see cref="GcmBlockCipher"/> ready for data processing.</returns>
+        private static GcmBlockCipher InitializeCipher(byte[] key, byte[] iv, bool forEncryption)
+        {
             var cipher = new GcmBlockCipher(new AesEngine());
             var parameters = new AeadParameters(new KeyParameter(key), TagSize * 8, iv);
+            cipher.Init(forEncryption, parameters);
+            return cipher;
+        }
 
-            cipher.Init(false, parameters);
-
-            var output = new byte[cipher.GetOutputSize(cipherText.Length)];
-            int len = cipher.ProcessBytes(cipherText, 0, cipherText.Length, output, 0);
-            cipher.DoFinal(output, len);
-
+        /// <summary>
+        /// Processes the input data through the cipher and returns the result.
+        /// </summary>
+        /// <param name="cipher">The initialized GCM cipher.</param>
+        /// <param name="input">The data to process (plaintext or ciphertext).</param>
+        /// <returns>The processed output as a byte array.</returns>
+        private static byte[] ProcessData(GcmBlockCipher cipher, byte[] input)
+        {
+            byte[] output = new byte[cipher.GetOutputSize(input.Length)];
+            int length = cipher.ProcessBytes(input, 0, input.Length, output, 0);
+            cipher.DoFinal(output, length);
             return output;
         }
 
         /// <summary>
-        /// Validates key, IV, and data for AES-256-GCM operations.
+        /// Validates key, IV, and data parameters for AES-256-GCM operations.
         /// </summary>
-        /// <param name="key">Encryption key.</param>
-        /// <param name="iv">Initialization vector.</param>
-        /// <param name="data">Data to process (plaintext or ciphertext).</param>
+        /// <param name="key">The encryption key to validate.</param>
+        /// <param name="iv">The initialization vector to validate.</param>
+        /// <param name="data">The data to validate (plaintext or ciphertext).</param>
         /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
         /// <exception cref="ArgumentException">Thrown when key or IV lengths are invalid.</exception>
         private static void ValidateParameters(byte[] key, byte[] iv, byte[] data)
         {
-            if (key is null)
-                throw new ArgumentNullException(nameof(key));
-
-            if (iv is null)
-                throw new ArgumentNullException(nameof(iv));
-
-            if (data is null)
-                throw new ArgumentNullException(nameof(data));
+            if (key is null) throw new ArgumentNullException(nameof(key));
+            if (iv is null) throw new ArgumentNullException(nameof(iv));
+            if (data is null) throw new ArgumentNullException(nameof(data));
 
             if (key.Length != KeySize)
                 throw new ArgumentException($"AES-256 key must be {KeySize} bytes.", nameof(key));

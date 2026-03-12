@@ -2,33 +2,24 @@
 
 namespace BlockSense.Backend.Exceptions.Generic
 {
+    /// <summary>
+    /// Thrown when a downstream external service fails or returns an unexpected error.
+    /// </summary>
     public sealed class ExternalServiceException : ApiException
     {
-        public override string Type
-        {
-            get
-            {
-                return StandardizedCodes.Generic.ExternalServiceError;
-            }
-        }
+        /// <inheritdoc/>
+        public override string Type => StandardizedCodes.Generic.ExternalServiceError;
 
-        public override string Title
-        {
-            get
-            {
-                return "External Service Error";
-            }
-        }
+        /// <inheritdoc/>
+        public override string Title => "External Service Error";
 
-        public override int Status
-        {
-            get
-            {
-                return StatusCodes.Status502BadGateway;
-            }
-        }
+        /// <inheritdoc/>
+        public override int Status => StatusCodes.Status502BadGateway;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ExternalServiceException"/> class.
+        /// </summary>
         public ExternalServiceException()
-            : base("n error occurred while processing your request with an external service. Please try again later.") { }
+            : base("An error occurred while processing your request with an external service. Please try again later.") { }
     }
 }

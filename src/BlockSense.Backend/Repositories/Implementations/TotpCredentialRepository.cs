@@ -6,10 +6,18 @@ using MySql.Data.MySqlClient;
 
 namespace BlockSense.Backend.Repositories.Implementations
 {
+    /// <summary>
+    /// MySQL implementation of <see cref="ITotpCredentialRepository"/>.
+    /// </summary>
     public sealed class TotpCredentialRepository : ITotpCredentialRepository
     {
         private readonly DatabaseContext _databaseContext;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="TotpCredentialRepository"/>.
+        /// </summary>
+        /// <param name="databaseContext">The database context used to execute queries.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="databaseContext"/> is null.</exception>
         public TotpCredentialRepository(DatabaseContext databaseContext)
         {
             _databaseContext = databaseContext
@@ -28,12 +36,12 @@ namespace BlockSense.Backend.Repositories.Implementations
                     updated_at       AS UpdatedAt
                 FROM totp_credentials
                 WHERE user_id = @UserId
-                LIMIT 1
+                LIMIT 1;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId },
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
             };
 
             await using var reader =
@@ -49,12 +57,12 @@ namespace BlockSense.Backend.Repositories.Implementations
                 SELECT EXISTS (
                     SELECT 1
                     FROM totp_credentials
-                    WHERE user_id = @UserId )
-            """;
+                    WHERE user_id = @UserId );
+                """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId },
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
             };
 
             var result =
@@ -102,15 +110,15 @@ namespace BlockSense.Backend.Repositories.Implementations
                     encrypted_secret = @EncryptedSecret,
                     backup_codes     = @BackupCodes,
                     updated_at       = @UpdatedAt
-                WHERE user_id = @UserId
+                WHERE user_id = @UserId;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId",          MySqlDbType.UInt32)          { Value = totpCredential.UserId },
-                new MySqlParameter("@EncryptedSecret", MySqlDbType.VarBinary, 48)   { Value = totpCredential.EncryptedSecret },
-                new MySqlParameter("@BackupCodes",     MySqlDbType.JSON)            { Value = (object?)totpCredential.BackupCodes ?? DBNull.Value },
-                new MySqlParameter("@UpdatedAt",       MySqlDbType.DateTime)        { Value = totpCredential.UpdatedAt },
+                new MySqlParameter("@UserId",          MySqlDbType.UInt32)        { Value = totpCredential.UserId },
+                new MySqlParameter("@EncryptedSecret", MySqlDbType.VarBinary, 48) { Value = totpCredential.EncryptedSecret },
+                new MySqlParameter("@BackupCodes",     MySqlDbType.JSON)          { Value = (object?)totpCredential.BackupCodes ?? DBNull.Value },
+                new MySqlParameter("@UpdatedAt",       MySqlDbType.DateTime)      { Value = totpCredential.UpdatedAt }
             };
 
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
@@ -121,12 +129,12 @@ namespace BlockSense.Backend.Repositories.Implementations
         {
             const string sql = """
                 DELETE FROM totp_credentials
-                WHERE user_id = @UserId
+                WHERE user_id = @UserId;
                 """;
 
             var parameters = new[]
             {
-                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId },
+                new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
             };
 
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);

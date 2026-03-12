@@ -1,24 +1,35 @@
-﻿using BlockSense.Backend.Exceptions.Authentication;
+﻿using BlockSense.Backend.Controllers.Base;
 using BlockSense.Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.JsonWebTokens;
-using System.Security.Claims;
 
 namespace BlockSense.Backend.Controllers
 {
-    [ApiController]
+    /// <summary>
+    /// Provides endpoints for retrieving the authenticated user's activity log.
+    /// </summary>
     [Route("api/users/me/activity")]
-    public class ActivityLogController : ControllerBase
+    public class ActivityLogController : AuthenticatedControllerBase
     {
         private readonly IActivityLogService _activityLogService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ActivityLogController"/> class.
+        /// </summary>
+        /// <param name="activityLogService">Service used to retrieve activity log entries.</param>
         public ActivityLogController(IActivityLogService activityLogService)
         {
             _activityLogService = activityLogService
                 ?? throw new ArgumentNullException(nameof(activityLogService));
         }
 
+        /// <summary>
+        /// Returns a paginated page of activity log entries for the authenticated user.
+        /// </summary>
+        /// <param name="page">The page number to retrieve. Defaults to 1.</param>
+        /// <param name="pageSize">The number of entries per page. Clamped between 1 and 100. Defaults to 20.</param>
+        /// <param name="cancellationToken">Token used to cancel the operation if the request is aborted.</param>
+        /// <returns>A paginated list of activity log entries.</returns>
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetPage(
@@ -26,8 +37,7 @@ namespace BlockSense.Backend.Controllers
             [FromQuery] int pageSize = 20,
             CancellationToken cancellationToken = default)
         {
-            if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
-                throw new AuthenticationRequiredException();
+            uint userId = GetAuthenticatedUserId();
 
             page = Math.Max(1, page);
             pageSize = Math.Clamp(pageSize, 1, 100);
@@ -37,12 +47,19 @@ namespace BlockSense.Backend.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Returns all activity log entries newer than the specified entry ID for the authenticated user.
+        /// </summary>
+        /// <param name="afterId">The ID of the last known entry. Only entries with a higher ID are returned.</param>
+        /// <param name="cancellationToken">Token used to cancel the operation if the request is aborted.</param>
+        /// <returns>A list of activity log entries newer than <paramref name="afterId"/>.</returns>
         [HttpGet("latest")]
         [Authorize]
-        public async Task<IActionResult> GetNewerThan([FromQuery] ulong afterId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetNewerThan(
+            [FromQuery] ulong afterId,
+            CancellationToken cancellationToken = default)
         {
-            if (!uint.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out uint userId))
-                throw new AuthenticationRequiredException();
+            uint userId = GetAuthenticatedUserId();
 
             var entries = await _activityLogService.GetLatestAsync(userId, afterId, cancellationToken);
 

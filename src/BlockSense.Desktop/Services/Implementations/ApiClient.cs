@@ -9,24 +9,33 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BlockSense.Desktop.Services.Implementations
 {
+    /// <summary>
+    /// Implements <see cref="IApiClient"/> to send HTTP requests to the backend API
+    /// and return structured <see cref="ApiResult"/> responses.
+    /// </summary>
     public sealed class ApiClient : IApiClient
     {
         private readonly ILogger<ApiClient> _logger;
         private readonly HttpClient _httpClient;
         private readonly ApiRequestOptions _requestOptions;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="ApiClient"/> with default request options.
+        /// </summary>
+        /// <param name="logger">The logger used to record request and error events.</param>
+        /// <param name="httpClient">The underlying HTTP client used to send requests.</param>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="logger"/> or <paramref name="httpClient"/> is null.</exception>
         public ApiClient(ILogger<ApiClient> logger, HttpClient httpClient)
             : this(logger, httpClient, new ApiRequestOptions()) { }
 
-        private ApiClient(ILogger<ApiClient> logger, HttpClient httpClient, ApiRequestOptions apiRequestOptions)
+        private ApiClient(ILogger<ApiClient> logger, HttpClient httpClient, ApiRequestOptions requestOptions)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-            _requestOptions = apiRequestOptions ?? throw new ArgumentNullException(nameof(apiRequestOptions));
+            _requestOptions = requestOptions ?? throw new ArgumentNullException(nameof(requestOptions));
         }
 
         /// <inheritdoc/>
@@ -54,9 +63,43 @@ namespace BlockSense.Desktop.Services.Implementations
             => SendAsync<TRequest, TResponse>(HttpMethod.Delete, requestUri, request, cancellationToken);
 
         private async Task<ApiResult> SendAsync<TRequest, TResponse>(
-            HttpMethod method, string requestUri, TRequest? request, CancellationToken cancellationToken)
+            HttpMethod method,
+            string requestUri,
+            TRequest? request,
+            CancellationToken cancellationToken)
         {
-            using var httpRequest = new HttpRequestMessage(method, requestUri);
+            using var httpRequest = BuildHttpRequest(method, requestUri, request);
+
+            try
+            {
+                _logger.LogDebug("Sending {Method} {Uri}", method.Method, requestUri);
+
+                var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+
+                return response.IsSuccessStatusCode
+                    ? await ReadSuccessAsync<TResponse>(response, cancellationToken)
+                    : await ReadFailureAsync(response, requestUri);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Network error during {Method} {Uri}", method.Method, requestUri);
+                return BuildNetworkError(requestUri);
+            }
+            catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogError(ex, "Request timed out during {Method} {Uri}", method.Method, requestUri);
+                return BuildTimeoutError(requestUri);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during {Method} {Uri}", method.Method, requestUri);
+                return BuildUnexpectedError(requestUri);
+            }
+        }
+
+        private HttpRequestMessage BuildHttpRequest<TRequest>(HttpMethod method, string requestUri, TRequest? request)
+        {
+            var httpRequest = new HttpRequestMessage(method, requestUri);
             _requestOptions.ApplyTo(httpRequest);
 
             if (request is not null)
@@ -64,42 +107,17 @@ namespace BlockSense.Desktop.Services.Implementations
                 httpRequest.Content = JsonContent.Create(request);
             }
 
-            try
-            {
-                _logger.LogDebug("{Method} {Uri}", method.Method, requestUri);
-
-                var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    return await ReadSuccessAsync<TResponse>(response, cancellationToken);
-                }
-
-                return await ReadFailureAsync(response, requestUri);
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "Network error for {Method} {Uri}", method.Method, requestUri);
-                return NetworkError(requestUri);
-            }
-            catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
-            {
-                _logger.LogError(ex, "Request timeout for {Method} {Uri}", method.Method, requestUri);
-                return TimeoutError(requestUri);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error for {Method} {Uri}", method.Method, requestUri);
-                return UnexpectedError(requestUri);
-            }
+            return httpRequest;
         }
 
-        private async Task<ApiResult> ReadSuccessAsync<TResponse>(HttpResponseMessage response, CancellationToken cancellationToken)
+        private static async Task<ApiResult> ReadSuccessAsync<TResponse>(
+            HttpResponseMessage response,
+            CancellationToken cancellationToken)
         {
             try
             {
                 var data = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken)
-                    ?? throw new NullReferenceException();
+                    ?? throw new NullReferenceException("Deserialized response was null.");
 
                 return new ApiResult<TResponse>.Success(data);
             }
@@ -111,49 +129,53 @@ namespace BlockSense.Desktop.Services.Implementations
 
         private async Task<ApiResult> ReadFailureAsync(HttpResponseMessage response, string requestUri)
         {
-            ProblemDetails problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>()
-                ?? throw new NullReferenceException();
+            var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>()
+                ?? throw new NullReferenceException("Failed to deserialize ProblemDetails from error response.");
 
             if (problemDetails.Type is StandardizedCodes.Authentication.AuthenticationRequired)
             {
-                _logger.LogWarning("Authentication required. Forcing sign-out.");
-
-                var sessionService = App.ServiceProvider.GetRequiredService<ISessionService>();
-                await sessionService.SignOutAsync();
+                _logger.LogWarning("Authentication required — forcing sign-out");
+                await ForceSignOutAsync();
             }
 
             _logger.LogWarning(
-                "HTTP {StatusCode} from {Uri} — {Type}",
-                (int)response.StatusCode, requestUri, problemDetails.Type);
+                "HTTP {StatusCode} from {Uri} — {Type}: {Title}",
+                (int)response.StatusCode, requestUri, problemDetails.Type, problemDetails.Title);
 
             return new ApiResult.Failure(problemDetails);
         }
 
-        private static ApiResult.Failure NetworkError(string uri) => new(new ProblemDetails
+        private static async Task ForceSignOutAsync()
+        {
+            var sessionService = App.ServiceProvider.GetRequiredService<ISessionService>();
+            await sessionService.SignOutAsync();
+        }
+
+        private static ApiResult.Failure BuildNetworkError(string requestUri) => new(new ProblemDetails
         {
             Type = StandardizedCodes.Client.NetworkError,
             Title = "Network Error",
             Status = 503,
             Detail = "A network or connectivity issue occurred. Please check your connection.",
-            Instance = uri
+            Instance = requestUri
         });
 
-        private static ApiResult.Failure TimeoutError(string uri) => new(new ProblemDetails
+        private static ApiResult.Failure BuildTimeoutError(string requestUri) => new(new ProblemDetails
         {
             Type = StandardizedCodes.Client.NetworkError,
             Title = "Request Timeout",
             Status = 408,
             Detail = "The request took too long to complete. Please try again.",
-            Instance = uri
+            Instance = requestUri
         });
 
-        private static ApiResult.Failure UnexpectedError(string uri) => new(new ProblemDetails
+        private static ApiResult.Failure BuildUnexpectedError(string requestUri) => new(new ProblemDetails
         {
             Type = StandardizedCodes.Client.UnknownError,
             Title = "Unexpected Error",
             Status = 500,
             Detail = "An unexpected error occurred while processing the request.",
-            Instance = uri
+            Instance = requestUri
         });
     }
 }

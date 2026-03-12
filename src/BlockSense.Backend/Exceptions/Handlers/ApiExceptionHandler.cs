@@ -4,17 +4,21 @@ using Microsoft.AspNetCore.Mvc;
 namespace BlockSense.Backend.Exceptions.Handlers
 {
     /// <summary>
-    /// Exception handler responsible for processing application-specific <see cref="ApiException"/> instances and converting them into <see cref="ProblemDetails"/> responses.
+    /// Exception handler responsible for processing application-specific <see cref="ApiException"/>
+    /// instances and converting them into standardized <see cref="ProblemDetails"/> responses.
     /// </summary>
     public sealed class ApiExceptionHandler : IExceptionHandler
     {
         /// <summary>
-        /// Attempts to handle an exception thrown during request processing.
+        /// Attempts to handle an <see cref="ApiException"/> thrown during request processing.
         /// </summary>
         /// <param name="httpContext">The current HTTP context for the request.</param>
         /// <param name="exception">The exception thrown during execution.</param>
         /// <param name="cancellationToken">Token used to cancel the operation if the request is aborted.</param>
-        /// <returns><c>true</c> if the exception was handled and a response was written; otherwise, <c>false</c> if the exception is not an <see cref="ApiException"/>.</returns>
+        /// <returns>
+        /// <c>true</c> if the exception was an <see cref="ApiException"/> and a response was written;
+        /// otherwise, <c>false</c>.
+        /// </returns>
         public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {
             if (exception is not ApiException apiException)

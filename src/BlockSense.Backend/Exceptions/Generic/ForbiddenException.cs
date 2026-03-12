@@ -2,32 +2,23 @@
 
 namespace BlockSense.Backend.Exceptions.Generic
 {
+    /// <summary>
+    /// Thrown when the authenticated user does not have permission to access the requested resource.
+    /// </summary>
     public sealed class ForbiddenException : ApiException
     {
-        public override string Type
-        {
-            get
-            {
-                return StandardizedCodes.Generic.Forbidden;
-            }
-        }
+        /// <inheritdoc/>
+        public override string Type => StandardizedCodes.Generic.Forbidden;
 
-        public override string Title
-        {
-            get
-            {
-                return "Access Prohibited";
-            }
-        }
+        /// <inheritdoc/>
+        public override string Title => "Access Prohibited";
 
-        public override int Status
-        {
-            get
-            {
-                return StatusCodes.Status403Forbidden;
-            }
-        }
+        /// <inheritdoc/>
+        public override int Status => StatusCodes.Status403Forbidden;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ForbiddenException"/> class.
+        /// </summary>
         public ForbiddenException()
             : base("Your account is currently restricted and cannot access this service. If you believe this is a mistake or need assistance, please contact support.") { }
     }

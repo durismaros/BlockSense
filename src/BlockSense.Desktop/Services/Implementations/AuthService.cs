@@ -10,7 +10,9 @@ using System.Threading.Tasks;
 namespace BlockSense.Desktop.Services.Implementations
 {
     /// <summary>
-    /// Implements <see cref="IAuthService"/> to handle user authentication by communicating with the backend API via <see cref="IApiClient"/>.
+    /// Implements <see cref="IAuthService"/> to handle user authentication
+    /// by communicating with the backend API via <see cref="IApiClient"/>.
+    /// Manages two-factor authentication challenges when required.
     /// </summary>
     public sealed class AuthService : IAuthService
     {
@@ -22,9 +24,10 @@ namespace BlockSense.Desktop.Services.Implementations
         /// <summary>
         /// Initializes a new instance of <see cref="AuthService"/>.
         /// </summary>
-        /// <param name="logger">Logger for capturing authentication-related events.</param>
+        /// <param name="logger">The logger used to record authentication events.</param>
         /// <param name="apiClient">The API client used to send authentication requests.</param>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="apiClient"/> or <paramref name="logger"/> is null.</exception>
+        /// <param name="sessionService">The session service used to establish a session after successful authentication.</param>
+        /// <exception cref="ArgumentNullException">Thrown if any required dependency is null.</exception>
         public AuthService(
             ILogger<AuthService> logger,
             IApiClient apiClient,
@@ -48,6 +51,24 @@ namespace BlockSense.Desktop.Services.Implementations
         {
             _logger.LogInformation("Starting authentication for user: {Login}", request.Login);
 
+            var result = await SendAuthRequestWithDelayNotificationAsync(request, cancellationToken);
+
+            switch (result)
+            {
+                case ApiResult<AuthResponse>.Success success:
+                    await HandleAuthSuccessAsync(success.Data, cancellationToken);
+                    break;
+
+                case ApiResult.Failure failure:
+                    await HandleAuthFailureAsync(failure, request, cancellationToken);
+                    break;
+            }
+        }
+
+        private async Task<ApiResult> SendAuthRequestWithDelayNotificationAsync(
+            AuthRequest request,
+            CancellationToken cancellationToken)
+        {
             var delayTask = Task.Delay(1000, cancellationToken);
             var authTask = _apiClient
                 .AddDeviceHeaders()
@@ -56,33 +77,19 @@ namespace BlockSense.Desktop.Services.Implementations
                     request: request,
                     cancellationToken: cancellationToken);
 
-            // Wait for whichever finishes first
-            var completedTask = await Task.WhenAny(authTask, delayTask);
+            var completedFirst = await Task.WhenAny(authTask, delayTask);
 
-            if (completedTask == delayTask)
+            if (completedFirst == delayTask)
             {
                 MainWindow.Instance.ShowNotification(
                     "Authentication",
                     "Your request is being processed. Please wait.");
             }
 
-            var response = await authTask;
-
-            switch (response)
-            {
-                case ApiResult<AuthResponse>.Success success:
-                    await HandleAuthenticationSuccessAsync(success.Data, cancellationToken);
-                    break;
-
-                case ApiResult.Failure error:
-                    await HandleAuthenticationFailureAsync(error, request, cancellationToken);
-                    break;
-            }
+            return await authTask;
         }
 
-        #region Private Helper Methods
-
-        private async Task HandleAuthenticationSuccessAsync(AuthResponse response, CancellationToken cancellationToken)
+        private async Task HandleAuthSuccessAsync(AuthResponse response, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Authentication successful");
 
@@ -91,36 +98,50 @@ namespace BlockSense.Desktop.Services.Implementations
             await _sessionService.EstablishSessionAsync(response, cancellationToken);
         }
 
-        private async Task HandleAuthenticationFailureAsync(
-            ApiResult.Failure error,
+        private async Task HandleAuthFailureAsync(
+            ApiResult.Failure failure,
             AuthRequest originalRequest,
             CancellationToken cancellationToken)
         {
-            _logger.LogWarning("Authentication failed: {ErrorTitle}", error.ProblemDetails.Title);
+            _logger.LogWarning("Authentication failed: {ErrorTitle}", failure.ProblemDetails.Title);
 
-            switch (error.ProblemDetails.Type)
+            switch (failure.ProblemDetails.Type)
             {
                 case StandardizedCodes.Authentication.TwoFactorRequired:
-                    _logger.LogInformation("2FA required [Showing sliding panel]");
-                    _twoFactorSlidingPanel.ShowPanel(async code =>
-                    {
-                        await AuthenticateAsync(originalRequest with { TwoFactorCode = code }, cancellationToken);
-                    });
+                    HandleTwoFactorRequired(originalRequest, cancellationToken);
                     break;
 
                 case StandardizedCodes.TwoFactorAuthentication.Invalid:
-                    _logger.LogWarning("Invalid 2FA code");
-                    await _twoFactorSlidingPanel.ShowErrorState();
+                    await HandleInvalidTwoFactorCodeAsync();
                     break;
 
                 default:
-                    MainWindow.Instance.ShowNotification(
-                        error.ProblemDetails.Title,
-                        error.ProblemDetails.Detail);
+                    ShowErrorNotification(failure);
                     break;
             }
         }
 
-        #endregion
+        private void HandleTwoFactorRequired(AuthRequest originalRequest, CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Two-factor authentication required — showing sliding panel");
+
+            _twoFactorSlidingPanel.ShowPanel(async code =>
+            {
+                await AuthenticateAsync(originalRequest with { TwoFactorCode = code }, cancellationToken);
+            });
+        }
+
+        private async Task HandleInvalidTwoFactorCodeAsync()
+        {
+            _logger.LogWarning("Invalid two-factor authentication code entered");
+            await _twoFactorSlidingPanel.ShowErrorState();
+        }
+
+        private static void ShowErrorNotification(ApiResult.Failure failure)
+        {
+            MainWindow.Instance.ShowNotification(
+                failure.ProblemDetails.Title,
+                failure.ProblemDetails.Detail);
+        }
     }
 }

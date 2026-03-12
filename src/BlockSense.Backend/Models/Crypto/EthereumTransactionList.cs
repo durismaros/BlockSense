@@ -1,15 +1,18 @@
 ﻿namespace BlockSense.Backend.Models.Crypto
 {
+    /// <summary>Represents the API envelope for an Ethereum transaction list response.</summary>
     internal sealed class EthTxListEnvelope
     {
         public required EthTxListData Data { get; set; }
     }
 
+    /// <summary>Wraps the list of Ethereum transaction items returned by the API.</summary>
     internal sealed class EthTxListData
     {
         public required List<EthTxItem> Items { get; set; }
     }
 
+    /// <summary>Represents a single Ethereum transaction returned by the API.</summary>
     internal sealed class EthTxItem
     {
         public required string Hash { get; set; }

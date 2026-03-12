@@ -7,15 +7,23 @@ using BlockSense.Contracts.DTOs.Transaction;
 using BlockSense.Contracts.DTOs.Wallet;
 using BlockSense.Contracts.Enums;
 using Microsoft.Extensions.Options;
-using System.Globalization;
 
 namespace BlockSense.Backend.Services.Implementations
 {
+    /// <summary>
+    /// Provides Bitcoin-specific cryptocurrency service operations.
+    /// </summary>
     public sealed class BitcoinService : ICryptoService
     {
         private readonly CryptoApiClient _cryptoApiClient;
         private readonly CryptoConfig _cryptoConfig;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="BitcoinService"/> with required dependencies.
+        /// </summary>
+        /// <param name="cryptoApiClient">The HTTP client used to communicate with the crypto API.</param>
+        /// <param name="cryptoConfig">The configuration containing network and API settings.</param>
+        /// <exception cref="ArgumentNullException">Thrown if any dependency is <c>null</c>.</exception>
         public BitcoinService(CryptoApiClient cryptoApiClient, IOptions<CryptoConfig> cryptoConfig)
         {
             _cryptoApiClient = cryptoApiClient
@@ -25,46 +33,34 @@ namespace BlockSense.Backend.Services.Implementations
                 ?? throw new ArgumentNullException(nameof(cryptoConfig));
         }
 
+        /// <inheritdoc/>
         public async Task<WalletBalanceResponse> GetBalanceAsync(string address, CancellationToken cancellationToken = default)
         {
             var path = $"addresses-latest/utxo/bitcoin/{_cryptoConfig.Bitcoin.Network}/{address}/balance";
             var response = await _cryptoApiClient.GetAsync<BalanceEnvelope>(path, cancellationToken);
-            var balance = response.Data.Item.ConfirmedBalance.Amount;
 
             return new WalletBalanceResponse
             {
                 Address = address,
-                Balance = ParseDecimal(balance),
+                Balance = ParseDecimal(response.Data.Item.ConfirmedBalance.Amount),
                 Currency = "BTC"
             };
         }
 
-        public async Task<NextNonceResponse> GetNextAvailableNonce(string address, CancellationToken cancellationToken = default)
+        /// <inheritdoc/>
+        public Task<NextNonceResponse> GetNextAvailableNonce(string address, CancellationToken cancellationToken = default)
         {
             throw new NotFoundException();
         }
 
+        /// <inheritdoc/>
         public async Task<TransactionListResponse> GetTransactionsAsync(string address, CancellationToken cancellationToken = default)
         {
-            var confirmedPath = $"addresses-latest/utxo/bitcoin/{_cryptoConfig.Bitcoin.Network}/{address}/transactions" +
-                $"?limit=5";
+            var confirmedTransactions = await FetchConfirmedTransactionsAsync(address, cancellationToken);
+            var unconfirmedTransactions = await FetchUnconfirmedTransactionsAsync(address, cancellationToken);
 
-            var unconfirmedPath = $"addresses-latest/utxo/bitcoin/{_cryptoConfig.Bitcoin.Network}/{address}/unconfirmed-transactions" +
-                $"?limit=5";
-
-            var confirmedResponse = await _cryptoApiClient.GetAsync<BtcTxListEnvelope>(confirmedPath, cancellationToken);
-            var confirmedTxs = confirmedResponse.Data.Items;
-
-            var unconfirmedResponse = await _cryptoApiClient.GetAsync<BtcTxListEnvelope>(unconfirmedPath, cancellationToken);
-            var unconfirmedTxs = unconfirmedResponse.Data.Items;
-
-            var transactions = confirmedTxs
-                .Select(tx => MapTransaction(tx, address, TransactionStatus.Confirmed))
-                .Concat(unconfirmedTxs.Select(tx => MapTransaction(tx, address, TransactionStatus.Pending)))
-                .OrderByDescending(tx => tx.Timestamp);
-
-            var allTransactions = confirmedTxs.Concat(unconfirmedTxs).ToList();
-            var utxos = ExtractUtxos(allTransactions, address);
+            var transactions = MapAllTransactions(confirmedTransactions, unconfirmedTransactions, address);
+            var utxos = ExtractUtxos(confirmedTransactions.Concat(unconfirmedTransactions), address);
 
             return new TransactionListResponse
             {
@@ -75,19 +71,11 @@ namespace BlockSense.Backend.Services.Implementations
             };
         }
 
+        /// <inheritdoc/>
         public async Task<BroadcastTransactionResponse> BroadcastAsync(BroadcastTransactionRequest request, CancellationToken cancellationToken = default)
         {
             var path = $"/broadcast-transactions/bitcoin/{_cryptoConfig.Bitcoin.Network}";
-            var body = new
-            {
-                data = new
-                {
-                    item = new
-                    {
-                        signedTransactionHex = request.SignedTransactionHex
-                    }
-                }
-            };
+            var body = BuildBroadcastBody(request.SignedTransactionHex);
 
             var response = await _cryptoApiClient.PostAsync<BroadcastEnvelope>(path, body, cancellationToken);
 
@@ -97,32 +85,51 @@ namespace BlockSense.Backend.Services.Implementations
             };
         }
 
-        private static TransactionDto MapTransaction(BtcTxItem tx, string wallet, TransactionStatus status)
+        private async Task<IEnumerable<BtcTxItem>> FetchConfirmedTransactionsAsync(string address, CancellationToken cancellationToken)
         {
-            var received = tx.Outputs?
-                .Where(o => o.Addresses?.Contains(wallet) == true)
-                .Sum(o => ParseDecimal(o.Value?.Amount ?? "0")) ?? 0m;
+            var path = $"addresses-latest/utxo/bitcoin/{_cryptoConfig.Bitcoin.Network}/{address}/transactions?limit=5";
+            var response = await _cryptoApiClient.GetAsync<BtcTxListEnvelope>(path, cancellationToken);
+            return response.Data.Items;
+        }
 
-            var sent = tx.Inputs?
-                .Where(i => i.Addresses?.Contains(wallet) == true)
-                .Sum(i => ParseDecimal(i.Value?.Amount ?? "0")) ?? 0m;
+        private async Task<IEnumerable<BtcTxItem>> FetchUnconfirmedTransactionsAsync(string address, CancellationToken cancellationToken)
+        {
+            var path = $"addresses-latest/utxo/bitcoin/{_cryptoConfig.Bitcoin.Network}/{address}/unconfirmed-transactions?limit=5";
+            var response = await _cryptoApiClient.GetAsync<BtcTxListEnvelope>(path, cancellationToken);
+            return response.Data.Items;
+        }
 
+        private static IEnumerable<TransactionDto> MapAllTransactions(
+            IEnumerable<BtcTxItem> confirmed,
+            IEnumerable<BtcTxItem> unconfirmed,
+            string address)
+        {
+            return confirmed
+                .Select(tx => MapTransaction(tx, address, TransactionStatus.Confirmed))
+                .Concat(unconfirmed.Select(tx => MapTransaction(tx, address, TransactionStatus.Pending)))
+                .OrderByDescending(tx => tx.Timestamp);
+        }
+
+        private static object BuildBroadcastBody(string signedTransactionHex) => new
+        {
+            data = new
+            {
+                item = new { signedTransactionHex }
+            }
+        };
+
+        private static TransactionDto MapTransaction(BtcTxItem tx, string walletAddress, TransactionStatus status)
+        {
+            var received = SumOutputsToAddress(tx, walletAddress);
+            var sent = SumInputsFromAddress(tx, walletAddress);
             var amount = received - sent;
-
-            var fromAddress = tx.Inputs?.FirstOrDefault(i =>
-                    i.Addresses?.Contains(wallet) == true)?.Addresses?.First()
-                        ?? tx.Inputs?.FirstOrDefault()?.Addresses?.FirstOrDefault() ?? "Unknown";
-
-            var toAddress = tx.Outputs?.FirstOrDefault(o =>
-                    o.Addresses?.Contains(wallet) == false)?.Addresses?.FirstOrDefault()
-                        ?? tx.Outputs?.FirstOrDefault()?.Addresses?.FirstOrDefault() ?? "Unknown";
 
             return new TransactionDto
             {
                 TxHash = tx.Hash ?? tx.Id,
                 Fee = ParseDecimal(tx.Fee?.Amount ?? "0"),
-                FromAddress = fromAddress,
-                ToAddress = toAddress,
+                FromAddress = ResolveFromAddress(tx, walletAddress),
+                ToAddress = ResolveToAddress(tx, walletAddress),
                 Amount = amount,
                 Currency = "BTC",
                 Status = status,
@@ -130,14 +137,34 @@ namespace BlockSense.Backend.Services.Implementations
             };
         }
 
+        private static decimal SumOutputsToAddress(BtcTxItem tx, string address) =>
+            tx.Outputs?
+                .Where(o => o.Addresses?.Contains(address) == true)
+                .Sum(o => ParseDecimal(o.Value?.Amount ?? "0")) ?? 0m;
+
+        private static decimal SumInputsFromAddress(BtcTxItem tx, string address) =>
+            tx.Inputs?
+                .Where(i => i.Addresses?.Contains(address) == true)
+                .Sum(i => ParseDecimal(i.Value?.Amount ?? "0")) ?? 0m;
+
+        private static string ResolveFromAddress(BtcTxItem tx, string walletAddress) =>
+            tx.Inputs?.FirstOrDefault(i => i.Addresses?.Contains(walletAddress) == true)?.Addresses?.First()
+                ?? tx.Inputs?.FirstOrDefault()?.Addresses?.FirstOrDefault()
+                ?? "Unknown";
+
+        private static string ResolveToAddress(BtcTxItem tx, string walletAddress) =>
+            tx.Outputs?.FirstOrDefault(o => o.Addresses?.Contains(walletAddress) == false)?.Addresses?.FirstOrDefault()
+                ?? tx.Outputs?.FirstOrDefault()?.Addresses?.FirstOrDefault()
+                ?? "Unknown";
+
         private static List<UtxoDto> ExtractUtxos(IEnumerable<BtcTxItem> transactions, string address)
         {
-            var unspentOutputs = transactions
+            var txList = transactions.ToList();
+
+            var unspentOutputs = txList
                 .SelectMany(tx => tx.Outputs
                     .Select((output, index) => (tx.Hash, Index: index, Output: output))
-                    .Where(x =>
-                        x.Output.Addresses?.Contains(address) == true &&
-                        !x.Output.IsSpent)
+                    .Where(x => x.Output.Addresses?.Contains(address) == true && !x.Output.IsSpent)
                     .Select(x => new UtxoDto
                     {
                         TransactionId = x.Hash,
@@ -145,7 +172,7 @@ namespace BlockSense.Backend.Services.Implementations
                         Amount = ParseDecimal(x.Output.Value?.Amount ?? "0")
                     }));
 
-            var spentKeys = transactions
+            var spentKeys = txList
                 .SelectMany(tx => tx.Inputs
                     .Where(i => i.Addresses?.Contains(address) == true)
                     .Select(i => (i.TransactionId, i.OutputIndex)))
@@ -156,8 +183,9 @@ namespace BlockSense.Backend.Services.Implementations
                 .ToList();
         }
 
-        private static decimal ParseDecimal(string? value)
-            => decimal.TryParse(value,
+        private static decimal ParseDecimal(string? value) =>
+            decimal.TryParse(
+                value,
                 System.Globalization.NumberStyles.Any,
                 System.Globalization.CultureInfo.InvariantCulture,
                 out var result) ? result : 0m;

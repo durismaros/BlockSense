@@ -6,16 +6,25 @@ using MySql.Data.MySqlClient;
 
 namespace BlockSense.Backend.Repositories.Implementations
 {
+    /// <summary>
+    /// MySQL implementation of <see cref="IActivityLogRepository"/>.
+    /// </summary>
     public sealed class ActivityLogRepository : IActivityLogRepository
     {
         private readonly DatabaseContext _databaseContext;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="ActivityLogRepository"/>.
+        /// </summary>
+        /// <param name="databaseContext">The database context used to execute queries.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="databaseContext"/> is null.</exception>
         public ActivityLogRepository(DatabaseContext databaseContext)
         {
             _databaseContext = databaseContext
                 ?? throw new ArgumentNullException(nameof(databaseContext));
         }
 
+        /// <inheritdoc/>
         public async Task InsertAsync(ActivityLog log, CancellationToken cancellationToken = default)
         {
             const string sql = """
@@ -36,7 +45,7 @@ namespace BlockSense.Backend.Repositories.Implementations
             var parameters = new[]
             {
                 new MySqlParameter("@Type",       MySqlDbType.Enum)         { Value = log.Type.ToString().ToLowerInvariant() },
-                new MySqlParameter("@UserId",     MySqlDbType.UInt32)       { Value = (object?)log.UserId ?? DBNull.Value },
+                new MySqlParameter("@UserId",     MySqlDbType.UInt32)       { Value = log.UserId },
                 new MySqlParameter("@Action",     MySqlDbType.VarChar, 255) { Value = log.Action },
                 new MySqlParameter("@Context",    MySqlDbType.JSON)         { Value = (object?)log.Context ?? DBNull.Value },
                 new MySqlParameter("@OccurredAt", MySqlDbType.DateTime)     { Value = log.OccurredAt }
@@ -45,6 +54,7 @@ namespace BlockSense.Backend.Repositories.Implementations
             await _databaseContext.ExecuteNonQueryAsync(sql, parameters, cancellationToken);
         }
 
+        /// <inheritdoc/>
         public async Task<IReadOnlyList<ActivityLog>> GetPagedByUserIdAsync(
             uint userId,
             int page,
@@ -75,10 +85,10 @@ namespace BlockSense.Backend.Repositories.Implementations
             await using var reader =
                 await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
 
-            return SqlMapper.Parse<ActivityLog>(reader)
-                .AsList().AsReadOnly();
+            return SqlMapper.Parse<ActivityLog>(reader).AsList().AsReadOnly();
         }
 
+        /// <inheritdoc/>
         public async Task<IReadOnlyList<ActivityLog>> GetLatestAsync(
             uint userId,
             ulong afterId,
@@ -107,10 +117,10 @@ namespace BlockSense.Backend.Repositories.Implementations
             await using var reader =
                 await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
 
-            return SqlMapper.Parse<ActivityLog>(reader)
-                .AsList().AsReadOnly();
+            return SqlMapper.Parse<ActivityLog>(reader).AsList().AsReadOnly();
         }
 
+        /// <inheritdoc/>
         public async Task<ulong> CountByUserIdAsync(uint userId, CancellationToken cancellationToken = default)
         {
             const string sql = """
@@ -124,10 +134,7 @@ namespace BlockSense.Backend.Repositories.Implementations
                 new MySqlParameter("@UserId", MySqlDbType.UInt32) { Value = userId }
             };
 
-            await using var reader =
-                await _databaseContext.ExecuteReaderAsync(sql, parameters, cancellationToken);
-
-            return SqlMapper.Parse<ulong>(reader).FirstOrDefault();
+            return await _databaseContext.ExecuteScalarAsync<ulong>(sql, parameters, cancellationToken);
         }
     }
 }
