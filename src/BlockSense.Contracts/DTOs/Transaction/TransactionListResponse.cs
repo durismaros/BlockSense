@@ -31,14 +31,5 @@
             get;
             init;
         }
-
-        /// <summary>
-        /// The list of unspent transaction outputs (UTXOs) for the address.
-        /// </summary>
-        public required IEnumerable<UtxoDto> Utxos
-        {
-            get;
-            init;
-        }
     }
 }

@@ -81,7 +81,7 @@ namespace BlockSense.Desktop.Services.Implementations
 
                 switch (response)
                 {
-                    case ApiResult<UserSummaryDto>.Success:
+                    case ApiResult<object>.Success:
                         _currentUserProvider.SetProfile(
                             _currentUserProvider.Profile with { TwoFactorEnabled = true });
 
@@ -118,11 +118,10 @@ namespace BlockSense.Desktop.Services.Implementations
 
                 switch (response)
                 {
-                    case ApiResult<UserSummaryDto>.Success:
+                    case ApiResult<object>.Success:
+                        _currentUserProvider.SetTwoFactorBackupCodes(null);
                         _currentUserProvider.SetProfile(
                             _currentUserProvider.Profile with { TwoFactorEnabled = false });
-
-                        _currentUserProvider.SetTwoFactorBackupCodes(null);
 
                         await _twoFactorSlidingPanel.ShowVerifiedState();
                         break;

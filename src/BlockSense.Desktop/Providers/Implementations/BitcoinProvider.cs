@@ -33,12 +33,6 @@ namespace BlockSense.Desktop.Providers.Implementations
             private set; 
         }
 
-        public IReadOnlyList<UtxoDto> Utxos
-        {
-            get;
-            private set;
-        }
-
         public event Action? OnChanged
         {
             add
@@ -57,7 +51,6 @@ namespace BlockSense.Desktop.Providers.Implementations
             Balance = 0m;
             ExchangeRate = 0m;
             Transactions = Array.Empty<TransactionDto>();
-            Utxos = Array.Empty<UtxoDto>();
         }
 
         public void Initialize(string address)
@@ -66,12 +59,11 @@ namespace BlockSense.Desktop.Providers.Implementations
             _onChanged?.Invoke();
         }
 
-        public void Set(decimal balance, decimal exchangeRate, IReadOnlyList<TransactionDto> transactions, IReadOnlyList<UtxoDto> utxos)
+        public void Set(decimal balance, decimal exchangeRate, IReadOnlyList<TransactionDto> transactions)
         {
             Balance = balance;
             ExchangeRate = exchangeRate;
             Transactions = transactions;
-            Utxos = utxos;
             _onChanged?.Invoke();
         }
 
@@ -81,7 +73,6 @@ namespace BlockSense.Desktop.Providers.Implementations
             Balance = 0m;
             ExchangeRate = 0m;
             Transactions = Array.Empty<TransactionDto>();
-            Utxos = Array.Empty<UtxoDto>();
         }
     }
 }

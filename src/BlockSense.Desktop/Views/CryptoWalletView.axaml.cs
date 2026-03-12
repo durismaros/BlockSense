@@ -291,15 +291,29 @@ public partial class CryptoWalletView : UserControl
         }
     }
 
-    private List<TransactionDto> GetFilteredTransactions() => _activeTab switch
+    private List<TransactionDto> GetFilteredTransactions()
     {
-        ActiveTab.Bitcoin => _bitcoinProvider.Transactions.ToList(),
-        ActiveTab.Ethereum => _ethereumProvider.Transactions.ToList(),
-        _ => _bitcoinProvider.Transactions
-                .Concat(_ethereumProvider.Transactions)
-                .OrderByDescending(t => t.Timestamp)
-                .ToList()
-    };
+        var btc = _bitcoinProvider.Transactions
+            .Select(tx => tx with
+            {
+                Amount = tx.FromAddress.ToLowerInvariant() == _bitcoinProvider.Address.ToLowerInvariant()
+                ? -tx.Amount : tx.Amount
+            });
+
+        var eth = _ethereumProvider.Transactions
+            .Select(tx => tx with
+            {
+                Amount = tx.FromAddress.ToLowerInvariant() == _ethereumProvider.Address.ToLowerInvariant()
+                ? -tx.Amount : tx.Amount
+            });
+
+        return _activeTab switch
+        {
+            ActiveTab.Bitcoin => btc.ToList(),
+            ActiveTab.Ethereum => eth.ToList(),
+            _ => btc.Concat(eth).OrderByDescending(t => t.Timestamp).ToList()
+        };
+    }
 
     // ── Wallet actions ────────────────────────────────────────────────────────
 
@@ -485,6 +499,7 @@ public partial class CryptoWalletView : UserControl
         _cancellationTokenSource = new CancellationTokenSource();
 
         RenderAddresses();
+        RenderTransactions();
 
         _bitcoinProvider.OnChanged += OnBitcoinChanged;
         _ethereumProvider.OnChanged += OnEthereumChanged;

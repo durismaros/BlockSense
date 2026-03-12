@@ -134,12 +134,12 @@ public partial class TwoFactorSlidingPanel : UserControl
         await Animations.FadeInAnimation.RunAsync(VerifiedStatePanel);
         await Task.Delay(2000);
 
+        HidePanel();
+
         await Task.WhenAll(
             ShowDefaultState(),
             ResetCodeEntry()
             );
-
-        HidePanel();
     }
 
     /// <summary>

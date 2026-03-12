@@ -60,14 +60,12 @@ namespace BlockSense.Backend.Services.Implementations
             var unconfirmedTransactions = await FetchUnconfirmedTransactionsAsync(address, cancellationToken);
 
             var transactions = MapAllTransactions(confirmedTransactions, unconfirmedTransactions, address);
-            var utxos = ExtractUtxos(confirmedTransactions.Concat(unconfirmedTransactions), address);
 
             return new TransactionListResponse
             {
                 Address = address,
                 Total = transactions.Count(),
-                Transactions = transactions,
-                Utxos = utxos
+                Transactions = transactions
             };
         }
 
@@ -130,7 +128,7 @@ namespace BlockSense.Backend.Services.Implementations
                 Fee = ParseDecimal(tx.Fee?.Amount ?? "0"),
                 FromAddress = ResolveFromAddress(tx, walletAddress),
                 ToAddress = ResolveToAddress(tx, walletAddress),
-                Amount = amount,
+                Amount = Math.Abs(amount),
                 Currency = "BTC",
                 Status = status,
                 Timestamp = DateTimeOffset.FromUnixTimeSeconds(tx.Timestamp).UtcDateTime
@@ -156,32 +154,6 @@ namespace BlockSense.Backend.Services.Implementations
             tx.Outputs?.FirstOrDefault(o => o.Addresses?.Contains(walletAddress) == false)?.Addresses?.FirstOrDefault()
                 ?? tx.Outputs?.FirstOrDefault()?.Addresses?.FirstOrDefault()
                 ?? "Unknown";
-
-        private static List<UtxoDto> ExtractUtxos(IEnumerable<BtcTxItem> transactions, string address)
-        {
-            var txList = transactions.ToList();
-
-            var unspentOutputs = txList
-                .SelectMany(tx => tx.Outputs
-                    .Select((output, index) => (tx.Hash, Index: index, Output: output))
-                    .Where(x => x.Output.Addresses?.Contains(address) == true && !x.Output.IsSpent)
-                    .Select(x => new UtxoDto
-                    {
-                        TransactionId = x.Hash,
-                        OutputIndex = x.Index,
-                        Amount = ParseDecimal(x.Output.Value?.Amount ?? "0")
-                    }));
-
-            var spentKeys = txList
-                .SelectMany(tx => tx.Inputs
-                    .Where(i => i.Addresses?.Contains(address) == true)
-                    .Select(i => (i.TransactionId, i.OutputIndex)))
-                .ToHashSet();
-
-            return unspentOutputs
-                .Where(u => !spentKeys.Contains((u.TransactionId, u.OutputIndex)))
-                .ToList();
-        }
 
         private static decimal ParseDecimal(string? value) =>
             decimal.TryParse(

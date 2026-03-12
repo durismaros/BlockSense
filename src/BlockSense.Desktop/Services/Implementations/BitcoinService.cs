@@ -126,8 +126,7 @@ namespace BlockSense.Desktop.Services.Implementations
             _bitcoinProvider.Set(
                 balance.Balance,
                 rate.Rate,
-                transactions.Transactions.ToList().AsReadOnly(),
-                transactions.Utxos.ToList().AsReadOnly());
+                transactions.Transactions.ToList().AsReadOnly());
         }
 
         /// <inheritdoc/>
@@ -160,6 +159,7 @@ namespace BlockSense.Desktop.Services.Implementations
             decimal amount,
             CancellationToken cancellationToken)
         {
+            /*
             var decryptedSeed = _currentWalletProvider.DecryptSeed(pin);
 
             if (decryptedSeed is null)
@@ -204,6 +204,11 @@ namespace BlockSense.Desktop.Services.Implementations
                 _pinEntrySlidingPanel.HidePanel();
                 CryptographicOperations.ZeroMemory(decryptedSeed);
             }
+
+            */
+
+
+            throw new NotImplementedException();
         }
 
         private async Task BroadcastAndNotifyAsync(string signedHex, CancellationToken cancellationToken)
@@ -228,6 +233,7 @@ namespace BlockSense.Desktop.Services.Implementations
 
         private static string BuildAndSignTransaction(byte[] privateKeyBytes, BitcoinSignRequest request)
         {
+            /*
             var key = new Key(privateKeyBytes);
             var sourceAddress = key.PubKey.GetAddress(ScriptPubKeyType.Legacy, BitcoinChain.CurrentNetwork);
             var destinationAddress = BitcoinAddress.Create(request.ToAddress, BitcoinChain.CurrentNetwork);
@@ -253,6 +259,11 @@ namespace BlockSense.Desktop.Services.Implementations
             }
 
             return transaction.ToHex();
+
+            */
+
+
+            throw new NotImplementedException();
         }
 
         private static byte[] DerivePrivateKey(byte[] seed)

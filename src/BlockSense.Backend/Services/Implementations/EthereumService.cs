@@ -70,8 +70,7 @@ namespace BlockSense.Backend.Services.Implementations
             {
                 Address = address,
                 Total = transactions.Count(),
-                Transactions = transactions,
-                Utxos = new List<UtxoDto>()
+                Transactions = transactions
             };
         }
 
