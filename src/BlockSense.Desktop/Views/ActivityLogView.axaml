@@ -5,110 +5,9 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="BlockSense.Desktop.ActivityLogView">
 
-    <UserControl.Styles>
-
-        <Style Selector="Border.Sheet">
-            <Setter Property="Background"   Value="#FBF7F1"/>
-            <Setter Property="CornerRadius" Value="20 20 0 0"/>
-            <Setter Property="BoxShadow"    Value="0 -4 40 0 #30000000"/>
-            <Setter Property="Padding"      Value="32 28 32 20"/>
-        </Style>
-
-        <Style Selector="Border.FilterChip">
-            <Setter Property="CornerRadius" Value="20"/>
-            <Setter Property="Padding"      Value="12 5"/>
-            <Setter Property="Cursor"       Value="Hand"/>
-            <Setter Property="Background"   Value="#EDE7DE"/>
-        </Style>
-
-        <Style Selector="Border.FilterChipActive">
-            <Setter Property="CornerRadius" Value="20"/>
-            <Setter Property="Padding"      Value="12 5"/>
-            <Setter Property="Cursor"       Value="Hand"/>
-            <Setter Property="Background"   Value="#8B6B4A"/>
-        </Style>
-
-        <Style Selector="TextBlock.ChipLabel">
-            <Setter Property="FontSize"          Value="11"/>
-            <Setter Property="FontWeight"        Value="SemiBold"/>
-            <Setter Property="Foreground"        Value="#6D4C41"/>
-            <Setter Property="LetterSpacing"     Value="0.4"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-
-        <Style Selector="TextBlock.ChipLabelActive">
-            <Setter Property="FontSize"          Value="11"/>
-            <Setter Property="FontWeight"        Value="SemiBold"/>
-            <Setter Property="Foreground"        Value="#F5E1C5"/>
-            <Setter Property="LetterSpacing"     Value="0.4"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-
-        <Style Selector="TextBlock.TableHead">
-            <Setter Property="FontSize"      Value="11"/>
-            <Setter Property="FontWeight"    Value="SemiBold"/>
-            <Setter Property="Foreground"    Value="#8B6B4A"/>
-            <Setter Property="LetterSpacing" Value="0.8"/>
-        </Style>
-
-        <Style Selector="TextBlock.RowDate">
-            <Setter Property="FontSize"          Value="12"/>
-            <Setter Property="Foreground"        Value="#9E8572"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="FontStyle"         Value="Italic"/>
-        </Style>
-
-        <Style Selector="TextBlock.RowAction">
-            <Setter Property="FontSize"          Value="13"/>
-            <Setter Property="Foreground"        Value="#4A4238"/>
-            <Setter Property="FontWeight"        Value="Medium"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="TextTrimming"      Value="CharacterEllipsis"/>
-        </Style>
-
-        <Style Selector="Border.TypePill">
-            <Setter Property="CornerRadius"        Value="10"/>
-            <Setter Property="Padding"             Value="9 3"/>
-            <Setter Property="VerticalAlignment"   Value="Center"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-        </Style>
-
-        <Style Selector="TextBlock.TypePillText">
-            <Setter Property="FontSize"      Value="10"/>
-            <Setter Property="FontWeight"    Value="SemiBold"/>
-            <Setter Property="LetterSpacing" Value="0.5"/>
-        </Style>
-
-        <Style Selector="Border.RowDivider">
-            <Setter Property="Height"     Value="1"/>
-            <Setter Property="Background" Value="#EDE7DE"/>
-        </Style>
-
-        <Style Selector="Button.PagerBtn">
-            <Setter Property="Width"        Value="30"/>
-            <Setter Property="Height"       Value="30"/>
-            <Setter Property="CornerRadius" Value="15"/>
-            <Setter Property="Background"   Value="#EDE7DE"/>
-            <Setter Property="Padding"      Value="0"/>
-        </Style>
-
-        <Style Selector="Button.PagerBtn:pointerover ContentPresenter">
-            <Setter Property="Background" Value="#D4C9A8"/>
-        </Style>
-
-        <Style Selector="Button.PagerBtnActive">
-            <Setter Property="Width"        Value="30"/>
-            <Setter Property="Height"       Value="30"/>
-            <Setter Property="CornerRadius" Value="15"/>
-            <Setter Property="Background"   Value="#8B6B4A"/>
-            <Setter Property="Padding"      Value="0"/>
-        </Style>
-
-    </UserControl.Styles>
-
     <Panel Background="#CC1A0F0A">
 
-        <Border Classes="Sheet" Margin="0 60 0 0">
+        <Border Classes="ActivityLogSheet" Margin="0 60 0 0">
 
             <Grid RowDefinitions="Auto Auto Auto * Auto">
 
@@ -145,7 +44,6 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Refresh + Close -->
                     <StackPanel Grid.Column="2"
                                 Orientation="Horizontal"
                                 Spacing="8"
@@ -153,45 +51,25 @@
 
                         <Grid>
                             <Button x:Name="RefreshButton"
-                                    Width="32" Height="32"
-                                    CornerRadius="16"
-                                    Background="#EDE7DE"
-                                    Padding="0"
+                                    Classes="ActivityLogIconButton"
                                     ToolTip.Tip="Check for newer entries">
                                 <Viewbox Width="15" Height="15">
                                     <Path Data="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"
                                           Fill="#8B6B4A" Stretch="Uniform"/>
                                 </Viewbox>
-                                <Button.Styles>
-                                    <Style Selector="Button:pointerover ContentPresenter">
-                                        <Setter Property="Background" Value="#D4C9A8"/>
-                                    </Style>
-                                </Button.Styles>
                             </Button>
 
                             <Border x:Name="RefreshBadge"
-                                    IsVisible="False"
-                                    Background="#C62828"
-                                    CornerRadius="8"
-                                    Width="16" Height="16"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Top"
-                                    Margin="0 -3 -3 0">
+                                    Classes="ActivityLogRefreshBadge"
+                                    IsVisible="False">
                                 <TextBlock x:Name="RefreshBadgeText"
-                                           Text="0"
-                                           FontSize="9"
-                                           FontWeight="Bold"
-                                           Foreground="White"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"/>
+                                           Classes="ActivityLogRefreshBadgeText"
+                                           Text="0"/>
                             </Border>
                         </Grid>
 
                         <Button x:Name="CloseActivityLogButton"
-                                Width="32" Height="32"
-                                CornerRadius="16"
-                                Background="#EDE7DE"
-                                Padding="0">
+                                Classes="ActivityLogIconButton">
                             <Viewbox Width="14" Height="14">
                                 <Path Data="M4,4 L20,20 M20,4 L4,20"
                                       Stroke="#6D4C41"
@@ -199,11 +77,6 @@
                                       StrokeLineCap="Round"
                                       Stretch="Uniform"/>
                             </Viewbox>
-                            <Button.Styles>
-                                <Style Selector="Button:pointerover ContentPresenter">
-                                    <Setter Property="Background" Value="#D4C9A8"/>
-                                </Style>
-                            </Button.Styles>
                         </Button>
                     </StackPanel>
                 </Grid>
@@ -213,26 +86,26 @@
                             Orientation="Horizontal"
                             Spacing="8"
                             Margin="0 0 0 16">
-                    <Border x:Name="ChipAll"    Classes="FilterChipActive">
-                        <TextBlock x:Name="ChipAllLabel"    Classes="ChipLabelActive" Text="All"/>
+                    <Border x:Name="ChipAll"    Classes="ActivityFilterChipActive">
+                        <TextBlock x:Name="ChipAllLabel"    Classes="ActivityFilterChipLabelActive" Text="All"/>
                     </Border>
-                    <Border x:Name="ChipUser"   Classes="FilterChip">
-                        <TextBlock x:Name="ChipUserLabel"   Classes="ChipLabel" Text="User"/>
+                    <Border x:Name="ChipUser"   Classes="ActivityFilterChip">
+                        <TextBlock x:Name="ChipUserLabel"   Classes="ActivityFilterChipLabel" Text="User"/>
                     </Border>
-                    <Border x:Name="ChipSystem" Classes="FilterChip">
-                        <TextBlock x:Name="ChipSystemLabel" Classes="ChipLabel" Text="System"/>
+                    <Border x:Name="ChipSystem" Classes="ActivityFilterChip">
+                        <TextBlock x:Name="ChipSystemLabel" Classes="ActivityFilterChipLabel" Text="System"/>
                     </Border>
-                    <Border x:Name="ChipCron"   Classes="FilterChip">
-                        <TextBlock x:Name="ChipCronLabel"   Classes="ChipLabel" Text="Cron"/>
+                    <Border x:Name="ChipCron"   Classes="ActivityFilterChip">
+                        <TextBlock x:Name="ChipCronLabel"   Classes="ActivityFilterChipLabel" Text="Cron"/>
                     </Border>
                 </StackPanel>
 
-                <!-- Column headers + divider -->
+                <!-- Column headers -->
                 <StackPanel Grid.Row="2" Margin="0 0 0 4">
                     <Grid ColumnDefinitions="160 * 80" Margin="0 0 0 12">
-                        <TextBlock Grid.Column="0" Classes="TableHead" Text="DATE"/>
-                        <TextBlock Grid.Column="1" Classes="TableHead" Text="ACTIVITY" Margin="12 0 0 0"/>
-                        <TextBlock Grid.Column="2" Classes="TableHead" Text="TYPE"/>
+                        <TextBlock Grid.Column="0" Classes="ActivityTableHead" Text="DATE"/>
+                        <TextBlock Grid.Column="1" Classes="ActivityTableHead" Text="ACTIVITY" Margin="12 0 0 0"/>
+                        <TextBlock Grid.Column="2" Classes="ActivityTableHead" Text="TYPE"/>
                     </Grid>
                 </StackPanel>
 
@@ -259,7 +132,7 @@
                                 Orientation="Horizontal"
                                 Spacing="6">
 
-                        <Button x:Name="PrevPageButton" Classes="PagerBtn" IsEnabled="False">
+                        <Button x:Name="PrevPageButton" Classes="ActivityPagerButton" IsEnabled="False">
                             <Viewbox Width="12" Height="12">
                                 <Path Data="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"
                                       Fill="#6D4C41" Stretch="Uniform"/>
@@ -268,7 +141,7 @@
 
                         <StackPanel x:Name="PageNumbersPanel" Orientation="Horizontal" Spacing="4"/>
 
-                        <Button x:Name="NextPageButton" Classes="PagerBtn">
+                        <Button x:Name="NextPageButton" Classes="ActivityPagerButton">
                             <Viewbox Width="12" Height="12">
                                 <Path Data="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"
                                       Fill="#6D4C41" Stretch="Uniform"/>
@@ -287,4 +160,5 @@
             </Grid>
         </Border>
     </Panel>
+
 </UserControl>

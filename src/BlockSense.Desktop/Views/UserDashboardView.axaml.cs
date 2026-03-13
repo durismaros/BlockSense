@@ -227,6 +227,9 @@ public partial class UserDashboardView : UserControl
         TwoFactorEnabledContent.IsVisible = false;
         TwoFactorDisabledContent.IsVisible = true;
 
+        if (TwoFactorQRCodeImage.Source is not null && SetupKeyTextBlock.Text is not null)
+            return;
+
         var setup = await _twoFactorAuthService.GetSetupInitAsync();
         TwoFactorQRCodeImage.Source = new Bitmap(new MemoryStream(setup.QrCodeData));
         SetupKeyTextBlock.Text = setup.SetupKey;

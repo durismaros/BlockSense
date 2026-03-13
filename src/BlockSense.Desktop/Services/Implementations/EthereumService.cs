@@ -215,6 +215,7 @@ namespace BlockSense.Desktop.Services.Implementations
             }
             finally
             {
+                _pinEntrySlidingPanel.HidePanel();
                 CryptographicOperations.ZeroMemory(decryptedSeed);
             }
         }

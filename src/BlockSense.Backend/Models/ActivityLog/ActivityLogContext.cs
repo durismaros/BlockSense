@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using BlockSense.Backend.Utilities;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace BlockSense.Backend.Models.ActivityLog
@@ -11,35 +12,35 @@ namespace BlockSense.Backend.Models.ActivityLog
     {
         /// <summary>Gets the target user ID involved in the activity, if applicable.</summary>
         [JsonPropertyName("target_user_id")]
-        public uint? TargetUserId { get; private set; }
+        public uint? TargetUserId { get; set; }
 
         /// <summary>Gets the IP address associated with the activity, if applicable.</summary>
         [JsonPropertyName("ip_address")]
-        public string? IpAddress { get; private set; }
+        public string? IpAddress { get; set; }
 
         /// <summary>Gets the previous value before the activity change, if applicable.</summary>
         [JsonPropertyName("old_value")]
-        public string? OldValue { get; private set; }
+        public string? OldValue { get; set; }
 
         /// <summary>Gets the new value after the activity change, if applicable.</summary>
         [JsonPropertyName("new_value")]
-        public string? NewValue { get; private set; }
+        public string? NewValue { get; set; }
 
         /// <summary>Gets the invitation code associated with the activity, if applicable.</summary>
         [JsonPropertyName("invitation_code")]
-        public string? InvitationCode { get; private set; }
+        public string? InvitationCode { get; set; }
 
         /// <summary>Gets the two-factor authentication method used, if applicable.</summary>
         [JsonPropertyName("two_factor_method")]
-        public string? TwoFactorMethod { get; private set; }
+        public string? TwoFactorMethod { get; set; }
 
         /// <summary>Gets the reason associated with the activity, if applicable.</summary>
         [JsonPropertyName("reason")]
-        public string? Reason { get; private set; }
+        public string? Reason { get; set; }
 
         /// <summary>Gets the error message associated with the activity, if applicable.</summary>
         [JsonPropertyName("error")]
-        public string? Error { get; private set; }
+        public string? Error { get; set; }
 
         /// <summary>Sets the target user ID and returns the updated context.</summary>
         /// <param name="id">The target user ID.</param>
@@ -94,7 +95,7 @@ namespace BlockSense.Backend.Models.ActivityLog
         /// </summary>
         /// <returns>A JSON representation of the activity log context.</returns>
         public string ToJson()
-            => JsonSerializer.Serialize(this);
+            => JsonSerializer.Serialize(this, JsonOptions.Default);
 
         private ActivityLogContext Apply(Action<ActivityLogContext> setter)
         {

@@ -1,8 +1,11 @@
 ﻿using BlockSense.Backend.Entities;
+using BlockSense.Backend.Models.ActivityLog;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Backend.Utilities;
 using BlockSense.Contracts.DTOs.User;
+using BlockSense.Contracts.Enums;
+using System.Text.Json;
 
 namespace BlockSense.Backend.Services.Implementations
 {
@@ -67,5 +70,29 @@ namespace BlockSense.Backend.Services.Implementations
             ActivityMessage = ActivityMessageMapper.Map(log.Action, log.Context),
             OccurredAt = log.OccurredAt
         };
+
+        /// <inheritdoc/>
+        public async Task CreateAsync(
+            ActivityType type,
+            uint userId,
+            string action,
+            ActivityLogContext? context = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(action))
+                throw new ArgumentException("Action must be provided.", nameof(action));
+
+            var log = new ActivityLog
+            {
+                Id = default,
+                Type = type,
+                UserId = userId,
+                Action = action,
+                Context = context?.ToJson(),
+                OccurredAt = DateTime.UtcNow
+            };
+
+            await _activityLogRepository.InsertAsync(log, cancellationToken);
+        }
     }
 }

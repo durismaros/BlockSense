@@ -53,7 +53,7 @@ namespace BlockSense.Backend.Utilities
 
             try
             {
-                return JsonSerializer.Deserialize<ActivityLogContext>(json);
+                return JsonSerializer.Deserialize<ActivityLogContext>(json, JsonOptions.Default);
             }
             catch
             {

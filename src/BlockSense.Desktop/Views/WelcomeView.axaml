@@ -4,25 +4,27 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="BlockSense.Desktop.WelcomeView">
-    
+
     <StackPanel HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Spacing="18">
 
-        <!-- Application Header -->
+        <!-- Application name -->
         <TextBlock HorizontalAlignment="Center"
                    Foreground="#4A4238"
                    FontSize="40"
                    FontWeight="Light">
-                Block
+            Block
             <Span Foreground="#2A2118">
                 Sense
             </Span>
         </TextBlock>
-            
+
+        <!-- Decorative separator -->
         <Border Classes="DefaultSeparator"
                 Width="120"/>
-        
+
+        <!-- Tagline -->
         <TextBlock Width="320"
                    Text="Securely manage and protect your digital assets in one trusted place."
                    Foreground="#2A2118"
@@ -34,11 +36,11 @@
                    FontWeight="SemiBold"
                    FontStyle="Italic"
                    Opacity="0.9"/>
-        
-        <!--Authenticate Button-->
+
+        <!-- Navigate to the Authentication view -->
         <Button x:Name="AuthenticateButton"
                 Classes="DefaultDarkBrown">
-            
+
             <TextBlock Text="Authenticate"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"
@@ -46,16 +48,16 @@
                        FontWeight="Medium"/>
         </Button>
 
-            <!--Register Button-->
-			<Button x:Name="RegisterButton"
-                    Classes="DefaultLightBrown">
-				
-				<TextBlock Text="Create an account"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           Foreground="#5D3F36"
-                           FontWeight="Medium"/>
-			</Button>
-        </StackPanel>
+        <!-- Navigate to the Registration view -->
+        <Button x:Name="RegisterButton"
+                Classes="DefaultLightBrown">
+
+            <TextBlock Text="Create an account"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Foreground="#5D3F36"
+                       FontWeight="Medium"/>
+        </Button>
+    </StackPanel>
 
 </UserControl>

@@ -3,15 +3,18 @@ using BlockSense.Backend.Entities;
 using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Exceptions.Generic;
 using BlockSense.Backend.Exceptions.TwoFactorAuthentication;
+using BlockSense.Backend.Models.ActivityLog;
 using BlockSense.Backend.Models.Device;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
 using BlockSense.Contracts.Cryptography.Utilities;
+using BlockSense.Contracts.Definitions;
 using BlockSense.Contracts.DTOs.Authentication;
 using BlockSense.Contracts.DTOs.Session;
 using BlockSense.Contracts.DTOs.Token;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
+using BlockSense.Contracts.Enums;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -29,6 +32,7 @@ namespace BlockSense.Backend.Services.Implementations
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IUserRepository _userRepository;
         private readonly ITwoFactorAuthService _twoFactorAuthService;
+        private readonly IActivityLogService _activityLogService;
 
         /// <summary>
         /// Initializes a new instance of <see cref="TokenService"/> with required configurations and dependencies.
@@ -44,13 +48,15 @@ namespace BlockSense.Backend.Services.Implementations
             IOptions<JwtTokenConfig> jwtTokenConfig,
             IRefreshTokenRepository refreshTokenRepository,
             IUserRepository userRepository,
-            ITwoFactorAuthService twoFactorAuthService)
+            ITwoFactorAuthService twoFactorAuthService,
+            IActivityLogService activityLogService)
         {
             _refreshTokenConfig = refreshTokenConfig.Value ?? throw new ArgumentNullException(nameof(refreshTokenConfig));
             _jwtTokenConfig = jwtTokenConfig.Value ?? throw new ArgumentNullException(nameof(jwtTokenConfig));
             _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _twoFactorAuthService = twoFactorAuthService ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
+            _activityLogService = activityLogService ?? throw new ArgumentNullException(nameof(activityLogService));
         }
 
         /// <inheritdoc/>
@@ -124,6 +130,8 @@ namespace BlockSense.Backend.Services.Implementations
                 throw new NotFoundException();
 
             await _refreshTokenRepository.RevokeAsync(request.TokenHash, cancellationToken);
+
+            await LogDeviceRevokedAsync(userId, token, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -211,6 +219,22 @@ namespace BlockSense.Backend.Services.Implementations
             {
                 throw new TwoFactorRequiredException();
             }
+        }
+
+        private Task LogDeviceRevokedAsync(
+            uint userId,
+            RefreshToken token,
+            CancellationToken cancellationToken)
+        {
+            var context = new ActivityLogContext()
+                .WithIpAddress(token.IpAddress);
+
+            return _activityLogService.CreateAsync(
+                ActivityType.User,
+                userId,
+                ActivityActions.Device.Revoked,
+                context,
+                cancellationToken);
         }
     }
 }

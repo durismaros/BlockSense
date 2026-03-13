@@ -2,13 +2,16 @@
 using BlockSense.Backend.Entities;
 using BlockSense.Backend.Exceptions.Generic;
 using BlockSense.Backend.Exceptions.TwoFactorAuthentication;
+using BlockSense.Backend.Models.ActivityLog;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Encryption;
 using BlockSense.Contracts.Cryptography.Hashing;
 using BlockSense.Contracts.Cryptography.Utilities;
+using BlockSense.Contracts.Definitions;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Setup;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
+using BlockSense.Contracts.Enums;
 using Microsoft.Extensions.Options;
 using OtpNet;
 using QRCoder;
@@ -25,6 +28,7 @@ namespace BlockSense.Backend.Services.Implementations
         private readonly TwoFactorAuthConfig _twoFactorAuthConfig;
         private readonly ITotpCredentialRepository _totpCredentialRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IActivityLogService _activityLogService;
         private readonly Aes256GcmEncryptor _aes256GcmEncryptor;
 
         /// <summary>
@@ -33,15 +37,18 @@ namespace BlockSense.Backend.Services.Implementations
         /// <param name="twoFactorAuthConfig">The configuration for TOTP settings, backup codes, and encryption.</param>
         /// <param name="totpCredentialRepository">The repository for TOTP credential entity operations.</param>
         /// <param name="userRepository">The repository for user entity operations.</param>
+        /// <param name="activityLogService">The service responsible for recording user and system activity logs.</param>
         /// <exception cref="ArgumentNullException">Thrown if any dependency is <c>null</c>.</exception>
         public TwoFactorAuthService(
             IOptions<TwoFactorAuthConfig> twoFactorAuthConfig,
             ITotpCredentialRepository totpCredentialRepository,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            IActivityLogService activityLogService)
         {
             _twoFactorAuthConfig = twoFactorAuthConfig.Value ?? throw new ArgumentNullException(nameof(twoFactorAuthConfig));
             _totpCredentialRepository = totpCredentialRepository ?? throw new ArgumentNullException(nameof(totpCredentialRepository));
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _activityLogService = activityLogService ?? throw new ArgumentNullException(nameof(activityLogService));
             _aes256GcmEncryptor = new Aes256GcmEncryptor();
         }
 
@@ -79,6 +86,8 @@ namespace BlockSense.Backend.Services.Implementations
 
             var credential = BuildTotpCredential(userId, secretKey);
             await _totpCredentialRepository.CreateAsync(credential, cancellationToken);
+
+            await LogTwoFactorEnabledAsync(userId, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -116,6 +125,8 @@ namespace BlockSense.Backend.Services.Implementations
 
             await _totpCredentialRepository.UpdateAsync(credential, cancellationToken);
 
+            await LogBackupCodesGeneratedAsync(userId, cancellationToken);
+
             return plainCodes;
         }
 
@@ -128,6 +139,8 @@ namespace BlockSense.Backend.Services.Implementations
             await VerifyAsync(userId, request, cancellationToken);
 
             await _totpCredentialRepository.DeleteByUserIdAsync(userId, cancellationToken);
+
+            await LogTwoFactorDisabledAsync(userId, cancellationToken);
         }
 
         private async Task EnsureTwoFactorNotConfiguredAsync(uint userId, CancellationToken cancellationToken)
@@ -273,6 +286,41 @@ namespace BlockSense.Backend.Services.Implementations
             var iv = encryptedSecret.Take(12).ToArray();
             var ciphertext = encryptedSecret.Skip(12).ToArray();
             return _aes256GcmEncryptor.Decrypt(key, iv, ciphertext);
+        }
+
+        private Task LogTwoFactorEnabledAsync(uint userId, CancellationToken cancellationToken)
+        {
+            var context = new ActivityLogContext()
+                .WithTwoFactorMethod("TOTP");
+
+            return _activityLogService.CreateAsync(
+                ActivityType.User,
+                userId,
+                ActivityActions.TwoFactorAuthentication.Enabled,
+                context,
+                cancellationToken);
+        }
+
+        private Task LogTwoFactorDisabledAsync(uint userId, CancellationToken cancellationToken)
+        {
+            var context = new ActivityLogContext()
+                .WithTwoFactorMethod("TOTP");
+
+            return _activityLogService.CreateAsync(
+                ActivityType.User,
+                userId,
+                ActivityActions.TwoFactorAuthentication.Disabled,
+                context,
+                cancellationToken);
+        }
+
+        private Task LogBackupCodesGeneratedAsync(uint userId, CancellationToken cancellationToken)
+        {
+            return _activityLogService.CreateAsync(
+                ActivityType.User,
+                userId,
+                ActivityActions.TwoFactorAuthentication.BackupCodesGenerated,
+                cancellationToken: cancellationToken);
         }
     }
 }

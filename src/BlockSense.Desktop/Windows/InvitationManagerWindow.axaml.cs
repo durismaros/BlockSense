@@ -1,300 +1,419 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Layout;
 using BlockSense.Contracts.DTOs.Invitation;
 using BlockSense.Contracts.Enums;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Utilities.Formatting;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace BlockSense.Desktop;
 
+/// <summary>
+/// A floating window that lists all invitations belonging to the current user
+/// and allows the user to search and inspect individual invitation codes.
+/// </summary>
 public partial class InvitationManagerWindow : Window
 {
+    private const string CollapsedCodeLabel = "Click here to Expand";
+
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly ILogger<InvitationManagerWindow> _logger;
 
-    private Border? _currentExpandedBorder;
+    /// <summary>The code cell border that is currently in its expanded state, or <see langword="null"/> when none is expanded.</summary>
+    private Border? _expandedCodeBorder;
 
+    /// <summary>
+    /// Initialises a new instance of <see cref="InvitationManagerWindow"/>,
+    /// resolves dependencies, wires up event handlers, and performs the initial
+    /// invitation display.
+    /// </summary>
     public InvitationManagerWindow()
     {
         _currentUserProvider = App.ServiceProvider.GetRequiredService<ICurrentUserProvider>()
             ?? throw new ArgumentNullException(nameof(ICurrentUserProvider));
 
+        _logger = App.ServiceProvider.GetRequiredService<ILogger<InvitationManagerWindow>>()
+            ?? throw new ArgumentNullException(nameof(ILogger<InvitationManagerWindow>));
+
         InitializeComponent();
 
-        DisplayInvites(_currentUserProvider.Invitations);
+        DisplayInvitations(_currentUserProvider.Invitations);
 
-        DraggableArea.PointerPressed += DraggableAreaPointerPressed;
-        CloseWindowButton.Click += CloseWindowClick;
+        DraggableArea.PointerPressed += OnDraggableAreaPointerPressed;
+        CloseWindowButton.Click += OnCloseWindowButtonClick;
+        InvitationSearchTextBox.TextChanged += OnInvitationSearchTextChanged;
 
-        InvitationSearchTextBox.TextChanged += InvitationSearchTextBoxTextChanged;
-
-        MainWindow.Instance.Closing += (s, e) => this.Close();
+        MainWindow.Instance.Closing += (_, _) => Close();
     }
 
-    private void DisplayInvites(IEnumerable<InvitationDto> invites)
+    /// <summary>
+    /// Fades the window out and hides it when the close button is clicked.
+    /// </summary>
+    private async void OnCloseWindowButtonClick(object? sender, RoutedEventArgs e)
     {
-        InviteCodesGrid.Children.Clear();
-        InviteCodesGrid.RowDefinitions.Clear();
-        _currentExpandedBorder = null;
-
-        if (invites == null || invites.Count() == 0)
-            return;
-
-        for (int row = 0; row < invites.Count(); row++)
-        {
-            var invite = invites.ElementAt(row);
-
-            InviteCodesGrid.RowDefinitions.Add(new RowDefinition(new GridLength(40)));
-
-            AddRowBackground(row);
-            AddCreationDate(invite, row);
-            AddExpirationDate(invite, row);
-            AddInviteCode(invite, row);
-            AddInvitedUser(invite, row);
-            AddStatus(invite, row);
-        }
-    }
-
-    private async void CloseWindowClick(object? sender, RoutedEventArgs e)
-    {
-        // Fade out animation on Window close
         await Animations.FadeOutAnimation.RunAsync(this);
-
-        // Close the window
-        this.Hide();
+        Hide();
     }
 
-    private void DraggableAreaPointerPressed(object? sender, PointerPressedEventArgs e)
+    /// <summary>
+    /// Begins a native window drag operation when the user presses the left
+    /// mouse button on the drag area.
+    /// </summary>
+    private void OnDraggableAreaPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed && VisualRoot is Window window)
+        bool isLeftButton = e.GetCurrentPoint(this).Properties.IsLeftButtonPressed;
+
+        if (isLeftButton && VisualRoot is Window window)
         {
             window.BeginMoveDrag(e);
         }
     }
 
-    private void InvitationSearchTextBoxTextChanged(object? sender, TextChangedEventArgs e)
+    /// <summary>
+    /// Filters the displayed invitations whenever the search query changes.
+    /// Resets to the full list when the query is empty.
+    /// </summary>
+    private void OnInvitationSearchTextChanged(object? sender, TextChangedEventArgs e)
     {
-        var searchText = InvitationSearchTextBox.Text?.Trim();
+        var query = InvitationSearchTextBox.Text?.Trim();
 
-        if (string.IsNullOrWhiteSpace(searchText))
+        if (string.IsNullOrWhiteSpace(query))
         {
-            DisplayInvites(_currentUserProvider.Invitations);
+            DisplayInvitations(_currentUserProvider.Invitations);
             return;
         }
 
-        searchText = searchText.ToLowerInvariant();
+        var normalizedQuery = query.ToLowerInvariant();
 
-        var filteredInvites = _currentUserProvider.Invitations
-            .Where(invite => InviteMatchesSearch(invite, searchText))
+        var filtered = _currentUserProvider.Invitations
+            .Where(invitation => InvitationMatchesSearch(invitation, normalizedQuery))
             .ToList();
 
-        DisplayInvites(filteredInvites);
+        DisplayInvitations(filtered);
     }
 
-    private void ExpandInviteCode(object? sender, PointerPressedEventArgs e)
+    /// <summary>
+    /// Toggles the expansion state of an invitation-code cell when it is clicked.
+    /// Collapses any previously expanded cell before expanding the new one.
+    /// </summary>
+    private void OnCodeCellPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (sender is not Border border ||
-            border.Child is not TextBlock text ||
-            border.Tag is not InvitationDto invite)
+            border.Child is not TextBlock label ||
+            border.Tag is not InvitationDto invitation)
         {
             return;
         }
 
-        if (_currentExpandedBorder == border)
+        bool isSameBorder = _expandedCodeBorder == border;
+
+        CollapseExpandedCodeCell();
+
+        if (!isSameBorder)
         {
-            CollapseCurrentExpandedBorder();
+            ExpandCodeCell(border, label, invitation);
+        }
+    }
+
+    /// <summary>
+    /// Clears the invitation grid and rebuilds it from the supplied
+    /// <paramref name="invitations"/> collection.
+    /// </summary>
+    /// <param name="invitations">The invitations to render.</param>
+    private void DisplayInvitations(IEnumerable<InvitationDto> invitations)
+    {
+        InviteCodesGrid.Children.Clear();
+        InviteCodesGrid.RowDefinitions.Clear();
+        _expandedCodeBorder = null;
+
+        var invitationList = invitations?.ToList();
+
+        if (invitationList is null || invitationList.Count == 0)
+        {
+            _logger.LogDebug("No invitations to display.");
             return;
         }
 
-        CollapseCurrentExpandedBorder();
-
-        border.Opacity = 0;
-
-        Grid.SetColumn(border, 0);
-        Grid.SetColumnSpan(border, 5);
-        border.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
-        border.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch;
-        border.ZIndex = 10;
-
-        text.Text = invite.Code;
-        text.Classes.Add("InviteCodeExpandedTextBlock");
-
-        border.Classes.Add("InviteCodeExpandedBorder");
-
-        border.Opacity = 1;
-
-        _currentExpandedBorder = border;
-    }
-
-    private void CollapseCurrentExpandedBorder()
-    {
-        if (_currentExpandedBorder?.Child is not TextBlock text)
+        for (int rowIndex = 0; rowIndex < invitationList.Count; rowIndex++)
         {
-            return;
+            var invitation = invitationList[rowIndex];
+
+            InviteCodesGrid.RowDefinitions.Add(new RowDefinition(new GridLength(40)));
+
+            AddRowBackground(rowIndex);
+            AddCreatedDateCell(invitation, rowIndex);
+            AddExpiredDateCell(invitation, rowIndex);
+            AddCodeCell(invitation, rowIndex);
+            AddRedeemedByCell(invitation, rowIndex);
+            AddStatusCell(invitation, rowIndex);
         }
 
-        var border = _currentExpandedBorder;
-
-        border.Opacity = 0;
-
-        border.Classes.Remove("InviteCodeExpandedBorder");
-
-        Grid.SetColumn(_currentExpandedBorder, 2);
-        Grid.SetColumnSpan(_currentExpandedBorder, 1);
-        _currentExpandedBorder.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center;
-        _currentExpandedBorder.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center;
-        _currentExpandedBorder.ZIndex = 0;
-
-        text.Text = "Click here to Expand";
-        text.Classes.Remove("InviteCodeExpandedTextBlock");
-
-        border.Opacity = 1;
-
-        _currentExpandedBorder = null;
+        _logger.LogDebug("Displayed {Count} invitation(s).", invitationList.Count);
     }
 
-    private void AddRowBackground(int row)
+    /// <summary>
+    /// Adds the full-width dark pill that serves as the row background for the
+    /// given <paramref name="rowIndex"/>.
+    /// </summary>
+    /// <param name="rowIndex">Zero-based row index in the invitation grid.</param>
+    private void AddRowBackground(int rowIndex)
     {
-        var border = new Border { Classes = { "InvitationBorder" } };
-        Grid.SetRow(border, row);
-        Grid.SetColumnSpan(border, 5);
-        InviteCodesGrid.Children.Add(border);
+        var background = new Border { Classes = { "InvitationRow" } };
+
+        Grid.SetRow(background, rowIndex);
+        Grid.SetColumnSpan(background, 5);
+
+        InviteCodesGrid.Children.Add(background);
     }
 
-    private void AddCreationDate(InvitationDto invitation, int row)
+    /// <summary>
+    /// Adds the formatted creation-date label to column 0 of the given row.
+    /// </summary>
+    /// <param name="invitation">The invitation whose creation date is displayed.</param>
+    /// <param name="rowIndex">Zero-based row index in the invitation grid.</param>
+    private void AddCreatedDateCell(InvitationDto invitation, int rowIndex)
     {
-        var text = new TextBlock
+        var label = new TextBlock
         {
             Text = DateTimeFormatter.ToOrdinalDate(invitation.CreatedAt),
-            Classes = { "CreationTextBlock" }
+            Classes = { "InvitationCreatedDate" }
         };
 
-        Grid.SetRow(text, row);
-        Grid.SetColumn(text, 0);
-        InviteCodesGrid.Children.Add(text);
+        Grid.SetRow(label, rowIndex);
+        Grid.SetColumn(label, 0);
+
+        InviteCodesGrid.Children.Add(label);
     }
 
-    private void AddExpirationDate(InvitationDto invitation, int row)
+    /// <summary>
+    /// Adds the formatted expiry-date label to column 1 of the given row.
+    /// </summary>
+    /// <param name="invitation">The invitation whose expiry date is displayed.</param>
+    /// <param name="rowIndex">Zero-based row index in the invitation grid.</param>
+    private void AddExpiredDateCell(InvitationDto invitation, int rowIndex)
     {
-        var text = new TextBlock
+        var label = new TextBlock
         {
             Text = DateTimeFormatter.ToOrdinalDate(invitation.ExpiresAt),
-            Classes = { "ExpirationTextBlock" }
+            Classes = { "InvitationExpiresDate" }
         };
-        Grid.SetRow(text, row);
-        Grid.SetColumn(text, 1);
-        InviteCodesGrid.Children.Add(text);
+
+        Grid.SetRow(label, rowIndex);
+        Grid.SetColumn(label, 1);
+
+        InviteCodesGrid.Children.Add(label);
     }
 
-    private void AddInviteCode(InvitationDto invitation, int row)
+    /// <summary>
+    /// Adds a collapsible code pill to column 2 of the given row.
+    /// The pill expands to reveal the full invitation code on click.
+    /// </summary>
+    /// <param name="invitation">The invitation whose code is displayed.</param>
+    /// <param name="rowIndex">Zero-based row index in the invitation grid.</param>
+    private void AddCodeCell(InvitationDto invitation, int rowIndex)
     {
-        var border = new Border
+        var label = new TextBlock
         {
-            Classes = { "ExpandInvitationCodeBorder" },
+            Text = CollapsedCodeLabel,
+            Classes = { "InvitationCodeCollapsedLabel" }
+        };
+
+        var pill = new Border
+        {
+            Classes = { "InvitationCodeCollapsed" },
             Tag = invitation,
+            Child = label
         };
 
-        var text = new TextBlock
-        {
-            Text = "Click here to Expand",
-            Classes = { "InvitationCodeTextBlock" }
-        };
+        pill.PointerPressed += OnCodeCellPointerPressed;
 
-        border.Child = text;
-        border.PointerPressed += ExpandInviteCode;
+        Grid.SetRow(pill, rowIndex);
+        Grid.SetColumn(pill, 2);
 
-        Grid.SetRow(border, row);
-        Grid.SetColumn(border, 2);
-
-        InviteCodesGrid.Children.Add(border);
+        InviteCodesGrid.Children.Add(pill);
     }
 
-    private void AddInvitedUser(InvitationDto invitation, int row)
+    /// <summary>
+    /// Adds the "redeemed by" label to column 3 of the given row.
+    /// Falls back to "(not used)" when the invitation has not been redeemed.
+    /// </summary>
+    /// <param name="invitation">The invitation whose redeemer is displayed.</param>
+    /// <param name="rowIndex">Zero-based row index in the invitation grid.</param>
+    private void AddRedeemedByCell(InvitationDto invitation, int rowIndex)
     {
-        bool hasUser = !string.IsNullOrWhiteSpace(invitation.RedeemedBy);
+        bool isRedeemed = !string.IsNullOrWhiteSpace(invitation.RedeemedBy);
 
-        var text = new TextBlock
+        var label = new TextBlock
         {
-            Text = hasUser ? invitation.RedeemedBy : "( not used )",
-            Classes = { "InvitedUser" }
+            Text = isRedeemed ? invitation.RedeemedBy : "( not used )",
+            Classes = { "InvitationRedeemedBy" }
         };
 
-        Grid.SetRow(text, row);
-        Grid.SetColumn(text, 3);
-        InviteCodesGrid.Children.Add(text);
+        Grid.SetRow(label, rowIndex);
+        Grid.SetColumn(label, 3);
+
+        InviteCodesGrid.Children.Add(label);
     }
 
-    private void AddStatus(InvitationDto invitation, int row)
+    /// <summary>
+    /// Adds a colour-coded status badge to column 4 of the given row.
+    /// </summary>
+    /// <param name="invitation">The invitation whose status is displayed.</param>
+    /// <param name="rowIndex">Zero-based row index in the invitation grid.</param>
+    private void AddStatusCell(InvitationDto invitation, int rowIndex)
     {
-        var border = new Border
-        {
-            Classes = { GetStatusClass(invitation.Status) }
-        };
-
-        var text = new TextBlock
+        var label = new TextBlock
         {
             Text = invitation.Status.ToString(),
-            Classes = { "StatusTextBlock" }
+            Classes = { "InvitationStatusLabel" }
         };
 
-        border.Child = text;
+        var badge = new Border
+        {
+            Classes = { ResolveStatusBadgeClass(invitation.Status) },
+            Child = label
+        };
 
-        Grid.SetRow(border, row);
-        Grid.SetColumn(border, 4);
+        Grid.SetRow(badge, rowIndex);
+        Grid.SetColumn(badge, 4);
 
-        InviteCodesGrid.Children.Add(border);
+        InviteCodesGrid.Children.Add(badge);
     }
 
-    private static bool InviteMatchesSearch(InvitationDto invite, string searchText)
+    /// <summary>
+    /// Expands the given code cell to span all columns and reveals the raw
+    /// invitation code.
+    /// </summary>
+    /// <param name="pill">The border element acting as the code pill.</param>
+    /// <param name="label">The text block inside the pill.</param>
+    /// <param name="invitation">The invitation whose code is revealed.</param>
+    private void ExpandCodeCell(Border pill, TextBlock label, InvitationDto invitation)
     {
-        if (invite is null || string.IsNullOrWhiteSpace(searchText))
-            return false;
+        pill.Opacity = 0;
 
-        searchText = searchText.Trim();
+        Grid.SetColumn(pill, 0);
+        Grid.SetColumnSpan(pill, 5);
+        pill.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
+        pill.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch;
+        pill.ZIndex = 10;
 
-        return
-            Contains(invite.Code, searchText) ||
-            Contains(invite.RedeemedBy, searchText) ||
-            Contains(invite.Status.ToString(), searchText) ||
-            DateMatches(invite.CreatedAt, searchText) ||
-            DateMatches(invite.ExpiresAt, searchText);
+        label.Text = invitation.Code;
+        label.Classes.Remove("InvitationCodeCollapsedLabel");
+        label.Classes.Add("InvitationCodeExpandedLabel");
+
+        pill.Classes.Remove("InvitationCodeCollapsed");
+        pill.Classes.Add("InvitationCodeExpanded");
+
+        pill.Opacity = 1;
+
+        _expandedCodeBorder = pill;
     }
 
-    private static bool Contains(string? source, string searchText)
+    /// <summary>
+    /// Collapses the currently expanded code cell back to its default state.
+    /// Does nothing when no cell is expanded.
+    /// </summary>
+    private void CollapseExpandedCodeCell()
+    {
+        if (_expandedCodeBorder is null || _expandedCodeBorder.Child is not TextBlock label)
+        {
+            return;
+        }
+
+        var pill = _expandedCodeBorder;
+        pill.Opacity = 0;
+
+        pill.Classes.Remove("InvitationCodeExpanded");
+        pill.Classes.Add("InvitationCodeCollapsed");
+
+        Grid.SetColumn(pill, 2);
+        Grid.SetColumnSpan(pill, 1);
+        pill.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center;
+        pill.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center;
+        pill.ZIndex = 0;
+
+        label.Text = CollapsedCodeLabel;
+        label.Classes.Remove("InvitationCodeExpandedLabel");
+        label.Classes.Add("InvitationCodeCollapsedLabel");
+
+        pill.Opacity = 1;
+
+        _expandedCodeBorder = null;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when any searchable field of
+    /// <paramref name="invitation"/> contains <paramref name="normalizedQuery"/>.
+    /// </summary>
+    /// <param name="invitation">The invitation to test.</param>
+    /// <param name="normalizedQuery">Lower-cased search query.</param>
+    /// <returns><see langword="true"/> if the invitation matches the query.</returns>
+    private static bool InvitationMatchesSearch(InvitationDto invitation, string normalizedQuery)
+    {
+        return
+            ContainsQuery(invitation.Code, normalizedQuery) ||
+            ContainsQuery(invitation.RedeemedBy, normalizedQuery) ||
+            ContainsQuery(invitation.Status.ToString(), normalizedQuery) ||
+            DateContainsQuery(invitation.CreatedAt, normalizedQuery) ||
+            DateContainsQuery(invitation.ExpiresAt, normalizedQuery);
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when <paramref name="source"/> contains
+    /// <paramref name="query"/> using a case-insensitive ordinal comparison.
+    /// </summary>
+    /// <param name="source">The string to search within. May be <see langword="null"/>.</param>
+    /// <param name="query">The search term.</param>
+    /// <returns><see langword="true"/> if <paramref name="source"/> contains <paramref name="query"/>.</returns>
+    private static bool ContainsQuery(string? source, string query)
     {
         return !string.IsNullOrWhiteSpace(source) &&
-            source.Contains(searchText, StringComparison.OrdinalIgnoreCase);
+               source.Contains(query, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool DateMatches(DateTime date, string searchText)
+    /// <summary>
+    /// Returns <see langword="true"/> when any of the common date representations
+    /// of <paramref name="date"/> contain <paramref name="query"/>.
+    /// </summary>
+    /// <param name="date">The date to test against.</param>
+    /// <param name="query">The search term.</param>
+    /// <returns><see langword="true"/> if the date matches the query in any supported format.</returns>
+    private static bool DateContainsQuery(DateTime date, string query)
     {
-        return $"Q{((date.Month - 1) / 3) + 1}".Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-            date.ToString("yyyy-MM-dd").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-            date.ToString("dd.MM.yyyy").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-            date.ToString("MM/dd/yyyy").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-            date.ToString("MMMM").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-            date.ToString("MMM").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-            date.DayOfYear.ToString().Contains(searchText) ||
-            date.DayOfWeek.ToString().Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-            date.Year.ToString().Contains(searchText) ||
-            date.Month.ToString().Contains(searchText) ||
-            date.Day.ToString().Contains(searchText);
+        string quarter = $"Q{((date.Month - 1) / 3) + 1}";
+
+        return quarter.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+               date.ToString("yyyy-MM-dd").Contains(query, StringComparison.OrdinalIgnoreCase) ||
+               date.ToString("dd.MM.yyyy").Contains(query, StringComparison.OrdinalIgnoreCase) ||
+               date.ToString("MM/dd/yyyy").Contains(query, StringComparison.OrdinalIgnoreCase) ||
+               date.ToString("MMMM").Contains(query, StringComparison.OrdinalIgnoreCase) ||
+               date.ToString("MMM").Contains(query, StringComparison.OrdinalIgnoreCase) ||
+               date.DayOfWeek.ToString().Contains(query, StringComparison.OrdinalIgnoreCase) ||
+               date.DayOfYear.ToString().Contains(query) ||
+               date.Year.ToString().Contains(query) ||
+               date.Month.ToString().Contains(query) ||
+               date.Day.ToString().Contains(query);
     }
 
-    private static string GetStatusClass(InvitationStatus invitationStatus) =>
-        invitationStatus switch
+    /// <summary>
+    /// Maps an <see cref="InvitationStatus"/> value to the corresponding
+    /// AXAML style class name for the status badge border.
+    /// </summary>
+    /// <param name="status">The invitation status to resolve.</param>
+    /// <returns>The AXAML class name for the matching status badge style.</returns>
+    private static string ResolveStatusBadgeClass(InvitationStatus status) =>
+        status switch
         {
-            InvitationStatus.Active => "ActiveStatusBorder",
-            InvitationStatus.Used => "UsedStatusBorder",
-            InvitationStatus.Expired => "ExpiredStatusBorder",
-            InvitationStatus.Revoked => "RevokedStatusBorder",
-            _ => "ActiveStatusBorder"
+            InvitationStatus.Active => "InvitationStatusActive",
+            InvitationStatus.Used => "InvitationStatusUsed",
+            InvitationStatus.Expired => "InvitationStatusExpired",
+            InvitationStatus.Revoked => "InvitationStatusRevoked",
+            _ => "InvitationStatusActive"
         };
-
 }

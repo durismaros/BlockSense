@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using BlockSense.Contracts.DTOs.User;
@@ -7,6 +9,7 @@ using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.Formatting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,75 +18,130 @@ using System.Threading.Tasks;
 
 namespace BlockSense.Desktop;
 
+/// <summary>
+/// A bottom-sheet view that displays a paginated, filterable list of activity-log entries
+/// for the current user.
+/// </summary>
 public partial class ActivityLogView : UserControl
 {
+    private const int PageSize = 20;
+
     private readonly IActivityLogService _activityLogService;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly ILogger<ActivityLogView> _logger;
 
     private List<ActivityLogDto> _allLogs = [];
     private List<ActivityLogDto> _filteredLogs = [];
 
     private string _activeTypeFilter = "all";
-
     private ulong _newestKnownId = 0;
-    private int _currentPageNum = 1;
+    private int _currentPageNumber = 1;
 
+    private CancellationTokenSource _cancellationTokenSource = new();
+
+    /// <summary>Gets the total number of pages for the current filtered result set.</summary>
     private int TotalFilteredPages => Math.Max(1, (int)Math.Ceiling(_filteredLogs.Count / (double)PageSize));
 
-    private const int PageSize = 20;
+    /// <summary>
+    /// Raised when the user requests this view to be closed.
+    /// </summary>
+    public event Func<Task>? CloseRequested;
 
-    private CancellationTokenSource _cts = new();
-
+    /// <summary>
+    /// Initialises a new instance of <see cref="ActivityLogView"/>.
+    /// </summary>
     public ActivityLogView()
     {
         _activityLogService = App.ServiceProvider.GetRequiredService<IActivityLogService>();
         _currentUserProvider = App.ServiceProvider.GetRequiredService<ICurrentUserProvider>();
+        _logger = App.ServiceProvider.GetRequiredService<ILogger<ActivityLogView>>();
 
         InitializeComponent();
-        WireEvents();
+
+        AttachedToVisualTree += OnAttachedToVisualTree;
+        DetachedFromVisualTree += OnDetachedFromVisualTree;
+    }
+
+    /// <summary>
+    /// Resets to page 1 and performs a full log reload. Safe to call externally.
+    /// </summary>
+    public async void LoadAsync()
+    {
+        _currentPageNumber = 1;
+        await FetchAllLogsAndRenderAsync();
+    }
+
+    private void OnAttachedToVisualTree(object? sender, Avalonia.VisualTreeAttachmentEventArgs e)
+    {
+        CloseActivityLogButton.Click += OnCloseActivityLogButtonClicked;
+        RefreshButton.Click += OnRefreshButtonClicked;
+        PrevPageButton.Click += OnPrevPageButtonClicked;
+        NextPageButton.Click += OnNextPageButtonClicked;
+        ChipAll.PointerPressed += OnChipAllPressed;
+        ChipUser.PointerPressed += OnChipUserPressed;
+        ChipSystem.PointerPressed += OnChipSystemPressed;
+        ChipCron.PointerPressed += OnChipCronPressed;
+
         LoadAsync();
     }
 
-    public async void LoadAsync()
+    private void OnDetachedFromVisualTree(object? sender, Avalonia.VisualTreeAttachmentEventArgs e)
     {
-        _currentPageNum = 1;
-        await FetchAllAndRenderAsync();
+        CloseActivityLogButton.Click -= OnCloseActivityLogButtonClicked;
+        RefreshButton.Click -= OnRefreshButtonClicked;
+        PrevPageButton.Click -= OnPrevPageButtonClicked;
+        NextPageButton.Click -= OnNextPageButtonClicked;
+        ChipAll.PointerPressed -= OnChipAllPressed;
+        ChipUser.PointerPressed -= OnChipUserPressed;
+        ChipSystem.PointerPressed -= OnChipSystemPressed;
+        ChipCron.PointerPressed -= OnChipCronPressed;
+
+        _cancellationTokenSource.Cancel();
     }
 
-    private void WireEvents()
+    private async void OnCloseActivityLogButtonClicked(object? sender, RoutedEventArgs e)
     {
-        CloseActivityLogButton.Click += async (_, _) => await RequestClose();
-        RefreshButton.Click += async (_, _) => await FetchAfterIdAsync();
-
-        PrevPageButton.Click += (_, _) =>
-        {
-            if (_currentPageNum > 1) { _currentPageNum--; RenderPage(); }
-        };
-
-        NextPageButton.Click += (_, _) =>
-        {
-            if (_currentPageNum < TotalFilteredPages) { _currentPageNum++; RenderPage(); }
-        };
-
-        ChipAll.PointerPressed += (_, _) => SetTypeFilter("all");
-        ChipUser.PointerPressed += (_, _) => SetTypeFilter("user");
-        ChipSystem.PointerPressed += (_, _) => SetTypeFilter("system");
-        ChipCron.PointerPressed += (_, _) => SetTypeFilter("cron");
+        if (CloseRequested is not null)
+            await CloseRequested.Invoke();
     }
 
-    // ── Data fetching ─────────────────────────────────────────────────
+    private async void OnRefreshButtonClicked(object? sender, RoutedEventArgs e)
+        => await FetchNewLogsAsync();
 
-    private async Task FetchAllAndRenderAsync()
+    private void OnPrevPageButtonClicked(object? sender, RoutedEventArgs e)
     {
-        _cts.Cancel();
-        _cts = new CancellationTokenSource();
-        var token = _cts.Token;
+        if (_currentPageNumber <= 1)
+            return;
 
-        SetLoadingState(true);
+        _currentPageNumber--;
+        RenderCurrentPage();
+    }
+
+    private void OnNextPageButtonClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_currentPageNumber >= TotalFilteredPages)
+            return;
+
+        _currentPageNumber++;
+        RenderCurrentPage();
+    }
+
+    private void OnChipAllPressed(object? sender, PointerPressedEventArgs e) => SetTypeFilter("all");
+    private void OnChipUserPressed(object? sender, PointerPressedEventArgs e) => SetTypeFilter("user");
+    private void OnChipSystemPressed(object? sender, PointerPressedEventArgs e) => SetTypeFilter("system");
+    private void OnChipCronPressed(object? sender, PointerPressedEventArgs e) => SetTypeFilter("cron");
+
+    private async Task FetchAllLogsAndRenderAsync()
+    {
+        _cancellationTokenSource.Cancel();
+        _cancellationTokenSource = new CancellationTokenSource();
+        var cancellationToken = _cancellationTokenSource.Token;
+
+        SetLoadingState(isLoading: true);
 
         try
         {
-            var allLogs = new List<ActivityLogDto>();
+            var aggregated = new List<ActivityLogDto>();
             int page = 1;
 
             while (true)
@@ -91,60 +149,79 @@ public partial class ActivityLogView : UserControl
                 var result = await _activityLogService.GetPageAsync(
                     page: page,
                     pageSize: 100,
-                    cancellationToken: token);
+                    cancellationToken: cancellationToken);
 
-                if (token.IsCancellationRequested) return;
-                if (result is null) { ShowError("Failed to load activity logs."); return; }
+                if (cancellationToken.IsCancellationRequested)
+                    return;
 
-                allLogs.AddRange(result.Entries);
+                if (result is null)
+                {
+                    ShowErrorMessage("Failed to load activity logs.");
+                    return;
+                }
 
-                if (page >= result.TotalPages) break;
+                aggregated.AddRange(result.Entries);
+
+                if (page >= result.TotalPages)
+                    break;
+
                 page++;
             }
 
-            _allLogs = [.. allLogs.OrderByDescending(l => l.OccurredAt)];
+            _allLogs = [.. aggregated.OrderByDescending(log => log.OccurredAt)];
 
             if (_allLogs.Count > 0)
             {
-                _newestKnownId = _allLogs.Max(l => l.Id);
+                _newestKnownId = _allLogs.Max(log => log.Id);
                 _currentUserProvider.SetRecentActivity(_allLogs.Take(3).ToList().AsReadOnly());
             }
 
-            _currentPageNum = 1;
-            ApplyFilters();
+            _currentPageNumber = 1;
+            ApplyFiltersAndRender();
             RefreshBadge.IsVisible = false;
+
+            _logger.LogDebug("Loaded {Count} activity log entries.", _allLogs.Count);
         }
-        catch (OperationCanceledException) { /* superseded */ }
+        catch (OperationCanceledException)
+        {
+            _logger.LogDebug("Activity log fetch was cancelled.");
+        }
         finally
         {
-            SetLoadingState(false);
+            SetLoadingState(isLoading: false);
         }
     }
 
-    private async Task FetchAfterIdAsync()
+    private async Task FetchNewLogsAsync()
     {
-        if (_newestKnownId == 0) { await FetchAllAndRenderAsync(); return; }
+        if (_newestKnownId == 0)
+        {
+            await FetchAllLogsAndRenderAsync();
+            return;
+        }
 
         RefreshButton.IsEnabled = false;
 
-        var newer = await _activityLogService.GetLatestAsync(_newestKnownId);
+        var newerEntries = await _activityLogService.GetLatestAsync(_newestKnownId);
 
-        if (newer.Count == 0) { RefreshButton.IsEnabled = true; return; }
+        if (newerEntries.Count == 0)
+        {
+            RefreshButton.IsEnabled = true;
+            return;
+        }
 
-        await FetchAllAndRenderAsync();
+        await FetchAllLogsAndRenderAsync();
     }
-
-    // ── Filtering ─────────────────────────────────────────────────────
 
     private void SetTypeFilter(string type)
     {
         _activeTypeFilter = type;
-        _currentPageNum = 1;
-        UpdateChipStyles();
-        ApplyFilters();
+        _currentPageNumber = 1;
+        UpdateFilterChipStyles();
+        ApplyFiltersAndRender();
     }
 
-    private void UpdateChipStyles()
+    private void UpdateFilterChipStyles()
     {
         (Border chip, TextBlock label, string key)[] chips =
         [
@@ -156,164 +233,162 @@ public partial class ActivityLogView : UserControl
 
         foreach (var (chip, label, key) in chips)
         {
-            bool active = key == _activeTypeFilter;
+            bool isActive = key == _activeTypeFilter;
+
             chip.Classes.Clear();
-            chip.Classes.Add(active ? "FilterChipActive" : "FilterChip");
+            chip.Classes.Add(isActive ? "ActivityFilterChipActive" : "ActivityFilterChip");
+
             label.Classes.Clear();
-            label.Classes.Add(active ? "ChipLabelActive" : "ChipLabel");
+            label.Classes.Add(isActive ? "ActivityFilterChipLabelActive" : "ActivityFilterChipLabel");
         }
     }
 
-    private void ApplyFilters()
+    private void ApplyFiltersAndRender()
     {
         var query = _allLogs.AsEnumerable();
 
         if (_activeTypeFilter != "all")
-            query = query.Where(l =>
-                l.Type.ToString().Equals(_activeTypeFilter, StringComparison.OrdinalIgnoreCase));
+        {
+            query = query.Where(log =>
+                log.Type.ToString().Equals(_activeTypeFilter, StringComparison.OrdinalIgnoreCase));
+        }
 
         _filteredLogs = [.. query];
 
-        LogCountTextBlock.Text = $"{_filteredLogs.Count:N0} {(_filteredLogs.Count == 1 ? "entry" : "entries")}";
+        var entryWord = _filteredLogs.Count == 1 ? "entry" : "entries";
+        LogCountTextBlock.Text = $"{_filteredLogs.Count:N0} {entryWord}";
 
-        RenderPage();
+        RenderCurrentPage();
     }
 
-    // ── Rendering ─────────────────────────────────────────────────────
-
-    private void RenderPage()
+    private void RenderCurrentPage()
     {
         LogRowsPanel.Children.Clear();
 
-        var page = _filteredLogs
-            .Skip((_currentPageNum - 1) * PageSize)
+        var pageEntries = _filteredLogs
+            .Skip((_currentPageNumber - 1) * PageSize)
             .Take(PageSize)
             .ToList();
 
-        if (page.Count == 0)
-        {
-            LogRowsPanel.Children.Add(new TextBlock
-            {
-                Text = "No activity found.",
-                Foreground = new SolidColorBrush(Color.Parse("#9E8572")),
-                FontSize = 13,
-                FontStyle = FontStyle.Italic,
-                Margin = new Avalonia.Thickness(0, 20),
-                HorizontalAlignment = HorizontalAlignment.Center
-            });
-        }
+        if (pageEntries.Count == 0)
+            LogRowsPanel.Children.Add(BuildEmptyPlaceholder());
         else
-        {
-            foreach (var log in page)
-                LogRowsPanel.Children.Add(CreateRow(log));
-        }
+            foreach (var log in pageEntries)
+                LogRowsPanel.Children.Add(BuildLogRow(log));
 
-        UpdatePager();
+        UpdatePagerControls();
     }
 
-    private void UpdatePager()
+    private void UpdatePagerControls()
     {
         int total = TotalFilteredPages;
 
-        PrevPageButton.IsEnabled = _currentPageNum > 1;
-        NextPageButton.IsEnabled = _currentPageNum < total;
-        PagerInfoTextBlock.Text = $"Page {_currentPageNum} of {total}";
+        PrevPageButton.IsEnabled = _currentPageNumber > 1;
+        NextPageButton.IsEnabled = _currentPageNumber < total;
+        PagerInfoTextBlock.Text = $"Page {_currentPageNumber} of {total}";
 
         PageNumbersPanel.Children.Clear();
 
-        int start = Math.Max(1, _currentPageNum - 2);
-        int end = Math.Min(total, start + 4);
-        start = Math.Max(1, end - 4);
+        int windowStart = Math.Max(1, _currentPageNumber - 2);
+        int windowEnd = Math.Min(total, windowStart + 4);
+        windowStart = Math.Max(1, windowEnd - 4);
 
-        for (int p = start; p <= end; p++)
+        for (int pageNumber = windowStart; pageNumber <= windowEnd; pageNumber++)
         {
-            int page = p;
-            bool isCurrent = page == _currentPageNum;
+            int capturedPage = pageNumber;
+            bool isCurrentPage = capturedPage == _currentPageNumber;
 
-            var btn = new Button
+            var label = new TextBlock
             {
-                Classes = { isCurrent ? "PagerBtnActive" : "PagerBtn" },
-                Content = new TextBlock
-                {
-                    Text = page.ToString(),
-                    FontSize = 12,
-                    FontWeight = FontWeight.Medium,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Foreground = new SolidColorBrush(Color.Parse(isCurrent ? "#F5E1C5" : "#6D4C41"))
-                }
+                Text = capturedPage.ToString(),
+                FontSize = 12,
+                FontWeight = Avalonia.Media.FontWeight.Medium,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Foreground = new SolidColorBrush(Color.Parse(isCurrentPage ? "#F5E1C5" : "#6D4C41"))
             };
 
-            btn.Click += (_, _) => { _currentPageNum = page; RenderPage(); };
-            PageNumbersPanel.Children.Add(btn);
+            var pageButton = new Button
+            {
+                Classes = { isCurrentPage ? "ActivityPagerButtonActive" : "ActivityPagerButton" },
+                Content = label
+            };
+
+            pageButton.Click += (_, _) => { _currentPageNumber = capturedPage; RenderCurrentPage(); };
+            PageNumbersPanel.Children.Add(pageButton);
         }
     }
 
-    private static Control CreateRow(ActivityLogDto log)
+    private static Control BuildLogRow(ActivityLogDto log)
     {
-        var wrapper = new StackPanel { Spacing = 0 };
-        wrapper.Children.Add(new Border { Classes = { "RowDivider" } });
+        var (backgroundHex, foregroundHex) = ResolveTypeColors(log.Type);
 
-        var grid = new Grid
+        var dateLabel = new TextBlock
+        {
+            Classes = { "ActivityRowDate" },
+            Text = DateTimeFormatter.ToOrdinalDate(log.OccurredAt)
+        };
+        Grid.SetColumn(dateLabel, 0);
+
+        var messageLabel = new TextBlock
+        {
+            Classes = { "ActivityRowAction" },
+            Text = log.ActivityMessage,
+            Margin = new Avalonia.Thickness(12, 0)
+        };
+        Grid.SetColumn(messageLabel, 1);
+
+        var typePill = new Border
+        {
+            Classes = { "ActivityTypePill" },
+            Background = new SolidColorBrush(Color.Parse(backgroundHex)),
+            Child = new TextBlock
+            {
+                Classes = { "ActivityTypePillText" },
+                Text = log.Type.ToString().ToUpperInvariant(),
+                Foreground = new SolidColorBrush(Color.Parse(foregroundHex))
+            }
+        };
+        Grid.SetColumn(typePill, 2);
+
+        var rowGrid = new Grid
         {
             ColumnDefinitions = new ColumnDefinitions("160 * 80"),
             Margin = new Avalonia.Thickness(0, 10)
         };
+        rowGrid.Children.Add(dateLabel);
+        rowGrid.Children.Add(messageLabel);
+        rowGrid.Children.Add(typePill);
 
-        var dateBlock = new TextBlock
-        {
-            Classes = { "RowDate" },
-            Text = DateTimeFormatter.ToOrdinalDate(log.OccurredAt)
-        };
-        Grid.SetColumn(dateBlock, 0);
+        var wrapper = new StackPanel { Spacing = 0 };
+        wrapper.Children.Add(new Border { Classes = { "ActivityRowDivider" } });
+        wrapper.Children.Add(rowGrid);
 
-        var msgBlock = new TextBlock
-        {
-            Classes = { "RowAction" },
-            Text = log.ActivityMessage,
-            Margin = new Avalonia.Thickness(12, 0)
-        };
-        Grid.SetColumn(msgBlock, 1);
-
-        var (bgHex, fgHex) = TypeColors(log.Type);
-        var pill = new Border
-        {
-            Classes = { "TypePill" },
-            Background = new SolidColorBrush(Color.Parse(bgHex)),
-            Child = new TextBlock
-            {
-                Classes = { "TypePillText" },
-                Text = log.Type.ToString().ToUpperInvariant(),
-                Foreground = new SolidColorBrush(Color.Parse(fgHex))
-            }
-        };
-        Grid.SetColumn(pill, 2);
-
-        grid.Children.Add(dateBlock);
-        grid.Children.Add(msgBlock);
-        grid.Children.Add(pill);
-        wrapper.Children.Add(grid);
         return wrapper;
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────
-
-    private static (string bg, string fg) TypeColors(ActivityType type) => type switch
+    private static TextBlock BuildEmptyPlaceholder() => new()
     {
-        ActivityType.User => ("#E8F5E9", "#2E7D32"),
-        ActivityType.System => ("#E3F2FD", "#1565C0"),
-        ActivityType.Cron => ("#FFF8E1", "#F57F17"),
-        _ => ("#EDE7DE", "#6D4C41")
+        Text = "No activity found.",
+        Foreground = new SolidColorBrush(Color.Parse("#9E8572")),
+        FontSize = 13,
+        FontStyle = Avalonia.Media.FontStyle.Italic,
+        Margin = new Avalonia.Thickness(0, 20),
+        HorizontalAlignment = HorizontalAlignment.Center
     };
 
-    private void SetLoadingState(bool loading)
+    private void SetLoadingState(bool isLoading)
     {
-        if (loading) LogCountTextBlock.Text = "Loading…";
-        RefreshButton.IsEnabled = !loading;
+        if (isLoading)
+            LogCountTextBlock.Text = "Loading…";
+
+        RefreshButton.IsEnabled = !isLoading;
     }
 
-    private void ShowError(string message)
+    private void ShowErrorMessage(string message)
     {
+        _logger.LogError("Activity log error: {Message}", message);
+
         LogRowsPanel.Children.Clear();
         LogRowsPanel.Children.Add(new TextBlock
         {
@@ -325,11 +400,11 @@ public partial class ActivityLogView : UserControl
         });
     }
 
-    public event Func<Task>? CloseRequested;
-
-    private async Task RequestClose()
+    private static (string background, string foreground) ResolveTypeColors(ActivityType type) => type switch
     {
-        if (CloseRequested is not null)
-            await CloseRequested.Invoke();
-    }
+        ActivityType.User => ("#E8F5E9", "#2E7D32"),
+        ActivityType.System => ("#E3F2FD", "#1565C0"),
+        ActivityType.Cron => ("#FFF8E1", "#F57F17"),
+        _ => ("#EDE7DE", "#6D4C41")
+    };
 }

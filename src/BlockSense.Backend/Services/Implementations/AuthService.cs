@@ -1,10 +1,12 @@
 ﻿using BlockSense.Backend.Data;
 using BlockSense.Backend.Exceptions.Authentication;
 using BlockSense.Backend.Exceptions.Generic;
+using BlockSense.Backend.Models.ActivityLog;
 using BlockSense.Backend.Models.Device;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Hashing;
+using BlockSense.Contracts.Definitions;
 using BlockSense.Contracts.DTOs.Authentication;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
 using BlockSense.Contracts.Enums;
@@ -22,6 +24,7 @@ namespace BlockSense.Backend.Services.Implementations
         private readonly ITotpCredentialRepository _totpCredentialRepository;
         private readonly ITokenService _tokenService;
         private readonly ITwoFactorAuthService _twoFactorAuthService;
+        private readonly IActivityLogService _activityLogService;
         private readonly DatabaseContext _databaseContext;
         private readonly Argon2idHasher _argon2IdHasher;
 
@@ -32,6 +35,7 @@ namespace BlockSense.Backend.Services.Implementations
         /// <param name="totpCredentialRepository">The repository for TOTP credential operations.</param>
         /// <param name="tokenService">The service responsible for generating access and refresh tokens.</param>
         /// <param name="twoFactorAuthService">The service responsible for two-factor authentication operations.</param>
+        /// <param name="activityLogService">The service responsible for recording user and system activity logs.</param>
         /// <param name="databaseContext">The database context used to manage transactions.</param>
         /// <exception cref="ArgumentNullException">Thrown if any dependency is <c>null</c>.</exception>
         public AuthService(
@@ -39,12 +43,14 @@ namespace BlockSense.Backend.Services.Implementations
             ITotpCredentialRepository totpCredentialRepository,
             ITokenService tokenService,
             ITwoFactorAuthService twoFactorAuthService,
+            IActivityLogService activityLogService,
             DatabaseContext databaseContext)
         {
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _totpCredentialRepository = totpCredentialRepository ?? throw new ArgumentNullException(nameof(totpCredentialRepository));
             _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
             _twoFactorAuthService = twoFactorAuthService ?? throw new ArgumentNullException(nameof(twoFactorAuthService));
+            _activityLogService = activityLogService ?? throw new ArgumentNullException(nameof(activityLogService));
             _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
             _argon2IdHasher = new Argon2idHasher();
         }
@@ -71,6 +77,8 @@ namespace BlockSense.Backend.Services.Implementations
                 var refreshToken = await _tokenService.CreateRefreshTokenAsync(user.Id, deviceContext, cancellationToken);
 
                 await _databaseContext.CommitTransactionAsync(cancellationToken);
+
+                await LogAuthenticationAsync(user.Id, deviceContext, cancellationToken);
 
                 return new AuthResponse
                 {
@@ -130,6 +138,22 @@ namespace BlockSense.Backend.Services.Implementations
             await _twoFactorAuthService.VerifyAsync(
                 userId,
                 new TwoFactorVerificationRequest { TwoFactorCode = code },
+                cancellationToken);
+        }
+
+        private Task LogAuthenticationAsync(
+            uint userId,
+            DeviceContext deviceContext,
+            CancellationToken cancellationToken)
+        {
+            var context = new ActivityLogContext()
+                .WithIpAddress(deviceContext.IpAddress);
+
+            return _activityLogService.CreateAsync(
+                ActivityType.User,
+                userId,
+                ActivityActions.Device.Authenticated,
+                context,
                 cancellationToken);
         }
     }

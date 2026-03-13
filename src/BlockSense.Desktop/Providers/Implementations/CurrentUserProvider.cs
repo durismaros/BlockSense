@@ -98,6 +98,7 @@ namespace BlockSense.Desktop.Providers.Implementations
         public void SetTwoFactorBackupCodes(IEnumerable<string>? backupCodes)
         {
             TwoFactorBackupCodes = backupCodes;
+            _onCurrentUserChanged?.Invoke();
         }
 
         public void Clear()

@@ -2,140 +2,116 @@ using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
-using Avalonia.Controls.Documents;
+using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Styling;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NBitcoin;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace BlockSense.Desktop;
 
+/// <summary>
+/// View that allows the user to restore a wallet by entering their 12-word BIP-39 recovery phrase.
+/// </summary>
 public partial class RecoveryPhraseImportView : UserControl
 {
     private readonly NavigationManager _navigationManager;
+    private readonly ILogger<RecoveryPhraseImportView> _logger;
     private readonly List<TextBox> _wordInputs = new();
 
+    /// <summary>
+    /// Initialises a new instance of <see cref="RecoveryPhraseImportView"/>.
+    /// </summary>
     public RecoveryPhraseImportView()
     {
         _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
             ?? throw new ArgumentNullException(nameof(NavigationManager));
 
+        _logger = App.ServiceProvider.GetRequiredService<ILogger<RecoveryPhraseImportView>>()
+            ?? throw new ArgumentNullException(nameof(ILogger<RecoveryPhraseImportView>));
+
         InitializeComponent();
-        CreateWordInputs();
+        BuildWordInputs();
 
         AttachedToVisualTree += OnAttachedToVisualTree;
         DetachedFromVisualTree += OnDetachedFromVisualTree;
     }
 
-    private async void ToWalletSelectionViewClick(object? sender, RoutedEventArgs e)
+    private void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    {
+        SlidePanel.RenderTransform = new TranslateTransform(0, SlidePanel.Height);
+
+        HomeButton.Click += OnHomeButtonClicked;
+        ContinueButton.Click += OnContinueButtonClicked;
+        ContentGrid.PointerPressed += OnContentGridPointerPressed;
+        SubmitButton.Click += OnSubmitButtonClicked;
+        CheckBox1.IsCheckedChanged += OnAcknowledgementCheckBoxChanged;
+        CheckBox2.IsCheckedChanged += OnAcknowledgementCheckBoxChanged;
+        CheckBox3.IsCheckedChanged += OnAcknowledgementCheckBoxChanged;
+    }
+
+    private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    {
+        HomeButton.Click -= OnHomeButtonClicked;
+        ContinueButton.Click -= OnContinueButtonClicked;
+        ContentGrid.PointerPressed -= OnContentGridPointerPressed;
+        SubmitButton.Click -= OnSubmitButtonClicked;
+        CheckBox1.IsCheckedChanged -= OnAcknowledgementCheckBoxChanged;
+        CheckBox2.IsCheckedChanged -= OnAcknowledgementCheckBoxChanged;
+        CheckBox3.IsCheckedChanged -= OnAcknowledgementCheckBoxChanged;
+    }
+
+    /// <summary>
+    /// Navigates back to the wallet selection view.
+    /// </summary>
+    private async void OnHomeButtonClicked(object? sender, RoutedEventArgs e)
     {
         await _navigationManager.NavigateToAsync<WalletSelectionView>();
     }
 
-    private async void ToPinEntryViewClick(object? sender, RoutedEventArgs e)
+    private void OnContinueButtonClicked(object? sender, RoutedEventArgs e)
+        => _ = AnimateSlidePanelAsync(open: true);
+
+    private void OnContentGridPointerPressed(object? sender, PointerPressedEventArgs e)
+        => _ = AnimateSlidePanelAsync(open: false);
+
+    /// <summary>
+    /// Validates the recovery phrase and navigates to PIN entry.
+    /// </summary>
+    private async void OnSubmitButtonClicked(object? sender, RoutedEventArgs e)
     {
-        if (!SetValidMnemonic())
-        {
+        if (!TrySetValidMnemonic())
             return;
-        }
 
         await _navigationManager.NavigateToAsync<PinEntryView>();
     }
 
-    private void CreateWordInputs()
+    /// <summary>
+    /// Enables or disables the submit button based on the three acknowledgement checkboxes.
+    /// </summary>
+    private void OnAcknowledgementCheckBoxChanged(object? sender, RoutedEventArgs e)
     {
-        PhraseGrid.Children.Clear();
-        _wordInputs.Clear();
-
-        for (int i = 1; i <= 12; i++)
-        {
-            int wordIndex = i; // capture for closure
-
-            var stackPanel = new StackPanel
-            {
-                Width = 80,
-                Height = 50,
-                Spacing = 5,
-                Background = Brushes.Transparent
-            };
-
-            var mnemonicTextBox = new TextBox
-            {
-                Watermark = "enter",
-                BorderThickness = new Thickness(0),
-                HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-            };
-
-            var separator = new Border
-            {
-                Width = 85,
-                Height = 1,
-                Background = new SolidColorBrush(Color.Parse("#5D4037")),
-                CornerRadius = new CornerRadius(100),
-                BoxShadow = new BoxShadows(
-                    new BoxShadow
-                    {
-                        OffsetX = 5,
-                        OffsetY = 5,
-                        Blur = 10,
-                        Spread = 0,
-                        Color = Colors.Black
-                    })
-            };
-
-            var mnemonicIndex = new TextBlock
-            {
-                Text = wordIndex.ToString(),
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                Foreground = new SolidColorBrush(Color.Parse("#3E2723")),
-                FontSize = 12,
-                FontWeight = FontWeight.Medium
-            };
-
-            stackPanel.Children.Add(mnemonicTextBox);
-            stackPanel.Children.Add(separator);
-            stackPanel.Children.Add(mnemonicIndex);
-
-            PhraseGrid.Children.Add(stackPanel);
-            _wordInputs.Add(mnemonicTextBox);
-        }
+        SubmitButton.IsEnabled =
+            CheckBox1.IsChecked == true &&
+            CheckBox2.IsChecked == true &&
+            CheckBox3.IsChecked == true;
     }
 
-    private async void AnimateSlidePanel(bool toggle)
+    /// <summary>
+    /// Validates the entered recovery phrase words and sets
+    /// <see cref="PinEntryView.Mnemonic"/> if valid.
+    /// </summary>
+    /// <returns><see langword="true"/> if a valid mnemonic was set.</returns>
+    public bool TrySetValidMnemonic()
     {
-        var animation = new Animation
-        {
-            Duration = TimeSpan.FromSeconds(0.3),
-            FillMode = FillMode.Forward,
-            Easing = new CubicEaseOut()
-        };
-
-        animation.Children.Add(new KeyFrame
-        {
-            Cue = new Cue(1.0),
-            Setters =
-            {
-                new Setter
-                {
-                    Property = TranslateTransform.YProperty,
-                    Value = toggle ? 0.0 : SlidePanel.Height
-                }
-            }
-        });
-
-        await animation.RunAsync(SlidePanel);
-    }
-    public bool SetValidMnemonic()
-    {
-        // Check if any TextBox is null, empty, or whitespace
-        if (_wordInputs.Any(tb => string.IsNullOrWhiteSpace(tb.Text)))
+        if (_wordInputs.Any(input => string.IsNullOrWhiteSpace(input.Text)))
         {
             MainWindow.Instance.ShowNotification(
                 "Invalid Phrase",
@@ -143,52 +119,100 @@ public partial class RecoveryPhraseImportView : UserControl
             return false;
         }
 
-        // Combine the words into a phrase
-        var phrase = string.Join(" ", _wordInputs.Select(tb => tb.Text?.Trim()));
-
-        // Create the mnemonic
+        var phrase = string.Join(" ", _wordInputs.Select(input => input.Text?.Trim()));
         var mnemonic = new Mnemonic(phrase, Wordlist.English);
 
-        if (mnemonic.IsValidChecksum)
+        if (!mnemonic.IsValidChecksum)
         {
-            PinEntryView.Mnemonic = mnemonic;
-            return true;
+            _logger.LogWarning("User entered an invalid mnemonic phrase.");
+            MainWindow.Instance.ShowNotification(
+                "Invalid Phrase",
+                "Entered mnemonic phrase seems to be invalid.");
+            return false;
         }
 
-        MainWindow.Instance.ShowNotification(
-            "Invalid Phrase",
-            "Entered mnemonic phrase seems to be invalid.");
-        return false;
+        PinEntryView.Mnemonic = mnemonic;
+        _logger.LogInformation("Valid mnemonic phrase accepted.");
+        return true;
     }
 
-    private void OnCheckboxChanged(object? sender, RoutedEventArgs e)
+    private void BuildWordInputs()
     {
-        SubmitButton.IsEnabled = CheckBox1.IsChecked == true && CheckBox2.IsChecked == true && CheckBox3.IsChecked == true;
+        PhraseGrid.Children.Clear();
+        _wordInputs.Clear();
+
+        for (int wordNumber = 1; wordNumber <= 12; wordNumber++)
+        {
+            var inputBox = new TextBox
+            {
+                Classes = { "NoUnderline" },
+                Watermark = "enter",
+                BorderThickness = new Thickness(0),
+                HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center
+            };
+
+            var separator = BuildWordSeparator();
+
+            var indexLabel = new TextBlock
+            {
+                Text = wordNumber.ToString(),
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                Foreground = new SolidColorBrush(Color.Parse("#3E2723")),
+                FontSize = 12,
+                FontWeight = Avalonia.Media.FontWeight.Medium
+            };
+
+            var wordStack = new StackPanel
+            {
+                Width = 110,
+                Height = 50,
+                Spacing = 5,
+                Background = Avalonia.Media.Brushes.Transparent
+            };
+
+            wordStack.Children.Add(inputBox);
+            wordStack.Children.Add(separator);
+            wordStack.Children.Add(indexLabel);
+
+            PhraseGrid.Children.Add(wordStack);
+            _wordInputs.Add(inputBox);
+        }
     }
 
-    private void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    private async Task AnimateSlidePanelAsync(bool open)
     {
-        SlidePanel.RenderTransform = new TranslateTransform(0, SlidePanel.Height);
+        var targetY = open ? 0.0 : SlidePanel.Height;
 
-        HomeButton.Click += ToWalletSelectionViewClick;
-        ContinueButton.Click += (s, e) => AnimateSlidePanel(true);
-        ContentGrid.PointerPressed += (s, ev) => AnimateSlidePanel(false);
-        SubmitButton.Click += ToPinEntryViewClick;
-
-        CheckBox1.IsCheckedChanged += OnCheckboxChanged;
-        CheckBox2.IsCheckedChanged += OnCheckboxChanged;
-        CheckBox3.IsCheckedChanged += OnCheckboxChanged;
+        await new Animation
+        {
+            Duration = TimeSpan.FromSeconds(0.3),
+            FillMode = FillMode.Forward,
+            Easing = new CubicEaseOut(),
+            Children =
+            {
+                new KeyFrame
+                {
+                    Cue     = new Cue(1.0),
+                    Setters = { new Setter(TranslateTransform.YProperty, targetY) }
+                }
+            }
+        }.RunAsync(SlidePanel);
     }
 
-    private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    private static Border BuildWordSeparator() => new()
     {
-        HomeButton.Click -= ToWalletSelectionViewClick;
-        ContinueButton.Click -= (s, e) => AnimateSlidePanel(true);
-        ContentGrid.PointerPressed -= (s, ev) => AnimateSlidePanel(false);
-        SubmitButton.Click -= ToPinEntryViewClick;
-
-        CheckBox1.IsCheckedChanged -= OnCheckboxChanged;
-        CheckBox2.IsCheckedChanged -= OnCheckboxChanged;
-        CheckBox3.IsCheckedChanged -= OnCheckboxChanged;
-    }
+        Width = 100,
+        Height = 1,
+        Background = new SolidColorBrush(Color.Parse("#5D4037")),
+        CornerRadius = new CornerRadius(100),
+        BoxShadow = new Avalonia.Media.BoxShadows(new Avalonia.Media.BoxShadow
+        {
+            OffsetX = 5,
+            OffsetY = 5,
+            Blur = 10,
+            Spread = 0,
+            Color = Avalonia.Media.Colors.Black
+        })
+    };
 }

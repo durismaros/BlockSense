@@ -6,6 +6,7 @@ using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Backend.Utilities;
 using BlockSense.Contracts.Cryptography.Hashing;
+using BlockSense.Contracts.Definitions;
 using BlockSense.Contracts.DTOs.Invitation;
 using BlockSense.Contracts.DTOs.Registration;
 using BlockSense.Contracts.DTOs.Session;
@@ -26,6 +27,7 @@ namespace BlockSense.Backend.Services.Implementations
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly ITotpCredentialRepository _totpCredentialRepository;
         private readonly IActivityLogRepository _activityLogRepository;
+        private readonly IActivityLogService _activityLogService;
         private readonly DatabaseContext _databaseContext;
         private readonly Argon2idHasher _argon2IdHasher;
 
@@ -37,6 +39,7 @@ namespace BlockSense.Backend.Services.Implementations
         /// <param name="refreshTokenRepository">The repository for refresh token entity operations.</param>
         /// <param name="totpCredentialRepository">The repository for TOTP credential entity operations.</param>
         /// <param name="activityLogRepository">The repository for activity log entity operations.</param>
+        /// <param name="activityLogService">The service responsible for recording user and system activity logs.</param>
         /// <param name="databaseContext">The database context used to manage transactions.</param>
         /// <exception cref="ArgumentNullException">Thrown if any dependency is <c>null</c>.</exception>
         public UserService(
@@ -45,6 +48,7 @@ namespace BlockSense.Backend.Services.Implementations
             IRefreshTokenRepository refreshTokenRepository,
             ITotpCredentialRepository totpCredentialRepository,
             IActivityLogRepository activityLogRepository,
+            IActivityLogService activityLogService,
             DatabaseContext databaseContext)
         {
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
@@ -52,6 +56,7 @@ namespace BlockSense.Backend.Services.Implementations
             _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
             _totpCredentialRepository = totpCredentialRepository ?? throw new ArgumentNullException(nameof(totpCredentialRepository));
             _activityLogRepository = activityLogRepository ?? throw new ArgumentNullException(nameof(activityLogRepository));
+            _activityLogService = activityLogService ?? throw new ArgumentNullException(nameof(activityLogService));
             _databaseContext = databaseContext ?? throw new ArgumentNullException(nameof(databaseContext));
             _argon2IdHasher = new Argon2idHasher();
         }
@@ -72,6 +77,8 @@ namespace BlockSense.Backend.Services.Implementations
 
                 await _invitationRepository.RedeemAsync(invitation.Id, userId, cancellationToken);
                 await _databaseContext.CommitTransactionAsync(cancellationToken);
+
+                await LogUserRegisteredAsync(userId, cancellationToken);
 
                 return BuildRegistrationResponse(userId, user);
             }
@@ -218,6 +225,15 @@ namespace BlockSense.Backend.Services.Implementations
             if (DateTime.UtcNow >= invitation.ExpiresAt) return InvitationStatus.Expired;
 
             return InvitationStatus.Active;
+        }
+
+        private Task LogUserRegisteredAsync(uint userId, CancellationToken cancellationToken)
+        {
+            return _activityLogService.CreateAsync(
+                ActivityType.User,
+                userId,
+                ActivityActions.User.Registered,
+                cancellationToken: cancellationToken);
         }
     }
 }
