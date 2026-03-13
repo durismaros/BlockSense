@@ -2,32 +2,23 @@
 
 namespace BlockSense.Backend.Exceptions.Registration
 {
+    /// <summary>
+    /// Thrown when the invitation code provided during registration is not valid.
+    /// </summary>
     public sealed class InvalidInvitationCodeException : ApiException
     {
-        public override string Type
-        {
-            get
-            {
-                return ApiProblemTypes.Registration.InvalidInvitation;
-            }
-        }
+        /// <inheritdoc/>
+        public override string Type => StandardizedCodes.Registration.InvalidInvitation;
 
-        public override string Title
-        {
-            get
-            {
-                return "Invalid Invitation Code";
-            }
-        }
+        /// <inheritdoc/>
+        public override string Title => "Invalid Invitation Code";
 
-        public override int Status
-        {
-            get
-            {
-                return StatusCodes.Status401Unauthorized;
-            }
-        }
+        /// <inheritdoc/>
+        public override int Status => StatusCodes.Status401Unauthorized;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="InvalidInvitationCodeException"/> class.
+        /// </summary>
         public InvalidInvitationCodeException()
             : base("The invitation code you entered is not valid. Please check the code and try again, or contact support if you believe this is an error.") { }
     }

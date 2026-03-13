@@ -21,15 +21,13 @@ namespace BlockSense.Desktop.Utilities.ApiHandling
             if (AddBearerToken)
             {
                 httpRequest.Options.Set(
-                    new HttpRequestOptionsKey<bool>(nameof(AddBearerToken)),
-                    true);
+                    new HttpRequestOptionsKey<bool>(nameof(AddBearerToken)), true);
             }
 
             if (AddDeviceHeaders)
             {
                 httpRequest.Options.Set(
-                    new HttpRequestOptionsKey<bool>(nameof(AddDeviceHeaders)),
-                    true);
+                    new HttpRequestOptionsKey<bool>(nameof(AddDeviceHeaders)), true);
             }
         }
     }

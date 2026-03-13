@@ -3,12 +3,12 @@
 namespace BlockSense.Contracts.DTOs.User
 {
     /// <summary>
-    /// Represents a summary of a user account.
+    /// Represents a summary of a user's account information.
     /// </summary>
     public sealed record UserSummaryDto
     {
         /// <summary>
-        /// Unique identifier of the user.
+        /// The unique identifier of the user.
         /// </summary>
         public required uint UserId
         {
@@ -35,16 +35,16 @@ namespace BlockSense.Contracts.DTOs.User
         }
 
         /// <summary>
-        /// Type of the user account.
+        /// The role assigned to the user.
         /// </summary>
-        public required UserType UserType
+        public required UserRole Role
         {
             get;
             init;
         }
 
         /// <summary>
-        /// UTC timestamp when the user account was created.
+        /// The UTC timestamp when the user account was created.
         /// </summary>
         public required DateTime CreatedAt
         {
@@ -53,7 +53,7 @@ namespace BlockSense.Contracts.DTOs.User
         }
 
         /// <summary>
-        /// UTC timestamp when the user account was last updated.
+        /// The UTC timestamp when the user account was last updated.
         /// </summary>
         public required DateTime UpdatedAt
         {
@@ -62,7 +62,7 @@ namespace BlockSense.Contracts.DTOs.User
         }
 
         /// <summary>
-        /// Identifier (Username) of the user who invited this account.
+        /// The username of the user who invited this account, if applicable.
         /// </summary>
         public required string InvitedBy
         {
@@ -71,7 +71,7 @@ namespace BlockSense.Contracts.DTOs.User
         }
 
         /// <summary>
-        /// Indicates whether two-factor authentication (2FA) is enabled for this user.
+        /// Indicates whether two-factor authentication is enabled for this account.
         /// </summary>
         public required bool TwoFactorEnabled
         {

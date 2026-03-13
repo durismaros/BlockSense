@@ -21,7 +21,9 @@ namespace BlockSense.Desktop.Utilities.Validation
         public static bool TryValidate<T>(T model, out string errorMessage)
         {
             if (model is null)
+            {
                 throw new ArgumentNullException(nameof(model));
+            }
 
             // Create a validation context and collect validation results
             var context = new ValidationContext(model);

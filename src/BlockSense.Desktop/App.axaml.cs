@@ -5,7 +5,8 @@ using BlockSense.Desktop.Providers.Implementations;
 using BlockSense.Desktop.Providers.Interfaces;
 using BlockSense.Desktop.Services.Implementations;
 using BlockSense.Desktop.Services.Interfaces;
-using BlockSense.Desktop.Utilities.ApiHandling;
+using BlockSense.Desktop.Utilities.ApiHandling.HeaderHandlers;
+using BlockSense.Desktop.Utilities.FileManagement;
 using BlockSense.Desktop.Utilities.UIComponents;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -17,17 +18,11 @@ namespace BlockSense.Desktop
 {
     public partial class App : Application
     {
-        public static IServiceProvider ServiceProvider
-        {
-            get;
-            private set;
-        }
-        = default!;
+        public static IServiceProvider ServiceProvider { get; private set; } = default!;
 
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
-
             ConfigureServices();
         }
 
@@ -37,7 +32,8 @@ namespace BlockSense.Desktop
             {
                 desktop.MainWindow = ServiceProvider.GetRequiredService<MainWindow>();
 
-                await ServiceProvider.GetRequiredService<IUserService>().InitializeAsync();
+                var session = ServiceProvider.GetRequiredService<ISessionService>();
+                await session.InitializeSessionAsync();
             }
 
             base.OnFrameworkInitializationCompleted();
@@ -47,18 +43,20 @@ namespace BlockSense.Desktop
         {
             var services = new ServiceCollection();
 
+            // Logging
             services.AddLogging(builder =>
             {
                 builder.ClearProviders();
                 builder.AddSerilog(dispose: true);
             });
 
+            // HTTP Client with handlers
             services.AddTransient<AuthorizationHeaderHandler>();
             services.AddTransient<DeviceContextHeaderHandler>();
 
             services.AddHttpClient<IApiClient, ApiClient>(client =>
             {
-                client.BaseAddress = new Uri("https://localhost:7262");
+                client.BaseAddress = new Uri("https://unicorn-casual-yeti.ngrok-free.app");
                 client.Timeout = TimeSpan.FromSeconds(30);
                 client.DefaultRequestHeaders.Accept.Add(
                     new MediaTypeWithQualityHeaderValue("application/json"));
@@ -66,27 +64,44 @@ namespace BlockSense.Desktop
             .AddHttpMessageHandler<AuthorizationHeaderHandler>()
             .AddHttpMessageHandler<DeviceContextHeaderHandler>();
 
-            // --- Model Providers ---
+            // --- Model Providers (Singleton for state management) ---
             services.AddSingleton<IDeviceContextProvider, DeviceContextProvider>();
             services.AddSingleton<IRefreshTokenProvider, RefreshTokenProvider>();
             services.AddSingleton<IAccessTokenProvider, AccessTokenProvider>();
             services.AddSingleton<ICurrentUserProvider, CurrentUserProvider>();
+            services.AddSingleton<ICurrentWalletProvider, CurrentWalletProvider>();
+            services.AddSingleton<IBitcoinProvider, BitcoinProvider>();
+            services.AddSingleton<IEthereumProvider, EthereumProvider>();
 
-            // --- Services / Helpers ---
+            // --- Infrastructure ---
             services.AddSingleton<NavigationManager>();
 
+            // --- Services / Helpers ---
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<ITwoFactorAuthService, TwoFactorAuthService>();
+            services.AddScoped<ISessionService, SessionService>();
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<ITwoFactorAuthService, TwoFactorAuthService>();
+            services.AddScoped<IActivityLogService, ActivityLogService>();
+            services.AddScoped<IWalletService, WalletService>();
+            services.AddScoped<IBitcoinService, BitcoinService>();
+            services.AddScoped<IEthereumService, EthereumService>();
 
             // --- Views ---
             services.AddSingleton<WelcomeView>();
             services.AddSingleton<RegistrationView>();
             services.AddSingleton<AuthenticationView>();
-            services.AddSingleton<TwoFactorSlidingPanel>();
             services.AddSingleton<HomeView>();
             services.AddSingleton<UserDashboardView>();
+            services.AddSingleton<WalletSelectionView>();
+            services.AddSingleton<RecoveryPhraseView>();
+            services.AddSingleton<RecoveryPhraseImportView>();
+            services.AddSingleton<PinEntryView>();
+            services.AddSingleton<CryptoWalletView>();
+
+            // --- Panels ---
+            services.AddSingleton<TwoFactorSlidingPanel>();
+            services.AddSingleton<PinEntrySlidingPanel>();
 
             // --- Windows ---
             services.AddSingleton<MainWindow>();

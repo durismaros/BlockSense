@@ -2,32 +2,23 @@
 
 namespace BlockSense.Backend.Exceptions.Authentication
 {
+    /// <summary>
+    /// Thrown when an account requires two-factor authentication to proceed but it has not been completed.
+    /// </summary>
     public sealed class TwoFactorRequiredException : ApiException
     {
-        public override string Type
-        {
-            get
-            {
-                return ApiProblemTypes.Authentication.TwoFactorRequired;
-            }
-        }
+        /// <inheritdoc/>
+        public override string Type => StandardizedCodes.Authentication.TwoFactorRequired;
 
-        public override string Title
-        {
-            get
-            {
-                return "Two-Factor Authentication Required";
-            }
-        }
+        /// <inheritdoc/>
+        public override string Title => "Two-Factor Authentication Required";
 
-        public override int Status
-        {
-            get
-            {
-                return StatusCodes.Status401Unauthorized;
-            }
-        }
+        /// <inheritdoc/>
+        public override int Status => StatusCodes.Status401Unauthorized;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TwoFactorRequiredException"/> class.
+        /// </summary>
         public TwoFactorRequiredException()
             : base("This account requires two-factor authentication (2FA) to proceed. Please complete the 2FA verification to continue.") { }
     }

@@ -2,47 +2,42 @@
 
 namespace BlockSense.Backend.Exceptions.TwoFactorAuthentication
 {
-    public class TwoFactorCooldownException : ApiException
+    /// <summary>
+    /// Thrown when backup codes cannot be regenerated because the cooldown period has not yet elapsed.
+    /// </summary>
+    public sealed class TwoFactorCooldownException : ApiException
     {
-        public override string Type
-        {
-            get
-            {
-                return ApiProblemTypes.TwoFactorAuthentication.BackupCodesCooldown;
-            }
-        }
+        /// <inheritdoc/>
+        public override string Type => StandardizedCodes.TwoFactorAuthentication.BackupCodesCooldown;
 
-        public override string Title
-        {
-            get
-            {
-                return "Backup Codes Cooldown";
-            }
-        }
+        /// <inheritdoc/>
+        public override string Title => "Backup Codes Cooldown";
 
-        public override int Status
-        {
-            get
-            {
-                return StatusCodes.Status429TooManyRequests;
-            }
-        }
+        /// <inheritdoc/>
+        public override int Status => StatusCodes.Status429TooManyRequests;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TwoFactorCooldownException"/> class.
+        /// </summary>
+        /// <param name="remainingTime">The time remaining before backup codes can be regenerated.</param>
         public TwoFactorCooldownException(TimeSpan remainingTime)
-            : base($"Backup codes cannot be generated yet. Please wait {FormatTime(remainingTime)} before trying again.") { }
+            : base($"Backup codes cannot be generated yet. Please wait {FormatRemainingTime(remainingTime)} before trying again.") { }
 
-        private static string FormatTime(TimeSpan timeSpan)
+        /// <summary>
+        /// Formats a <see cref="TimeSpan"/> into a human-readable duration string (e.g., "1 hour", "5 minutes").
+        /// </summary>
+        /// <param name="remainingTime">The duration to format.</param>
+        /// <returns>A human-readable string representing the duration in hours or minutes.</returns>
+        private static string FormatRemainingTime(TimeSpan remainingTime)
         {
-            if (timeSpan.TotalHours >= 1)
+            if (remainingTime.TotalHours >= 1)
             {
-                int hours = (int)timeSpan.TotalHours;
+                int hours = (int)remainingTime.TotalHours;
                 return hours == 1 ? "1 hour" : $"{hours} hours";
             }
-            else
-            {
-                int minutes = (int)timeSpan.TotalMinutes;
-                return minutes == 1 ? "1 minute" : $"{minutes} minutes";
-            }
+
+            int minutes = (int)remainingTime.TotalMinutes;
+            return minutes == 1 ? "1 minute" : $"{minutes} minutes";
         }
     }
 }

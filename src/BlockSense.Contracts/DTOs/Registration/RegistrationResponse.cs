@@ -4,12 +4,12 @@ using System.Text.Json.Serialization;
 namespace BlockSense.Contracts.DTOs.Registration
 {
     /// <summary>
-    /// Represents the response returned by the backend after a user registration attempt.
+    /// Represents the response returned after a successful user registration.
     /// </summary>
     public sealed record RegistrationResponse
     {
         /// <summary>
-        /// The unique identifier of the registered user.
+        /// The unique identifier of the newly registered user.
         /// </summary>
         public required uint UserId
         {
@@ -36,20 +36,17 @@ namespace BlockSense.Contracts.DTOs.Registration
         }
 
         /// <summary>
-        /// The type of the registered user.
+        /// The role assigned to the registered user. Serialized as a string in JSON responses.
         /// </summary>
-        /// <remarks>
-        /// Serialized as a string using JSON string enum converter.
-        /// </remarks>
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public required UserType UserType
+        public required UserRole UserRole
         {
             get;
             init;
         }
 
         /// <summary>
-        /// The UTC timestamp when the user was created.
+        /// The UTC timestamp when the user account was created.
         /// </summary>
         public required DateTime CreatedAt
         {

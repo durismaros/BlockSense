@@ -12,11 +12,6 @@ namespace BlockSense.Backend.Data
         private MySqlTransaction? _currentTransaction;
 
         /// <summary>
-        /// Gets the underlying MySQL connection used by this context.
-        /// </summary>
-        public MySqlConnection Connection => _connection;
-
-        /// <summary>
         /// Initializes a new instance of <see cref="DatabaseContext"/> using the provided connection.
         /// </summary>
         /// <param name="connection">A non-null <see cref="MySqlConnection"/>. Connection lifetime is managed externally.</param>
@@ -25,12 +20,6 @@ namespace BlockSense.Backend.Data
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
         }
-
-        /// <summary>
-        /// Gets the currently active transaction, if any.
-        /// </summary>
-        /// <returns>The active <see cref="MySqlTransaction"/> or null if none exists.</returns>
-        public MySqlTransaction? GetCurrentTransaction() => _currentTransaction;
 
         /// <summary>
         /// Begins a new transaction with the specified isolation level.
@@ -42,10 +31,12 @@ namespace BlockSense.Backend.Data
         public async Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted, CancellationToken cancellationToken = default)
         {
             if (_currentTransaction is not null)
+            {
                 throw new InvalidOperationException("A transaction is already active.");
+            }
 
             await EnsureConnectionOpenAsync(cancellationToken);
-            _currentTransaction = _connection.BeginTransaction(isolationLevel);
+            _currentTransaction = await _connection.BeginTransactionAsync(isolationLevel, cancellationToken);
         }
 
         /// <summary>
@@ -54,14 +45,15 @@ namespace BlockSense.Backend.Data
         /// <param name="cancellationToken">Optional token to cancel the commit.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         /// <exception cref="InvalidOperationException">Thrown if no transaction is active.</exception>
-        public async Task CommitAsync(CancellationToken cancellationToken = default)
+        public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
         {
             if (_currentTransaction is null)
+            {
                 throw new InvalidOperationException("No active transaction to commit.");
+            }
 
             await _currentTransaction.CommitAsync(cancellationToken);
-            await _currentTransaction.DisposeAsync();
-            _currentTransaction = null;
+            await DisposeTransactionAsync();
         }
 
         /// <summary>
@@ -69,23 +61,25 @@ namespace BlockSense.Backend.Data
         /// </summary>
         /// <param name="cancellationToken">Optional token to cancel the rollback.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public async Task RollbackAsync(CancellationToken cancellationToken = default)
+        /// <exception cref="InvalidOperationException">Thrown if no transaction is active.</exception>
+        public async Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
         {
-            if (_currentTransaction != null)
+            if (_currentTransaction is null)
             {
-                await _currentTransaction.RollbackAsync(cancellationToken);
-                await _currentTransaction.DisposeAsync();
-                _currentTransaction = null;
+                throw new InvalidOperationException("No active transaction to rollback.");
             }
+
+            await _currentTransaction.RollbackAsync(cancellationToken);
+            await DisposeTransactionAsync();
         }
 
         /// <summary>
-        /// Executes a SQL query that returns a <see cref="DbDataReader"/> for reading multiple rows.
+        /// Executes a SQL query and returns a <see cref="MySqlDataReader"/> for reading multiple rows.
         /// </summary>
         /// <param name="query">The SQL query to execute. Must not be null or empty.</param>
         /// <param name="parameters">Optional SQL parameters for the query.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>A <see cref="DbDataReader"/> for reading query results.</returns>
+        /// <returns>A <see cref="MySqlDataReader"/> for reading the query results.</returns>
         public async Task<MySqlDataReader> ExecuteReaderAsync(string query, IEnumerable<MySqlParameter>? parameters = null, CancellationToken cancellationToken = default)
         {
             await EnsureConnectionOpenAsync(cancellationToken);
@@ -101,7 +95,7 @@ namespace BlockSense.Backend.Data
         /// <param name="query">The SQL query to execute. Must not be null or empty.</param>
         /// <param name="parameters">Optional SQL parameters for the query.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>The scalar result of the query cast to type <typeparamref name="T"/>, or default if no value is returned.</returns>
+        /// <returns>The scalar result cast to <typeparamref name="T"/>, or <c>default</c> if no value is returned.</returns>
         public async Task<T?> ExecuteScalarAsync<T>(string query, IEnumerable<MySqlParameter>? parameters = null, CancellationToken cancellationToken = default)
         {
             await EnsureConnectionOpenAsync(cancellationToken);
@@ -109,7 +103,7 @@ namespace BlockSense.Backend.Data
             await using var command = CreateCommand(query, parameters);
             var result = await command.ExecuteScalarAsync(cancellationToken);
 
-            return (result is null || result == DBNull.Value) ? default : (T)Convert.ChangeType(result, typeof(T));
+            return IsNullOrDbNull(result) ? default : (T)Convert.ChangeType(result!, typeof(T));
         }
 
         /// <summary>
@@ -128,7 +122,28 @@ namespace BlockSense.Backend.Data
         }
 
         /// <summary>
-        /// Ensures the underlying connection is open before executing commands.
+        /// Asynchronously disposes the database context, rolling back any active transaction
+        /// and closing the underlying connection.
+        /// </summary>
+        /// <returns>A <see cref="ValueTask"/> representing the asynchronous dispose operation.</returns>
+        public async ValueTask DisposeAsync()
+        {
+            if (_currentTransaction is not null)
+            {
+                await _currentTransaction.RollbackAsync();
+                await DisposeTransactionAsync();
+            }
+
+            if (_connection.State == ConnectionState.Open)
+            {
+                await _connection.CloseAsync();
+            }
+
+            await _connection.DisposeAsync();
+        }
+
+        /// <summary>
+        /// Ensures the underlying database connection is open before executing commands.
         /// </summary>
         /// <param name="cancellationToken">Optional token to cancel opening the connection.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
@@ -141,18 +156,29 @@ namespace BlockSense.Backend.Data
         }
 
         /// <summary>
-        /// Creates a <see cref="MySqlCommand"/> with the provided SQL, parameters, and current transaction.
+        /// Disposes the current transaction and clears the reference.
+        /// </summary>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        private async Task DisposeTransactionAsync()
+        {
+            await _currentTransaction!.DisposeAsync();
+            _currentTransaction = null;
+        }
+
+        /// <summary>
+        /// Creates a <see cref="MySqlCommand"/> configured with the provided SQL, parameters, and active transaction.
         /// </summary>
         /// <param name="query">The SQL query to execute. Must not be null or empty.</param>
-        /// <param name="parameters">Optional parameters for the query.</param>
+        /// <param name="parameters">Optional parameters to bind to the command.</param>
         /// <returns>A configured <see cref="MySqlCommand"/> ready for execution.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="query"/> is null or empty or a parameter is null.</exception>
+        /// <exception cref="ArgumentException">Thrown if <paramref name="query"/> is null or whitespace.</exception>
+        /// <exception cref="ArgumentNullException">Thrown if any parameter in <paramref name="parameters"/> is null.</exception>
         /// <exception cref="InvalidOperationException">Thrown if duplicate parameter names are detected.</exception>
         private MySqlCommand CreateCommand(string query, IEnumerable<MySqlParameter>? parameters)
         {
             if (string.IsNullOrWhiteSpace(query))
             {
-                throw new ArgumentNullException(nameof(query), "SQL query must not be empty.");
+                throw new ArgumentException("SQL query must not be null or empty.", nameof(query));
             }
 
             var command = _connection.CreateCommand();
@@ -161,42 +187,44 @@ namespace BlockSense.Backend.Data
             command.CommandTimeout = 30;
             command.Transaction = _currentTransaction;
 
-            if (parameters != null)
+            if (parameters is not null)
             {
-                foreach (var p in parameters)
-                {
-                    if (p is null)
-                        throw new ArgumentNullException(nameof(parameters));
-
-                    if (command.Parameters.Contains(p.ParameterName))
-                        throw new InvalidOperationException($"Duplicate SQL parameter detected: {p.ParameterName}");
-
-                    command.Parameters.Add(p);
-                }
+                AddParameters(command, parameters);
             }
 
             return command;
         }
 
         /// <summary>
-        /// Asynchronously disposes the database context.
+        /// Adds the provided parameters to the given command, validating each one for nulls and duplicates.
         /// </summary>
-        /// <returns>A <see cref="ValueTask"/> representing the asynchronous dispose operation.</returns>
-        public async ValueTask DisposeAsync()
+        /// <param name="command">The command to which parameters will be added.</param>
+        /// <param name="parameters">The parameters to add.</param>
+        /// <exception cref="ArgumentNullException">Thrown if any individual parameter is null.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if a duplicate parameter name is detected.</exception>
+        private static void AddParameters(MySqlCommand command, IEnumerable<MySqlParameter> parameters)
         {
-            if (_currentTransaction != null)
+            foreach (var parameter in parameters)
             {
-                await _currentTransaction.RollbackAsync();
-                await _currentTransaction.DisposeAsync();
-                _currentTransaction = null;
-            }
+                if (parameter is null)
+                {
+                    throw new ArgumentNullException(nameof(parameters), "SQL parameter must not be null.");
+                }
 
-            if (_connection.State == ConnectionState.Open)
-            {
-                await _connection.CloseAsync();
-            }
+                if (command.Parameters.Contains(parameter.ParameterName))
+                {
+                    throw new InvalidOperationException($"Duplicate SQL parameter detected: {parameter.ParameterName}");
+                }
 
-            await _connection.DisposeAsync();
+                command.Parameters.Add(parameter);
+            }
         }
+
+        /// <summary>
+        /// Determines whether a scalar query result represents a null or database null value.
+        /// </summary>
+        /// <param name="value">The value returned from a scalar query.</param>
+        /// <returns><c>true</c> if the value is <c>null</c> or <see cref="DBNull.Value"/>; otherwise <c>false</c>.</returns>
+        private static bool IsNullOrDbNull(object? value) => value is null || value == DBNull.Value;
     }
 }

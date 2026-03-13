@@ -1,11 +1,11 @@
-﻿using BlockSense.Contracts.DTOs.Registration;
-using BlockSense.Backend.Exceptions.Registration;
+﻿using BlockSense.Backend.Exceptions.Registration;
+using BlockSense.Contracts.DTOs.Registration;
 using BlockSense.Contracts.DTOs.User;
 
 namespace BlockSense.Backend.Services.Interfaces
 {
     /// <summary>
-    /// Defines operations for managing user-related functionality.
+    /// Defines operations for managing user accounts and retrieving user data.
     /// </summary>
     public interface IUserService
     {
@@ -21,18 +21,19 @@ namespace BlockSense.Backend.Services.Interfaces
         Task<RegistrationResponse> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Retrieves a summary of the specified user.
+        /// Retrieves a summary of the specified user's account.
         /// </summary>
         /// <param name="userId">The unique identifier of the user.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>A <see cref="UserSummary"/> containing basic user information.</returns>
+        /// <returns>A <see cref="UserSummaryDto"/> containing basic user information.</returns>
         Task<UserSummaryDto> GetUserSummaryAsync(uint userId, CancellationToken cancellationToken = default);
+
         /// <summary>
-        /// Retrieves dashboard data for the specified user.
+        /// Retrieves aggregated dashboard data for the specified user.
         /// </summary>
         /// <param name="userId">The unique identifier of the user.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>A <see cref="UserDashboard"/> containing aggregated dashboard information.</returns>
+        /// <returns>A <see cref="UserDashboardDto"/> containing profile, sessions, recent activity, and invitations.</returns>
         Task<UserDashboardDto> GetUserDashboardAsync(uint userId, CancellationToken cancellationToken = default);
     }
 }

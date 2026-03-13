@@ -1,40 +1,49 @@
 <Window xmlns="https://github.com/avaloniaui"
-		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-		xmlns:local="clr-namespace:BlockSense.Desktop"
-		mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-		x:Class="BlockSense.Desktop.MainWindow"
-		Title="BlockSense"
-		Icon="\Assets\Icons\icon_app_taskbar.ico"
-		MinWidth="800" MinHeight="450"
-		Width="960" Height="540"
-		CanMaximize="False"
-		TransparencyLevelHint="AcrylicBlur"
-		Background="Transparent"
-		ExtendClientAreaToDecorationsHint="True">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BlockSense.Desktop"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="BlockSense.Desktop.MainWindow"
+        Title="BlockSense"
+        Icon="\Assets\Icons\icon_app_taskbar.ico"
+        MinWidth="800" MinHeight="450"
+        Width="960" Height="540"
+        CanMaximize="False"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True">
 
-	<Panel>
-		<ExperimentalAcrylicBorder IsHitTestVisible="False">
-			<ExperimentalAcrylicBorder.Material>
-				<ExperimentalAcrylicMaterial BackgroundSource="Digger"
-											 TintColor="Orange"
-											 TintOpacity="0.25"
-											 MaterialOpacity="0.6"/>
-			</ExperimentalAcrylicBorder.Material>
-		</ExperimentalAcrylicBorder>
+    <Panel>
 
-		<ContentControl x:Name="ContentContainer"/>
+        <!-- Acrylic blur background layer -->
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial BackgroundSource="Digger"
+                                             TintColor="Orange"
+                                             TintOpacity="0.25"
+                                             MaterialOpacity="0.6"/>
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
 
-		<StackPanel x:Name="NotificationStackPanel"
-					Width="320"
-					HorizontalAlignment="Right"
-					VerticalAlignment="Top"
-					Margin="12 32"
-					Spacing="12"/>
+        <!-- Primary view host — switched programmatically via NavigationManager -->
+        <ContentControl x:Name="ContentContainer"/>
 
-		<local:TwoFactorSlidingPanel x:Name="TwoFactorSlidingPanel"
-									 IsVisible="False"/>
-	</Panel>
+        <!-- Toast notification stack — anchored to top-right corner -->
+        <StackPanel x:Name="NotificationStackPanel"
+                    Width="320"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="12 32"
+                    Spacing="12"/>
+
+        <!-- 2FA sliding panel — hidden until required -->
+        <local:TwoFactorSlidingPanel x:Name="TwoFactorSlidingPanel"
+                                     IsVisible="False"/>
+
+        <!-- PIN entry sliding panel — hidden until required -->
+        <local:PinEntrySlidingPanel x:Name="PinEntrySlidingPanel"
+                                    IsVisible="False"/>
+    </Panel>
 
 </Window>

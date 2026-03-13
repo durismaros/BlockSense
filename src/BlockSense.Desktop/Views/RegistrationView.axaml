@@ -4,10 +4,10 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="BlockSense.Desktop.RegistrationView">
-    
+
     <Panel>
-        
-        <!-- Go Back Button -->
+
+        <!-- Back button — navigates to the Welcome view -->
         <Button x:Name="HomeButton"
                 Width="44"
                 Height="44"
@@ -15,8 +15,8 @@
                 VerticalAlignment="Top"
                 Background="Transparent"
                 CornerRadius="22"
-                Margin="18 32 0 0">
-            
+                Margin="16 32 0 0">
+
             <Viewbox Width="20"
                      Height="20"
                      HorizontalAlignment="Center"
@@ -29,43 +29,43 @@
             <Button.Styles>
                 <Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
                     <Setter Property="Background" Value="Transparent"/>
-                    <Setter Property="RenderTransform" Value="scale(1.1)" />
+                    <Setter Property="RenderTransform" Value="scale(1.1)"/>
                 </Style>
             </Button.Styles>
         </Button>
-        
-        <!-- Header -->
+
+        <!-- Page header -->
         <StackPanel Margin="72 24 0 0">
-            
+
             <TextBlock Text="Create Account"
                        Foreground="#28282B"
                        FontSize="28"
                        FontWeight="SemiBold"/>
-            
+
             <TextBlock Text="Please fill in the details to register"
                        Foreground="#2E1812"
                        FontSize="14"
                        FontStyle="Italic"/>
-            </StackPanel>
-        
-        <!-- Registration Content -->
+        </StackPanel>
+
+        <!-- Form area -->
         <Panel HorizontalAlignment="Center"
                VerticalAlignment="Center"
                Margin="0 64 0 0">
-            
+
             <StackPanel Spacing="24">
-                
-                <!-- Inputs -->
+
+                <!-- Input fields -->
                 <StackPanel Width="580"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Spacing="16"
                             Margin="0 0 0 16">
-                    
-                    <!-- Username & Email -->
+
+                    <!-- Username and e-mail — side by side -->
                     <StackPanel Orientation="Horizontal"
                                 Spacing="20">
-                        
+
                         <StackPanel Spacing="4"
                                     Width="280">
                             <TextBlock Text="Username"
@@ -78,7 +78,7 @@
                             <TextBox x:Name="UsernameTextBox"
                                      Watermark="Enter username"/>
                         </StackPanel>
-                        
+
                         <StackPanel Width="280"
                                     Spacing="4">
                             <TextBlock Text="Email"
@@ -87,15 +87,17 @@
                                        FontWeight="Medium"
                                        FontStyle="Italic"
                                        Opacity="0.8"/>
+
                             <TextBox x:Name="EmailTextBox"
                                      Watermark="example@email.com"/>
                         </StackPanel>
                     </StackPanel>
-                    
-                    <!-- Password & Confirm Password -->
+
+                    <!-- Password and repeat password — side by side -->
                     <StackPanel Orientation="Horizontal"
                                 Spacing="20">
-                        
+
+                        <!-- Password with reveal toggle -->
                         <StackPanel Width="280"
                                     Spacing="4">
                             <TextBlock Text="Password"
@@ -104,23 +106,24 @@
                                        FontWeight="Medium"
                                        FontStyle="Italic"
                                        Opacity="0.8"/>
+
                             <Panel>
                                 <TextBox x:Name="PasswordTextBox"
                                          Watermark="●●●●●●●●"
                                          PasswordChar="●"
                                          LetterSpacing="2"/>
-                                
+
                                 <Button x:Name="RevealPasswordButton"
                                         HorizontalAlignment="Right"
                                         VerticalAlignment="Center"
                                         Background="Transparent">
                                     <Viewbox Width="24" Height="24">
                                         <Panel Width="24" Height="24">
-                                            
-                                            <!-- Eye Icon -->
-                                            <Path Classes="ReavealPasswordEyeIcon"/>                                    
-                                            
-                                            <!-- Cross Line (hidden by default) -->
+
+                                            <!-- Eye icon (always visible) -->
+                                            <Path Classes="ReavealPasswordEyeIcon"/>
+
+                                            <!-- Strike-through line (hidden by default) -->
                                             <Path x:Name="EyeCrossLine"
                                                   Classes="ReavealPasswordCrossIcon"/>
                                         </Panel>
@@ -128,13 +131,14 @@
                                     <Button.Styles>
                                         <Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
                                             <Setter Property="Background" Value="Transparent"/>
-                                            <Setter Property="RenderTransform" Value="scale(1.1)" />
+                                            <Setter Property="RenderTransform" Value="scale(1.1)"/>
                                         </Style>
                                     </Button.Styles>
                                 </Button>
                             </Panel>
                         </StackPanel>
-                        
+
+                        <!-- Repeat password with reveal toggle -->
                         <StackPanel Width="280"
                                     Spacing="4">
                             <TextBlock Text="Repeat Password"
@@ -143,24 +147,24 @@
                                        FontWeight="Medium"
                                        FontStyle="Italic"
                                        Opacity="0.8"/>
-                            
+
                             <Panel>
                                 <TextBox x:Name="RepeatPasswordTextBox"
                                          Watermark="●●●●●●●●"
                                          PasswordChar="●"
                                          LetterSpacing="2"/>
-                                
+
                                 <Button x:Name="RevealRepeatedPasswordButton"
                                         HorizontalAlignment="Right"
                                         VerticalAlignment="Center"
                                         Background="Transparent">
                                     <Viewbox Width="24" Height="24">
                                         <Panel Width="24" Height="24">
-                                            
-                                            <!-- Eye Icon -->
+
+                                            <!-- Eye icon (always visible) -->
                                             <Path Classes="ReavealPasswordEyeIcon"/>
-                                            
-                                            <!-- Cross Line (hidden by default) -->
+
+                                            <!-- Strike-through line (hidden by default) -->
                                             <Path x:Name="RepeatedEyeCrossLine"
                                                   Classes="ReavealPasswordCrossIcon"/>
                                         </Panel>
@@ -168,38 +172,38 @@
                                     <Button.Styles>
                                         <Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
                                             <Setter Property="Background" Value="Transparent"/>
-                                            <Setter Property="RenderTransform" Value="scale(1.1)" />
+                                            <Setter Property="RenderTransform" Value="scale(1.1)"/>
                                         </Style>
                                     </Button.Styles>
                                 </Button>
                             </Panel>
                         </StackPanel>
                     </StackPanel>
-                    
-                    <!-- Invitation Code -->
+
+                    <!-- Invitation code — centred below the password row -->
                     <StackPanel Width="380"
                                 HorizontalAlignment="Center"
                                 Spacing="4">
-                        
+
                         <TextBlock Text="Invitation Code"
                                    Foreground="#4E342E"
                                    FontSize="13"
                                    FontWeight="Medium"
                                    FontStyle="Italic"
                                    Opacity="0.8"/>
-                        
+
                         <TextBox x:Name="InvitationCodeTextBox"
                                  Watermark="Enter code"/>
                     </StackPanel>
                 </StackPanel>
-                
-                <!-- Register Button -->
+
+                <!-- Primary action -->
                 <Button x:Name="RegisterButton"
                         Classes="DefaultLightBrown"
                         Width="320"
                         Height="36"
                         HorizontalAlignment="Center">
-                    
+
                     <TextBlock Text="Register"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"

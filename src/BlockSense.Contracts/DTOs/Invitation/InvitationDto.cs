@@ -3,22 +3,30 @@
 namespace BlockSense.Contracts.DTOs.Invitation
 {
     /// <summary>
-    /// Represents an invitation code and its current state.
-    /// Used to display invitation information to clients and for administrative purposes.
+    /// Represents an invitation code and its associated metadata.
     /// </summary>
     public sealed record InvitationDto
     {
         /// <summary>
-        /// The unique invitation code string.
+        /// The unique invitation code.
         /// </summary>
-        public required string InvitationCode
+        public required string Code
         {
             get;
             init;
         }
 
         /// <summary>
-        /// The UTC date and time when the invitation was created.
+        /// The username of the user who redeemed this invitation, or null if not yet redeemed.
+        /// </summary>
+        public required string? RedeemedBy
+        {
+            get;
+            init;
+        }
+
+        /// <summary>
+        /// The UTC timestamp when the invitation was created.
         /// </summary>
         public required DateTime CreatedAt
         {
@@ -27,7 +35,7 @@ namespace BlockSense.Contracts.DTOs.Invitation
         }
 
         /// <summary>
-        /// The UTC date and time when the invitation will expire.
+        /// The UTC timestamp when the invitation expires.
         /// </summary>
         public required DateTime ExpiresAt
         {
@@ -36,18 +44,18 @@ namespace BlockSense.Contracts.DTOs.Invitation
         }
 
         /// <summary>
-        /// The username or identifier of the user who used this invitation.
+        /// The current status of the invitation.
         /// </summary>
-        public string? InvitedUser
+        public required InvitationStatus Status
         {
             get;
             init;
         }
 
         /// <summary>
-        /// Current status of the invitation.
+        /// Indicates whether the invitation has been manually revoked.
         /// </summary>
-        public required InvitationStatus Status
+        public required bool IsRevoked
         {
             get;
             init;

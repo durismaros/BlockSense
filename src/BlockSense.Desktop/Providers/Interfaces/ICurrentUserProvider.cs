@@ -10,50 +10,37 @@ namespace BlockSense.Desktop.Providers.Interfaces
     {
         UserSummaryDto Profile
         {
-            get;
+            get; 
         }
 
-        IReadOnlyList<UserSessionDto> ActiveDevices
+        IList<SessionDto> ActiveDevices
+        {
+            get; 
+        }
+
+        IReadOnlyList<ActivityLogDto> RecentActivity
+        {
+            get; 
+        }
+
+        IEnumerable<InvitationDto> Invitations
+        {
+            get; 
+        }
+
+        IEnumerable<string>? TwoFactorBackupCodes
         {
             get;
         }
 
-        IReadOnlyList<InvitationDto> Invitations
-        {
-            get;
-        }
-
-        IReadOnlyList<string>? TwoFactorBackupCodes
-        {
-            get;
-        }
-
-        /// <summary>
-        /// Raised whenever any dashboard data changes.
-        /// </summary>
         event Action? OnCurrentUserChanged;
 
-        /// <summary>
-        /// Sets the dashboard data from backend response.
-        /// </summary>
-        /// <param name="userDashboardDto"></param>
-        void Set(UserDashboardDto userDashboardDto);
-
-        /// <summary>
-        /// Sets the user summary data from backend response.
-        /// </summary>
-        /// <param name="userSummaryDto"></param>
-        void SetProfile(UserSummaryDto userSummaryDto);
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="backupCodes"></param>
-        void SetTwoFactorBackupCodes(IReadOnlyList<string>? backupCodes);
-
-        /// <summary>
-        /// Clears all stored user data (e.g. on logout).
-        /// </summary>
+        void Set(UserDashboardDto dashboard);
+        void SetProfile(UserSummaryDto profile);
+        void SetActiveDevices(IList<SessionDto> activeDevices);
+        void SetInvitations(IEnumerable<InvitationDto> invitations);
+        void SetRecentActivity(IReadOnlyList<ActivityLogDto> entries);
+        void SetTwoFactorBackupCodes(IEnumerable<string>? backupCodes);
         void Clear();
     }
 }

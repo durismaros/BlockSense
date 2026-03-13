@@ -1,6 +1,6 @@
 ﻿using BlockSense.Backend.Exceptions.Authentication;
+using BlockSense.Backend.Models.Device;
 using BlockSense.Contracts.DTOs.Authentication;
-using BlockSense.Backend.Models.DeviceContext;
 
 namespace BlockSense.Backend.Services.Interfaces
 {
@@ -17,7 +17,7 @@ namespace BlockSense.Backend.Services.Interfaces
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>An <see cref="AuthResponse"/> containing access and refresh tokens for the authenticated user.</returns>
         /// <exception cref="InvalidCredentialsException">Thrown if the login or password is invalid.</exception>
-        /// <exception cref="AccessProhibitedException">Thrown if the account is banned.</exception>
+        /// <exception cref="ForbiddenException">Thrown if the account is banned.</exception>
         Task<AuthResponse> AuthenticateAsync(AuthRequest request, DeviceContext deviceContext, CancellationToken cancellationToken = default);
     }
 }

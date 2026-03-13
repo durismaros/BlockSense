@@ -6,6 +6,7 @@ using System.Linq;
 using System.Management;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Text;
 
 namespace BlockSense.Desktop.Providers.Implementations
@@ -39,107 +40,102 @@ namespace BlockSense.Desktop.Providers.Implementations
         public DeviceContextProvider()
         {
             DeviceIdentifier = Environment.MachineName;
-            DeviceOs = GetDeviceOs();
-            HardwareFingerprint = GetHardwareFingerprint();
-            NetworkFingerprint = GetNetworkFingerprint();
+            DeviceOs = BuildOsDescription();
+            HardwareFingerprint = BuildHardwareFingerprint();
+            NetworkFingerprint = BuildNetworkFingerprint();
         }
 
-        private string GetDeviceOs()
+        private string BuildOsDescription()
         {
             var os =
                 OperatingSystem.IsWindows() ? "Windows" :
-                OperatingSystem.IsMacOS() ? "macOS" :
+                OperatingSystem.IsMacOS() ? "MacOS" :
                 "Unknown";
 
             var version = Environment.OSVersion.Version;
             var description = RuntimeInformation.OSDescription;
 
-            return $"{os} {version.Major}.{version.Minor}.{version.Build} ({description})";
+            return $"{os} {version.Major}.{version.Minor}.{version.Build}";
         }
 
-        private string GetHardwareFingerprint()
+        private static string BuildHardwareFingerprint()
         {
-            var components = new[]
-            {
-                Environment.ProcessorCount.ToString(),
-                GetHardwareIds()
-            };
+            var raw = string.Join('|',
+                Environment.ProcessorCount,
+                GetHardwareIds());
 
-            var combined = string.Join('|', components);
-
-            return Sha256Hasher.ComputeBase64(Encoding.UTF8.GetBytes(combined));
-        }
-
-        private string GetNetworkFingerprint()
-        {
-            var nic = NetworkInterface.GetAllNetworkInterfaces()
-                .Where(n => n.OperationalStatus == OperationalStatus.Up &&
-                            n.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
-                            n.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
-                            n.Description.ToLower().Contains("virtual") == false &&
-                            n.Name.ToLower().Contains("virtual") == false)
-                .OrderByDescending(n => n.Speed)
-                .FirstOrDefault();
-
-            if (nic is null)
-                return "Unknown";
-
-            return string.Join(":", nic.GetPhysicalAddress()
-                                       .GetAddressBytes()
-                                       .Select(b => b.ToString("X2")));
+            return Sha256Hasher.ComputeBase64(
+                Encoding.UTF8.GetBytes(raw));
         }
 
         private static string GetHardwareIds()
         {
             if (OperatingSystem.IsWindows())
-            {
-                try
-                {
-                    // CPU ID
-                    using var cpuSearcher = new ManagementObjectSearcher("SELECT ProcessorId FROM Win32_Processor");
-                    string? cpuId = cpuSearcher.Get().Cast<ManagementObject>()
-                                            .Select(mo => mo["ProcessorId"]?.ToString())
-                                            .FirstOrDefault();
+                return GetWindowsHardwareIds();
 
-                    // Motherboard Serial
-                    using var boardSearcher = new ManagementObjectSearcher("SELECT SerialNumber FROM Win32_BaseBoard");
-                    string? motherboardId = boardSearcher.Get().Cast<ManagementObject>()
-                                            .Select(mo => mo["SerialNumber"]?.ToString())
-                                            .FirstOrDefault();
+            if (OperatingSystem.IsMacOS())
+                return GetMacHardwareIds();
 
-                    // Disk Serial
-                    using var diskSearcher = new ManagementObjectSearcher("SELECT SerialNumber FROM Win32_DiskDrive WHERE Index = 0");
-                    string? diskId = diskSearcher.Get().Cast<ManagementObject>()
-                                            .Select(mo => mo["SerialNumber"]?.ToString()?.Trim())
-                                            .FirstOrDefault();
-
-                    return string.Join('|', cpuId, motherboardId, diskId);
-                }
-                catch
-                {
-                    return string.Empty;
-                }
-            }
-
-            else if (OperatingSystem.IsMacOS())
-            {
-                try
-                {
-                    string? cpuBrand = RunProcess("/usr/sbin/sysctl", "-n machdep.cpu.brand_string")?.Trim();
-                    string? platformUuid = RunProcess("/usr/sbin/ioreg", "-rd1 -c IOPlatformExpertDevice | awk '/IOPlatformUUID/ { print $3 }'")?.Trim('\"');
-                    string? diskUuid = RunProcess("/usr/sbin/diskutil", "info / | awk '/Volume UUID/ { print $3 }'")?.Trim();
-
-                    return string.Join('|', cpuBrand, platformUuid, diskUuid);
-                }
-                catch
-                {
-                    return string.Empty;
-                }
-            }
-
-            throw new PlatformNotSupportedException();
+            return string.Empty;
         }
 
+        [SupportedOSPlatform("windows")]
+        private static string GetWindowsHardwareIds()
+        {
+            try
+            {
+                string? cpu = QueryWmi("SELECT ProcessorId FROM Win32_Processor", "ProcessorId");
+                string? board = QueryWmi("SELECT SerialNumber FROM Win32_BaseBoard", "SerialNumber");
+                string? disk = QueryWmi("SELECT SerialNumber FROM Win32_DiskDrive WHERE Index = 0", "SerialNumber");
+
+                return string.Join('|', cpu, board, disk);
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        [SupportedOSPlatform("windows")]
+        private static string? QueryWmi(string query, string property)
+        {
+            using var searcher = new ManagementObjectSearcher(query);
+            return searcher.Get()
+                           .Cast<ManagementObject>()
+                           .Select(mo => mo[property]?.ToString()?.Trim())
+                           .FirstOrDefault();
+        }
+
+        [SupportedOSPlatform("macos")]
+        private static string GetMacHardwareIds()
+        {
+            try
+            {
+                string? cpu = RunProcess("/usr/sbin/sysctl", "-n machdep.cpu.brand_string")?.Trim();
+
+                string? platform = RunProcess("/usr/sbin/ioreg",
+                    "-rd1 -c IOPlatformExpertDevice")?
+                    .Split('\n')
+                    .FirstOrDefault(l => l.Contains("IOPlatformUUID"))?
+                    .Split('"')
+                    .ElementAtOrDefault(3);
+
+                string? disk = RunProcess("/usr/sbin/diskutil", "info /")?
+                    .Split('\n')
+                    .FirstOrDefault(l => l.Contains("Volume UUID"))?
+                    .Split(':')
+                    .ElementAtOrDefault(1)?
+                    .Trim();
+
+                return string.Join('|', cpu, platform, disk);
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        [SupportedOSPlatform("macos")]
         private static string? RunProcess(string fileName, string arguments)
         {
             try
@@ -160,6 +156,29 @@ namespace BlockSense.Desktop.Providers.Implementations
             {
                 return null;
             }
+        }
+
+        private static string BuildNetworkFingerprint()
+        {
+            var nic = NetworkInterface.GetAllNetworkInterfaces()
+                .Where(n =>
+                    n.OperationalStatus == OperationalStatus.Up &&
+                    n.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
+                    n.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
+                    !n.Description.Contains("virtual", StringComparison.OrdinalIgnoreCase) &&
+                    !n.Name.Contains("virtual", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(n => n.Speed)
+                .FirstOrDefault();
+
+            if (nic == null)
+            {
+                return "Unknown";
+            }
+
+            return string.Join(":",
+                nic.GetPhysicalAddress()
+                   .GetAddressBytes()
+                   .Select(b => b.ToString("X2")));
         }
     }
 }

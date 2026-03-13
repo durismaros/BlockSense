@@ -1,22 +1,20 @@
 ﻿using BlockSense.Contracts.DTOs.Authentication;
-using BlockSense.Desktop.Models.Services;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace BlockSense.Desktop.Services.Interfaces
 {
     /// <summary>
-    /// Defines methods for user authentication in the BlockSense desktop application.
+    /// Defines methods for authenticating users against the backend API.
     /// </summary>
     public interface IAuthService
     {
         /// <summary>
-        /// Authenticates a user using the provided <see cref="AuthRequest"/> containing login credentials.
+        /// Authenticates a user using the provided credentials.
+        /// Handles two-factor authentication challenges when required.
         /// </summary>
-        /// <param name="request">The authentication request with username/email and password.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>A <see cref="ServiceResponse"/> indicating the result of the authentication attempt.</returns>
-        Task AuthAsync(AuthRequest request, CancellationToken cancellationToken = default);
-        Task AuthRefreshAsync(CancellationToken cancellationToken = default);
+        /// <param name="request">The authentication request containing user credentials.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        Task AuthenticateAsync(AuthRequest request, CancellationToken cancellationToken = default);
     }
 }

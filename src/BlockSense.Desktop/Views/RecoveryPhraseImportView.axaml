@@ -1,0 +1,138 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 x:Class="BlockSense.Desktop.RecoveryPhraseImportView">
+
+	<Panel>
+		<Grid x:Name="ContentGrid"
+			  RowDefinitions="Auto * Auto"
+			  Background="Transparent"
+			  Margin="0 30 0 0">
+
+			<!-- Go Back Button -->
+			<Button x:Name="HomeButton"
+					Width="44"
+					Height="44"
+					HorizontalAlignment="Left"
+					VerticalAlignment="Top"
+					Background="Transparent"
+					CornerRadius="22"
+					Margin="16 2 0 0">
+
+				<Viewbox Width="20"
+						 Height="20"
+						 HorizontalAlignment="Center"
+						 VerticalAlignment="Center">
+					<Path Data="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"
+						  Fill="#28282B"
+						  Stretch="Uniform"/>
+				</Viewbox>
+
+				<Button.Styles>
+					<Style Selector="Button:pointerover ContentPresenter, Button:pressed ContentPresenter">
+						<Setter Property="Background" Value="Transparent"/>
+						<Setter Property="RenderTransform" Value="scale(1.1)"/>
+					</Style>
+				</Button.Styles>
+			</Button>
+
+			<StackPanel Grid.Row="0"
+						HorizontalAlignment="Center"
+						VerticalAlignment="Top"
+						Spacing="24">
+
+				<TextBlock HorizontalAlignment="Center"
+						   Text="Restore Wallet"
+						   Foreground="#2A2118"
+						   FontSize="36"/>
+
+				<!--Separator-->
+				<Border Classes="DefaultSeparator"
+						Width="120"/>
+
+				<TextBlock Width="320"
+						   Text="Enter your 12-word recovery phrase to restore your wallet"
+						   Foreground="#2A2118"
+						   FontSize="14"
+						   FontWeight="Medium"
+						   FontStyle="Italic"
+						   TextWrapping="Wrap"
+						   TextAlignment="Center"
+						   LineHeight="22"
+						   Opacity="0.9"/>
+			</StackPanel>
+
+			<UniformGrid x:Name="PhraseGrid"
+						 Grid.Row="1"
+						 Width="720"
+						 Height="160"
+						 HorizontalAlignment="Center"
+						 VerticalAlignment="Center"
+						 Rows="2"
+						 Columns="6">
+
+				<!--Words are added automatically-->
+
+			</UniformGrid>
+
+			<Button x:Name="ContinueButton"
+					Classes="DefaultDarkBrown"
+					Grid.Row="2"
+					Width="240"
+					HorizontalAlignment="Center"
+					VerticalAlignment="Bottom"
+					Margin="30">
+
+				<TextBlock HorizontalAlignment="Center"
+						   VerticalAlignment="Center"
+						   Text="Continue"
+						   Foreground="#E6C8A0"
+						   FontWeight="Medium"/>
+			</Button>
+		</Grid>
+
+		<Border x:Name="SlidePanel"
+				Width="700"
+				Height="232"
+				HorizontalAlignment="Stretch"
+				VerticalAlignment="Bottom"
+				Background="#D4C9A8"
+				CornerRadius="24 0">
+
+			<StackPanel Spacing="14"
+						HorizontalAlignment="Center"
+						VerticalAlignment="Center">
+
+				<CheckBox x:Name="CheckBox1">
+					<TextBlock Text="BlockSense does not store or access this phrase"
+							   FontWeight="Medium"
+							   FontStyle="Italic"/>
+				</CheckBox>
+				<CheckBox x:Name="CheckBox2">
+					<TextBlock Text="Do not record this phrase digitally, including screenshots or unencrypted text"
+							   FontWeight="Medium"
+							   FontStyle="Italic"/>
+				</CheckBox>
+				<CheckBox x:Name="CheckBox3">
+					<TextBlock Text="Keep this phrase private and securely stored offline"
+							   FontWeight="Medium"
+							   FontStyle="Italic"/>
+				</CheckBox>
+
+				<Button x:Name="SubmitButton"
+						Classes="DefaultDarkBrown"
+						Width="240"
+						IsEnabled="False">
+					<TextBlock Text="Finish"
+							   HorizontalAlignment="Center"
+							   VerticalAlignment="Center"
+							   FontWeight="Medium"
+							   Foreground="#E6C8A0"/>
+				</Button>
+			</StackPanel>
+		</Border>
+	</Panel>
+
+</UserControl>

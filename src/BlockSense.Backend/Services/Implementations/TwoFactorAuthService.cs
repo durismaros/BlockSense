@@ -1,14 +1,17 @@
 ﻿using BlockSense.Backend.Data.Configurations;
 using BlockSense.Backend.Entities;
+using BlockSense.Backend.Exceptions.Generic;
 using BlockSense.Backend.Exceptions.TwoFactorAuthentication;
-using BlockSense.Backend.Exceptions.User;
+using BlockSense.Backend.Models.ActivityLog;
 using BlockSense.Backend.Repositories.Interfaces;
 using BlockSense.Backend.Services.Interfaces;
 using BlockSense.Contracts.Cryptography.Encryption;
 using BlockSense.Contracts.Cryptography.Hashing;
 using BlockSense.Contracts.Cryptography.Utilities;
+using BlockSense.Contracts.Definitions;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Setup;
 using BlockSense.Contracts.DTOs.TwoFactorAuth.Verification;
+using BlockSense.Contracts.Enums;
 using Microsoft.Extensions.Options;
 using OtpNet;
 using QRCoder;
@@ -17,182 +20,171 @@ using System.Text;
 
 namespace BlockSense.Backend.Services.Implementations
 {
+    /// <summary>
+    /// Provides two-factor authentication (TOTP) management, including setup, verification, backup codes, and disabling.
+    /// </summary>
     public sealed class TwoFactorAuthService : ITwoFactorAuthService
     {
         private readonly TwoFactorAuthConfig _twoFactorAuthConfig;
-        private readonly ITwoFactorAuthRepository _twoFactorAuthRepository;
+        private readonly ITotpCredentialRepository _totpCredentialRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IActivityLogService _activityLogService;
+        private readonly Aes256GcmEncryptor _aes256GcmEncryptor;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="TwoFactorAuthService"/> with required dependencies.
+        /// </summary>
+        /// <param name="twoFactorAuthConfig">The configuration for TOTP settings, backup codes, and encryption.</param>
+        /// <param name="totpCredentialRepository">The repository for TOTP credential entity operations.</param>
+        /// <param name="userRepository">The repository for user entity operations.</param>
+        /// <param name="activityLogService">The service responsible for recording user and system activity logs.</param>
+        /// <exception cref="ArgumentNullException">Thrown if any dependency is <c>null</c>.</exception>
         public TwoFactorAuthService(
             IOptions<TwoFactorAuthConfig> twoFactorAuthConfig,
-            ITwoFactorAuthRepository twoFactorAuthRepository,
-            IUserRepository userRepository)
+            ITotpCredentialRepository totpCredentialRepository,
+            IUserRepository userRepository,
+            IActivityLogService activityLogService)
         {
-            _twoFactorAuthConfig = twoFactorAuthConfig.Value
-                ?? throw new ArgumentNullException(nameof(twoFactorAuthConfig));
-
-            _twoFactorAuthRepository = twoFactorAuthRepository
-                ?? throw new ArgumentNullException(nameof(twoFactorAuthRepository));
-
-            _userRepository = userRepository
-                ?? throw new ArgumentNullException(nameof(userRepository));
+            _twoFactorAuthConfig = twoFactorAuthConfig.Value ?? throw new ArgumentNullException(nameof(twoFactorAuthConfig));
+            _totpCredentialRepository = totpCredentialRepository ?? throw new ArgumentNullException(nameof(totpCredentialRepository));
+            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _activityLogService = activityLogService ?? throw new ArgumentNullException(nameof(activityLogService));
+            _aes256GcmEncryptor = new Aes256GcmEncryptor();
         }
 
+        /// <inheritdoc/>
         public async Task<TwoFactorSetupInit> SetupInitAsync(uint userId, CancellationToken cancellationToken = default)
         {
-            if (await _twoFactorAuthRepository.IsEnabledAsync(userId, cancellationToken))
-            {
-                throw new TwoFactorAlreadyConfiguredException();
-            }
+            await EnsureTwoFactorNotConfiguredAsync(userId, cancellationToken);
 
-            var user =
-                await _userRepository.GetByIdAsync(userId, cancellationToken)
-                ?? throw new UserNotFoundException();
+            var user = await GetUserOrThrowAsync(userId, cancellationToken);
 
-            string setupKey = Base32Encoding.ToString(
-                CryptographyUtilities.GenerateSecureRandomBytes(20));
-
-            string authUri =
-                GenerateAuthUri(user.Email, setupKey);
-
-            var qrCodeData =
-                GenerateQRCodeData(authUri);
+            var setupKey = Base32Encoding.ToString(CryptographyUtilities.GenerateSecureRandomBytes(20));
+            var authUri = BuildAuthUri(user.Email, setupKey);
+            var qrCodeData = GenerateQrCodePng(authUri);
 
             return new TwoFactorSetupInit
             {
                 SetupKey = setupKey,
-                QRCodeData = qrCodeData
+                QrCodeData = qrCodeData
             };
         }
 
-        public async Task CompleteSetupAsync(uint userId, TwoFactorSetupRequest request, CancellationToken cancellationToken = default)
+        /// <inheritdoc/>
+        public async Task CompleteSetupAsync(
+            uint userId,
+            TwoFactorSetupRequest request,
+            CancellationToken cancellationToken = default)
         {
-            if (await _twoFactorAuthRepository.IsEnabledAsync(userId, cancellationToken))
-            {
-                throw new TwoFactorAlreadyConfiguredException();
-            }
+            await EnsureTwoFactorNotConfiguredAsync(userId, cancellationToken);
 
-            request = request with
-            {
-                SetupKey = request.SetupKey.Trim(),
-                TwoFactorCode = request.TwoFactorCode.Trim().ToUpperInvariant()
-            };
+            var normalizedRequest = NormalizeSetupRequest(request);
+            var secretKey = Base32Encoding.ToBytes(normalizedRequest.SetupKey);
 
-            byte[] secretKey = Base32Encoding.ToBytes(request.SetupKey);
-
-            if (!VerifyCode(secretKey, request.TwoFactorCode))
-            {
+            if (!VerifyTotpCode(secretKey, normalizedRequest.TwoFactorCode))
                 throw new TwoFactorInvalidCodeException();
-            }
 
-            var aes256GcmEncryptor = new Aes256GcmEncryptor();
+            var credential = BuildTotpCredential(userId, secretKey);
+            await _totpCredentialRepository.CreateAsync(credential, cancellationToken);
 
-            byte[] key =
-                Convert.FromBase64String(_twoFactorAuthConfig.MasterKey);
-
-            byte[] iv =
-                CryptographyUtilities.GenerateSecureRandomBytes(12);
-
-            byte[] ciphertext =
-                aes256GcmEncryptor.Encrypt(key, iv, secretKey);
-
-            // Combine nonce (12) + cipherTextWithTag (36) = 48 bytes
-            var encryptedSecret = iv.Concat(ciphertext).ToArray();
-
-            var twoFaAuthEntity = new TwoFactorAuthEntity
-            {
-                UserId = userId,
-                EncryptedTotpSecret = encryptedSecret,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            await _twoFactorAuthRepository.CreateAsync(twoFaAuthEntity, cancellationToken);
+            await LogTwoFactorEnabledAsync(userId, cancellationToken);
         }
 
+        /// <inheritdoc/>
         public async Task VerifyAsync(uint userId, TwoFactorVerificationRequest request, CancellationToken cancellationToken = default)
         {
-            var code = request.TwoFactorCode.Trim().ToUpperInvariant();
+            var normalizedCode = NormalizeCode(request.TwoFactorCode);
 
-            var twoFaAuthEntity =
-                await _twoFactorAuthRepository.GetByUserIdAsync(userId, cancellationToken)
-                ?? throw new TwoFactorNotConfiguredException();
+            var credential = await _totpCredentialRepository.GetByUserIdAsync(userId, cancellationToken)
+                ?? throw new TwoFactorConfigurationException();
 
-            if (twoFaAuthEntity.BackupCodes is not null &&
-                VerifyBackupCode(twoFaAuthEntity.BackupCodes, code))
-            {
-                twoFaAuthEntity.RemoveBackupCode(code);
+            var decryptedSecret = DecryptSecret(credential.EncryptedSecret);
 
-                await _twoFactorAuthRepository.UpdateBackupCodesAsync(userId, twoFaAuthEntity.BackupCodes, cancellationToken);
+            if (await TryVerifyAndConsumeBackupCodeAsync(credential, normalizedCode, cancellationToken))
                 return;
-            }
 
-            byte[] key =
-                Convert.FromBase64String(_twoFactorAuthConfig.MasterKey);
-
-            byte[] iv =
-                twoFaAuthEntity.EncryptedTotpSecret.Take(12).ToArray();
-
-            byte[] cipherText =
-                twoFaAuthEntity.EncryptedTotpSecret.Skip(12).ToArray();
-
-            var aes256GcmEncryptor = new Aes256GcmEncryptor();
-
-            byte[] decryptedSecret = aes256GcmEncryptor.Decrypt(key, iv, cipherText);
-
-            if (VerifyCode(decryptedSecret, code))
-            {
+            if (VerifyTotpCode(decryptedSecret, normalizedCode))
                 return;
-            }
 
             throw new TwoFactorInvalidCodeException();
         }
 
+        /// <inheritdoc/>
         public async Task<IReadOnlyList<string>> GenerateBackupCodesAsync(uint userId, CancellationToken cancellationToken = default)
         {
-            var twoFaAuthEntity =
-                await _twoFactorAuthRepository.GetByUserIdAsync(userId, cancellationToken)
-                ?? throw new TwoFactorNotConfiguredException();
+            var credential = await _totpCredentialRepository.GetByUserIdAsync(userId, cancellationToken)
+                ?? throw new TwoFactorConfigurationException();
 
-            var now = DateTime.UtcNow;
-            var cooldown = _twoFactorAuthConfig.BackupCodeCooldown;
+            EnforceBackupCodeCooldown(credential);
 
-            if (twoFaAuthEntity.BackupCodes is not null)
-            {
-                var elapsed = now - twoFaAuthEntity.UpdatedAt;
+            var plainCodes = GenerateBackupCodes();
+            var hashedCodes = HashBackupCodes(plainCodes);
 
-                if (elapsed < cooldown)
-                    throw new TwoFactorCooldownException(cooldown - elapsed);
-            }
+            credential.BackupCodesList = hashedCodes;
+            credential.UpdatedAt = DateTime.UtcNow;
 
-            var backupCodes = GenerateBackupCodes();
+            await _totpCredentialRepository.UpdateAsync(credential, cancellationToken);
 
-            var hashedBackupCodes = backupCodes
-                .Select(code => Sha256Hasher.ComputeBase64(
-                    Encoding.UTF8.GetBytes(code)))
-                .ToList();
+            await LogBackupCodesGeneratedAsync(userId, cancellationToken);
 
-            await _twoFactorAuthRepository.InsertBackupCodesAsync(
-                userId,
-                hashedBackupCodes,
-                now,
-                cancellationToken);
-
-            return backupCodes;
+            return plainCodes;
         }
 
+        /// <inheritdoc/>
         public async Task DisableAsync(uint userId, TwoFactorVerificationRequest request, CancellationToken cancellationToken = default)
         {
-            if (!await _twoFactorAuthRepository.IsEnabledAsync(userId, cancellationToken))
-            {
-                throw new TwoFactorNotConfiguredException();
-            }
+            if (!await _totpCredentialRepository.ExistsAsync(userId, cancellationToken))
+                throw new TwoFactorConfigurationException();
 
-            await VerifyAsync(userId, request);
+            await VerifyAsync(userId, request, cancellationToken);
 
-            await _twoFactorAuthRepository.DisableAsync(userId, cancellationToken);
+            await _totpCredentialRepository.DeleteByUserIdAsync(userId, cancellationToken);
+
+            await LogTwoFactorDisabledAsync(userId, cancellationToken);
         }
 
-        private bool VerifyCode(byte[] secretKey, string code)
+        private async Task EnsureTwoFactorNotConfiguredAsync(uint userId, CancellationToken cancellationToken)
+        {
+            if (await _totpCredentialRepository.ExistsAsync(userId, cancellationToken))
+                throw new TwoFactorConfigurationException();
+        }
+
+        private async Task<Entities.User> GetUserOrThrowAsync(uint userId, CancellationToken cancellationToken)
+        {
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+
+            if (user is null)
+                throw new NotFoundException();
+
+            return user;
+        }
+
+        private static TwoFactorSetupRequest NormalizeSetupRequest(TwoFactorSetupRequest request) =>
+            request with
+            {
+                SetupKey = request.SetupKey.Trim(),
+                TwoFactorCode = NormalizeCode(request.TwoFactorCode)
+            };
+
+        private static string NormalizeCode(string code) =>
+            code.Trim().ToUpperInvariant();
+
+        private TotpCredential BuildTotpCredential(uint userId, byte[] secretKey)
+        {
+            var encryptedSecret = EncryptSecret(secretKey);
+            var now = DateTime.UtcNow;
+
+            return new TotpCredential
+            {
+                UserId = userId,
+                EncryptedSecret = encryptedSecret,
+                BackupCodes = null,
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+        }
+
+        private bool VerifyTotpCode(byte[] secretKey, string code)
         {
             try
             {
@@ -205,22 +197,28 @@ namespace BlockSense.Backend.Services.Implementations
             }
         }
 
-        private bool VerifyBackupCode(IEnumerable<string> backupCodes, string code)
+        private async Task<bool> TryVerifyAndConsumeBackupCodeAsync(
+            TotpCredential credential,
+            string code,
+            CancellationToken cancellationToken)
         {
-            if (backupCodes is null)
+            if (!credential.HasBackupCodes)
                 return false;
 
-            var backupCodeHash = Sha256Hasher.ComputeByte(Encoding.UTF8.GetBytes(code));
+            var codeHash = Sha256Hasher.ComputeBytes(Encoding.UTF8.GetBytes(code));
 
-            foreach (var backupCode in backupCodes)
-            {
-                if (CryptographicOperations.FixedTimeEquals(backupCodeHash, Convert.FromBase64String(backupCode)) == false)
-                    continue;
+            var matchedCode = credential.BackupCodesList
+                .FirstOrDefault(b => CryptographicOperations.FixedTimeEquals(
+                    codeHash,
+                    Convert.FromBase64String(b)));
 
-                return true;
-            }
+            if (matchedCode is null)
+                return false;
 
-            return false;
+            credential.BackupCodesList.Remove(matchedCode);
+            await _totpCredentialRepository.UpdateAsync(credential, cancellationToken);
+
+            return true;
         }
 
         private IReadOnlyList<string> GenerateBackupCodes()
@@ -229,33 +227,100 @@ namespace BlockSense.Backend.Services.Implementations
 
             return Enumerable
                 .Range(0, _twoFactorAuthConfig.BackupCodeCount)
-                .Select(_ =>
-                {
-                    var bytes = CryptographyUtilities
-                        .GenerateSecureRandomBytes(_twoFactorAuthConfig.BackupCodeLength);
-
-                    var code = string.Concat(
-                        bytes.Select((b, i) =>
-                            (i == 4 ? "-" : "") + chars[b % chars.Length]));
-
-                    return code;
-                })
-                .ToList();
+                .Select(_ => BuildBackupCode(chars))
+                .ToList()
+                .AsReadOnly();
         }
 
-        private string GenerateAuthUri(string userEmail, string secretKey)
+        private string BuildBackupCode(string chars)
         {
-            return $"otpauth://totp/{Uri.EscapeDataString(_twoFactorAuthConfig.Issuer)}:{Uri.EscapeDataString(userEmail)}?" +
-                   $"secret={secretKey}&issuer={Uri.EscapeDataString(_twoFactorAuthConfig.Issuer)}" +
-                   $"&algorithm=SHA1&digits={_twoFactorAuthConfig.CodeLength}&period={_twoFactorAuthConfig.CodeLifetime.TotalSeconds}";
+            var bytes = CryptographyUtilities.GenerateSecureRandomBytes(_twoFactorAuthConfig.BackupCodeLength);
+
+            return string.Concat(
+                bytes.Select((b, i) => (i == 4 ? "-" : "") + chars[b % chars.Length]));
         }
 
-        private byte[] GenerateQRCodeData(string authUri)
+        private void EnforceBackupCodeCooldown(TotpCredential credential)
         {
-            QRCodeGenerator qrGenerator = new QRCodeGenerator();
-            QRCodeData qrCodeData = qrGenerator.CreateQrCode(authUri, QRCodeGenerator.ECCLevel.Q);
+            if (!credential.HasBackupCodes)
+                return;
+
+            var elapsed = DateTime.UtcNow - credential.UpdatedAt;
+            var cooldown = _twoFactorAuthConfig.BackupCodeCooldown;
+
+            if (elapsed < cooldown)
+                throw new TwoFactorCooldownException(cooldown - elapsed);
+        }
+
+        private static List<string> HashBackupCodes(IReadOnlyList<string> codes) =>
+            codes.Select(code => Sha256Hasher.ComputeBase64(Encoding.UTF8.GetBytes(code)))
+                 .ToList();
+
+        private string BuildAuthUri(string userEmail, string secretKey) =>
+            $"otpauth://totp/{Uri.EscapeDataString(_twoFactorAuthConfig.Issuer)}:{Uri.EscapeDataString(userEmail)}?" +
+            $"secret={secretKey}" +
+            $"&issuer={Uri.EscapeDataString(_twoFactorAuthConfig.Issuer)}" +
+            $"&algorithm=SHA1" +
+            $"&digits={_twoFactorAuthConfig.CodeLength}" +
+            $"&period={_twoFactorAuthConfig.CodeLifetime.TotalSeconds}";
+
+        private static byte[] GenerateQrCodePng(string authUri)
+        {
+            var qrGenerator = new QRCodeGenerator();
+            var qrCodeData = qrGenerator.CreateQrCode(authUri, QRCodeGenerator.ECCLevel.Q);
             var qrCode = new PngByteQRCode(qrCodeData);
             return qrCode.GetGraphic(10);
+        }
+
+        private byte[] EncryptSecret(byte[] secret)
+        {
+            var key = Convert.FromBase64String(_twoFactorAuthConfig.MasterKey);
+            var iv = CryptographyUtilities.GenerateSecureRandomBytes(12);
+            var ciphertext = _aes256GcmEncryptor.Encrypt(key, iv, secret);
+            return iv.Concat(ciphertext).ToArray();
+        }
+
+        private byte[] DecryptSecret(byte[] encryptedSecret)
+        {
+            var key = Convert.FromBase64String(_twoFactorAuthConfig.MasterKey);
+            var iv = encryptedSecret.Take(12).ToArray();
+            var ciphertext = encryptedSecret.Skip(12).ToArray();
+            return _aes256GcmEncryptor.Decrypt(key, iv, ciphertext);
+        }
+
+        private Task LogTwoFactorEnabledAsync(uint userId, CancellationToken cancellationToken)
+        {
+            var context = new ActivityLogContext()
+                .WithTwoFactorMethod("TOTP");
+
+            return _activityLogService.CreateAsync(
+                ActivityType.User,
+                userId,
+                ActivityActions.TwoFactorAuthentication.Enabled,
+                context,
+                cancellationToken);
+        }
+
+        private Task LogTwoFactorDisabledAsync(uint userId, CancellationToken cancellationToken)
+        {
+            var context = new ActivityLogContext()
+                .WithTwoFactorMethod("TOTP");
+
+            return _activityLogService.CreateAsync(
+                ActivityType.User,
+                userId,
+                ActivityActions.TwoFactorAuthentication.Disabled,
+                context,
+                cancellationToken);
+        }
+
+        private Task LogBackupCodesGeneratedAsync(uint userId, CancellationToken cancellationToken)
+        {
+            return _activityLogService.CreateAsync(
+                ActivityType.User,
+                userId,
+                ActivityActions.TwoFactorAuthentication.BackupCodesGenerated,
+                cancellationToken: cancellationToken);
         }
     }
 }

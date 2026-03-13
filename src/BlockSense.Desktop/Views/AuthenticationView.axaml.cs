@@ -6,18 +6,26 @@ using BlockSense.Desktop.Services.Interfaces;
 using BlockSense.Desktop.Utilities.UIComponents;
 using BlockSense.Desktop.Utilities.Validation;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 
 namespace BlockSense.Desktop;
 
+/// <summary>
+/// View that presents the login form and orchestrates the authentication flow.
+/// </summary>
 public partial class AuthenticationView : UserControl
 {
     private readonly IAuthService _authService;
     private readonly NavigationManager _navigationManager;
+    private readonly ILogger<AuthenticationView> _logger;
 
     private CancellationTokenSource? _cancellationTokenSource;
 
+    /// <summary>
+    /// Initialises a new instance of <see cref="AuthenticationView"/>.
+    /// </summary>
     public AuthenticationView()
     {
         _authService = App.ServiceProvider.GetRequiredService<IAuthService>()
@@ -26,43 +34,75 @@ public partial class AuthenticationView : UserControl
         _navigationManager = App.ServiceProvider.GetRequiredService<NavigationManager>()
             ?? throw new ArgumentNullException(nameof(NavigationManager));
 
+        _logger = App.ServiceProvider.GetRequiredService<ILogger<AuthenticationView>>()
+            ?? throw new ArgumentNullException(nameof(ILogger<AuthenticationView>));
+
         InitializeComponent();
 
-        this.AttachedToVisualTree += OnAttachedToVisualTree;
-        this.DetachedFromVisualTree += OnDetachedFromVisualTree;
+        AttachedToVisualTree += OnAttachedToVisualTree;
+        DetachedFromVisualTree += OnDetachedFromVisualTree;
     }
 
-    private async void ToWelcomeViewClick(object? sender, RoutedEventArgs e)
+    private void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    {
+        _cancellationTokenSource?.Cancel();
+
+        HomeButton.Click += OnHomeButtonClicked;
+        AuthenticateButton.Click += OnAuthenticateButtonClicked;
+        RevealPasswordButton.Click += OnRevealPasswordButtonClicked;
+    }
+
+    private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    {
+        ResetForm();
+
+        HomeButton.Click -= OnHomeButtonClicked;
+        AuthenticateButton.Click -= OnAuthenticateButtonClicked;
+        RevealPasswordButton.Click -= OnRevealPasswordButtonClicked;
+
+        _cancellationTokenSource?.Cancel();
+    }
+
+    /// <summary>
+    /// Navigates back to the <see cref="WelcomeView"/>.
+    /// </summary>
+    private async void OnHomeButtonClicked(object? sender, RoutedEventArgs e)
     {
         await _navigationManager.NavigateToAsync<WelcomeView>();
     }
 
-    private async void AuthenticateClick(object? sender = default, RoutedEventArgs? e = default)
+    /// <summary>
+    /// Validates inputs and submits an authentication request.
+    /// </summary>
+    private async void OnAuthenticateButtonClicked(object? sender, RoutedEventArgs e)
     {
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource = new CancellationTokenSource();
         var cancellationToken = _cancellationTokenSource.Token;
 
-        var request = new AuthRequest
-        {
-            Login = LoginTextBox.Text?.Trim() ?? string.Empty,
-            Password = PasswordTextBox.Text ?? string.Empty,
-        };
+        var request = BuildAuthRequest();
 
         if (!DataAnnotationsValidator.TryValidate(request, out var validationError))
         {
+            _logger.LogWarning("Authentication validation failed: {Error}", validationError);
             MainWindow.Instance.ShowNotification("Authentication", validationError);
             return;
         }
 
-        await _authService.AuthAsync(request, cancellationToken);
+        _logger.LogInformation("Submitting authentication request for login '{Login}'.", request.Login);
+        await _authService.AuthenticateAsync(request, cancellationToken);
     }
 
-    private async void RevealPasswordClick(object? sender, RoutedEventArgs e)
+    /// <summary>
+    /// Toggles the password field between masked and plain-text display.
+    /// </summary>
+    private async void OnRevealPasswordButtonClicked(object? sender, RoutedEventArgs e)
     {
-        PasswordTextBox.PasswordChar = EyeCrossLine.IsVisible ? '●' : '\0';
+        bool isCurrentlyRevealed = EyeCrossLine.IsVisible;
 
-        if (EyeCrossLine.IsVisible)
+        PasswordTextBox.PasswordChar = isCurrentlyRevealed ? '●' : '\0';
+
+        if (isCurrentlyRevealed)
         {
             await Animations.FadeOutAnimation.RunAsync(EyeCrossLine);
             EyeCrossLine.IsVisible = false;
@@ -74,25 +114,22 @@ public partial class AuthenticationView : UserControl
         }
     }
 
-    private void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    /// <summary>
+    /// Constructs an <see cref="AuthRequest"/> from the current input field values.
+    /// </summary>
+    private AuthRequest BuildAuthRequest() => new()
     {
-        _cancellationTokenSource?.Cancel();
+        Login = LoginTextBox.Text?.Trim() ?? string.Empty,
+        Password = PasswordTextBox.Text ?? string.Empty
+    };
 
-        HomeButton.Click += ToWelcomeViewClick;
-        AuthenticateButton.Click += AuthenticateClick;
-        RevealPasswordButton.Click += RevealPasswordClick;
-    }
-
-    private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    /// <summary>
+    /// Clears all input fields and resets the password-reveal icon.
+    /// </summary>
+    private void ResetForm()
     {
         LoginTextBox.Text = string.Empty;
         PasswordTextBox.Text = string.Empty;
         EyeCrossLine.IsVisible = false;
-
-        HomeButton.Click -= ToWelcomeViewClick;
-        AuthenticateButton.Click -= AuthenticateClick;
-        RevealPasswordButton.Click -= RevealPasswordClick;
-
-        _cancellationTokenSource?.Cancel();
     }
 }

@@ -1,65 +1,67 @@
 ﻿using BlockSense.Backend.Entities;
-using BlockSense.Contracts.DTOs.Session;
-using BlockSense.Contracts.DTOs.Token;
 
 namespace BlockSense.Backend.Repositories.Interfaces
 {
     /// <summary>
-    /// Defines data access operations for managing refresh tokens.
+    /// Defines data access operations for refresh tokens.
     /// </summary>
     public interface IRefreshTokenRepository
     {
         /// <summary>
-        /// Retrieves a refresh token by its hashed token value.
+        /// Retrieves a refresh token by its hashed value.
         /// </summary>
-        /// <param name="tokenHash">The hashed refresh token value.</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns>The <see cref="RefreshTokenEntity"/> if found; otherwise, <c>null</c>.</returns>
-        Task<RefreshTokenEntity?> GetByTokenAsync(string tokenHash, CancellationToken cancellationToken = default);
+        /// <param name="tokenHash">The hashed token value to look up.</param>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns>The matching <see cref="RefreshToken"/>, or <c>null</c> if not found.</returns>
+        Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Retrieves all refresh tokens issued to a specific user.
+        /// Retrieves a refresh token by the hardware fingerprint of the issuing device.
         /// </summary>
-        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="hardwareFingerprint">The hardware fingerprint to look up.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>A collection of <see cref="RefreshTokenEntity"/> instances associated with the specified user.</returns>
-        Task<IReadOnlyList<RefreshTokenEntity>> GetByUserAsync(uint userId, CancellationToken cancellationToken = default);
-        /// <summary>
-        /// Retrieves all active (non-revoked and non-expired) refresh tokens issued to a specific user.
-        /// </summary>
-        /// <param name="userId">The unique identifier of the user.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>A collection of active <see cref="RefreshTokenEntity"/> instances.</returns>
-        Task<IReadOnlyList<RefreshTokenEntity>> GetActiveByUserAsync(uint userId, CancellationToken cancellationToken = default);
-        /// <summary>
-        /// Retrieves all active (non-revoked and non-expired) refresh tokens issued to a specific user.
-        /// </summary>
-        /// <param name="userId">The unique identifier of the user.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>A collection of active <see cref="RefreshTokenDto"/> instances.</returns>
-        Task<IReadOnlyList<UserSessionDto>> GetActiveSessionsByUserAsync(uint userId, CancellationToken cancellationToken = default);
+        /// <returns>The matching <see cref="RefreshToken"/>, or <c>null</c> if not found.</returns>
+        Task<RefreshToken?> GetByHardwareFingerprintAsync(string hardwareFingerprint, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Creates and persists a new refresh token.
+        /// Retrieves all active (non-revoked and non-expired) refresh tokens for the specified user,
+        /// ordered by issuance date descending.
         /// </summary>
-        /// <param name="refreshToken">The refresh token entity to create.</param>
+        /// <param name="userId">The identifier of the user whose active tokens to retrieve.</param>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns>A read-only list of active refresh tokens for the user.</returns>
+        Task<IReadOnlyList<RefreshToken>> GetActiveByUserIdAsync(uint userId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Inserts or replaces a refresh token in the data store.
+        /// An existing token for the same hardware fingerprint will be overwritten.
+        /// </summary>
+        /// <param name="refreshToken">The refresh token to create.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        Task CreateOrUpdateAsync(RefreshTokenEntity refreshToken, CancellationToken cancellationToken = default);
+        Task CreateAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Revokes a specific refresh token, preventing further use.
+        /// Revokes the refresh token with the specified hash.
         /// </summary>
-        /// <param name="tokenId">The unique identifier of the refresh token to revoke.</param>
+        /// <param name="tokenHash">The hashed value of the token to revoke.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         Task RevokeAsync(string tokenHash, CancellationToken cancellationToken = default);
+
         /// <summary>
-        /// Revokes all refresh tokens issued to a specific user.
+        /// Revokes all active refresh tokens belonging to the specified user.
         /// </summary>
-        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="userId">The identifier of the user whose tokens to revoke.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        Task RevokeAllForUserAsync(uint userId, CancellationToken cancellationToken = default);
+        Task RevokeAllByUserIdAsync(uint userId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Permanently deletes all refresh tokens that have passed their expiration date.
+        /// </summary>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        Task DeleteExpiredAsync(CancellationToken cancellationToken = default);
     }
 }

@@ -17,7 +17,7 @@
         /// <summary>
         /// The QR code image data corresponding to the setup key.
         /// </summary>
-        public required byte[] QRCodeData
+        public required byte[] QrCodeData
         {
             get;
             init;

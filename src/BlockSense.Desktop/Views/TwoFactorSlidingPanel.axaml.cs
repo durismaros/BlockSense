@@ -35,16 +35,12 @@ public partial class TwoFactorSlidingPanel : UserControl
     public TwoFactorSlidingPanel()
     {
         InitializeComponent();
-
         SetupCodeDigits();
 
         this.Focusable = true;
-        this.KeyDown += OnKeyDown;
 
-        DragBorder.PointerPressed += DragWindow;
-        CancelCodeButton.Click += HidePanel;
-        BackUpToggleButton.Click += ToggleBackupCodeModeClick;
-        VerifyCodeButton.Click += VerifyCodeClick;
+        AttachedToVisualTree += OnAttachedToVisualTree;
+        DetachedFromVisualTree += OnDetachedFromVisualTree;
     }
 
     /// <summary>
@@ -118,113 +114,6 @@ public partial class TwoFactorSlidingPanel : UserControl
     }
 
     /// <summary>
-    /// Toggles between regular authenticator code and backup code input mode.
-    /// </summary>
-    private async void ToggleBackupCodeModeClick(object? sender, RoutedEventArgs e)
-    {
-        var currentPanel = _isBackupMode ? BackupCodePanel : RegularCodePanel;
-
-        // Fade out current UI elements
-        await Task.WhenAll(
-            Animations.FadeOutAnimation.RunAsync(InstructionsPanel),
-            Animations.FadeOutAnimation.RunAsync(currentPanel),
-            Animations.FadeOutAnimation.RunAsync(BackUpToggleButton)
-        );
-
-        currentPanel.IsVisible = false;
-
-        // Toggle mode
-        _isBackupMode = !_isBackupMode;
-
-        // Select new panel based on mode
-        await ResetCodeEntry();
-        var newPanel = _isBackupMode ? BackupCodePanel : RegularCodePanel;
-        newPanel.IsVisible = true;
-
-        // Update texts
-        BackupToggleText.Text = _isBackupMode ? "use authenticator code" : "verify using backup code";
-        TitleText.Text = _isBackupMode ? "Enter Backup Code" : "Enter Verification Code";
-        SubtitleText.Text = _isBackupMode
-            ? "Please enter one of your saved backup codes"
-            : "Please enter the 6-digit code from your authenticator app";
-
-        // Fade in updated UI elements
-        await Task.WhenAll(
-            Animations.FadeInAnimation.RunAsync(InstructionsPanel),
-            Animations.FadeInAnimation.RunAsync(newPanel),
-            Animations.FadeInAnimation.RunAsync(BackUpToggleButton)
-        );
-    }
-
-    /// <summary>
-    /// Handles the Verify button click event.
-    /// Submits the entered 2FA or backup code via the TwoFactorCodeSubmitted event.
-    /// </summary>
-    private async void VerifyCodeClick(object? sender, RoutedEventArgs e)
-    {
-        int codeLength = _isBackupMode ? BACKUP_CODE_LENGTH : CODE_LENGTH;
-
-        if (_currentCode.Length != codeLength)
-        {
-            return;
-        }
-
-        // Format backup code with dash for verification
-        string codeToVerify = _isBackupMode ?
-            $"{_currentCode.Substring(0, 4)}-{_currentCode.Substring(4, 3)}" :
-            _currentCode;
-
-        if (OnSubmitAsync is null)
-        {
-            return;
-        }
-
-        await OnSubmitAsync(codeToVerify);
-    }
-
-    /// <summary>
-    /// Handles key press input for code entry, including digits, backspace, and escape.
-    /// </summary>
-    private async void OnKeyDown(object? sender, KeyEventArgs e)
-    {
-        if (!this.IsVisible)
-        {
-            return;
-        }
-
-        int codeLength = _isBackupMode ? BACKUP_CODE_LENGTH : CODE_LENGTH;
-
-        char? inputChar = GetInputChar(e.Key);
-
-        // Handle alphanumeric input
-        if (inputChar.HasValue && _currentCode.Length < codeLength)
-        {
-            _currentCode += inputChar.Value;
-            await AnimateDigitEntry(_currentCode.Length - 1);
-
-            if (_currentCode.Length == codeLength)
-            {
-                VerifyCodeButton.IsEnabled = true;
-            }
-        }
-        // Handle Backspace
-        else if (e.Key == Key.Back && _currentCode.Length > 0)
-        {
-            int lastIndex = _currentCode.Length - 1;
-            _currentCode = _currentCode.Substring(0, lastIndex);
-
-            await AnimateDigitClear(lastIndex);
-
-            VerifyCodeButton.IsEnabled = false;
-        }
-        // Handle Escape to cancel
-        else if (e.Key == Key.Escape)
-        {
-            HidePanel();
-        }
-    }
-
-    /// <summary>
     /// Shows the verified state UI after successful code entry, waits briefly, then resets and hides the panel.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
@@ -245,12 +134,12 @@ public partial class TwoFactorSlidingPanel : UserControl
         await Animations.FadeInAnimation.RunAsync(VerifiedStatePanel);
         await Task.Delay(2000);
 
+        HidePanel();
+
         await Task.WhenAll(
             ShowDefaultState(),
             ResetCodeEntry()
             );
-
-        HidePanel();
     }
 
     /// <summary>
@@ -302,15 +191,119 @@ public partial class TwoFactorSlidingPanel : UserControl
             Animations.FadeInAnimation.RunAsync(TitleText),
             Animations.FadeInAnimation.RunAsync(SubtitleText)
             );
+    }
 
-        this.Focus();
+    /// <summary>
+    /// Handles the Verify button click event.
+    /// Submits the entered 2FA or backup code via the TwoFactorCodeSubmitted event.
+    /// </summary>
+    private async void VerifyCodeClick(object? sender, RoutedEventArgs e)
+    {
+        int codeLength = _isBackupMode ? BACKUP_CODE_LENGTH : CODE_LENGTH;
+
+        if (_currentCode.Length != codeLength)
+        {
+            return;
+        }
+
+        if (OnSubmitAsync is null)
+        {
+            return;
+        }
+
+        string codeToVerify = _isBackupMode ?
+            $"{_currentCode.Substring(0, 4)}-{_currentCode.Substring(4, 3)}" :
+            _currentCode;
+
+        await OnSubmitAsync(codeToVerify);
+    }
+
+    /// <summary>
+    /// Toggles between regular authenticator code and backup code input mode.
+    /// </summary>
+    private async void ToggleBackupCodeModeClick(object? sender, RoutedEventArgs e)
+    {
+        var currentPanel = _isBackupMode ? BackupCodePanel : RegularCodePanel;
+
+        // Fade out current UI elements
+        await Task.WhenAll(
+            Animations.FadeOutAnimation.RunAsync(InstructionsPanel),
+            Animations.FadeOutAnimation.RunAsync(currentPanel),
+            Animations.FadeOutAnimation.RunAsync(BackUpToggleButton)
+        );
+
+        currentPanel.IsVisible = false;
+
+        // Toggle mode
+        _isBackupMode = !_isBackupMode;
+
+        // Select new panel based on mode
+        await ResetCodeEntry();
+        var newPanel = _isBackupMode ? BackupCodePanel : RegularCodePanel;
+        newPanel.IsVisible = true;
+
+        // Update texts
+        BackupToggleText.Text = _isBackupMode ? "use authenticator code" : "verify using backup code";
+        TitleText.Text = _isBackupMode ? "Enter Backup Code" : "Enter Verification Code";
+        SubtitleText.Text = _isBackupMode
+            ? "Please enter one of your saved backup codes"
+            : "Please enter the 6-digit code from your authenticator app";
+
+        // Fade in updated UI elements
+        await Task.WhenAll(
+            Animations.FadeInAnimation.RunAsync(InstructionsPanel),
+            Animations.FadeInAnimation.RunAsync(newPanel),
+            Animations.FadeInAnimation.RunAsync(BackUpToggleButton)
+        );
+    }
+
+    /// <summary>
+    /// Handles key press input for code entry, including digits, backspace, and escape.
+    /// </summary>
+    private async void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (!this.IsVisible)
+        {
+            return;
+        }
+
+        int codeLength = _isBackupMode ? BACKUP_CODE_LENGTH : CODE_LENGTH;
+
+        char? inputChar = GetInputChar(e.Key);
+
+        // Handle alphanumeric input
+        if (inputChar.HasValue && _currentCode.Length < codeLength)
+        {
+            _currentCode += inputChar.Value;
+            await AnimateDigitEntry(_currentCode.Length - 1);
+
+            if (_currentCode.Length == codeLength)
+            {
+                VerifyCodeButton.IsEnabled = true;
+            }
+        }
+        // Handle Backspace
+        else if (e.Key == Key.Back && _currentCode.Length > 0)
+        {
+            int lastIndex = _currentCode.Length - 1;
+            _currentCode = _currentCode.Substring(0, lastIndex);
+
+            await AnimateDigitClear(lastIndex);
+
+            VerifyCodeButton.IsEnabled = false;
+        }
+        // Handle Escape to cancel
+        else if (e.Key == Key.Escape)
+        {
+            HidePanel();
+        }
     }
 
     /// <summary>
     /// Resets the entered code and clears all displayed digit UI elements.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    private async Task ResetCodeEntry()
+    private Task ResetCodeEntry()
     {
         _currentCode = string.Empty;
 
@@ -329,6 +322,10 @@ public partial class TwoFactorSlidingPanel : UserControl
                 }
             }
         }
+
+        this.Focus();
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -458,10 +455,14 @@ public partial class TwoFactorSlidingPanel : UserControl
     private char? GetInputChar(Key key)
     {
         if (key >= Key.D0 && key <= Key.D9)
+        {
             return (char)('0' + (key - Key.D0));
+        }
 
         if (_isBackupMode && key >= Key.A && key <= Key.Z)
+        {
             return (char)('A' + (key - Key.A));
+        }
 
         return null;
     }
@@ -490,10 +491,9 @@ public partial class TwoFactorSlidingPanel : UserControl
         var firstGroup = BackupCodePanel.Children[0] as StackPanel;
         var secondGroup = BackupCodePanel.Children[2] as StackPanel;
 
-        // First 4 digits
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < BACKUP_CODE_LENGTH; i++)
         {
-            _backupCodeDigits[i] = new Border
+            var digitBorder = new Border
             {
                 Classes = { "CodeDigit" },
                 Child = new TextBlock
@@ -502,22 +502,19 @@ public partial class TwoFactorSlidingPanel : UserControl
                     Text = ""
                 }
             };
-            firstGroup?.Children.Add(_backupCodeDigits[i]);
-        }
 
-        // Last 3 digits
-        for (int i = 4; i < BACKUP_CODE_LENGTH; i++)
-        {
-            _backupCodeDigits[i] = new Border
+            _backupCodeDigits[i] = digitBorder;
+
+            // First 4 digits go to first group, last 3 to second group
+            if (i < 4)
             {
-                Classes = { "CodeDigit" },
-                Child = new TextBlock
-                {
-                    Classes = { "DigitText" },
-                    Text = ""
-                }
-            };
-            secondGroup?.Children.Add(_backupCodeDigits[i]);
+                firstGroup?.Children.Add(digitBorder);
+            }
+
+            else
+            {
+                secondGroup?.Children.Add(digitBorder);
+            }
         }
     }
 
@@ -528,5 +525,25 @@ public partial class TwoFactorSlidingPanel : UserControl
     {
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed && VisualRoot is Window window)
             window.BeginMoveDrag(e);
+    }
+
+    private void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    {
+        this.Focus();
+
+        this.KeyDown += OnKeyDown;
+        DragBorder.PointerPressed += DragWindow;
+        CancelCodeButton.Click += HidePanel;
+        BackUpToggleButton.Click += ToggleBackupCodeModeClick;
+        VerifyCodeButton.Click += VerifyCodeClick;
+    }
+
+    private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    {
+        this.KeyDown -= OnKeyDown;
+        DragBorder.PointerPressed -= DragWindow;
+        CancelCodeButton.Click -= HidePanel;
+        BackUpToggleButton.Click -= ToggleBackupCodeModeClick;
+        VerifyCodeButton.Click -= VerifyCodeClick;
     }
 }

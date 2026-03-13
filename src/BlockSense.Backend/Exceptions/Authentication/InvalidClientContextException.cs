@@ -2,32 +2,23 @@
 
 namespace BlockSense.Backend.Exceptions.Authentication
 {
+    /// <summary>
+    /// Thrown when the client context provided with a request is invalid or incomplete.
+    /// </summary>
     public sealed class InvalidClientContextException : ApiException
     {
-        public override string Type
-        {
-            get
-            {
-                return ApiProblemTypes.Authentication.InvalidClientContext;
-            }
-        }
+        /// <inheritdoc/>
+        public override string Type => StandardizedCodes.Authentication.InvalidClientContext;
 
-        public override string Title
-        {
-            get
-            {
-                return "Invalid Client Context";
-            }
-        }
+        /// <inheritdoc/>
+        public override string Title => "Invalid Client Context";
 
-        public override int Status
-        {
-            get
-            {
-                return StatusCodes.Status401Unauthorized;
-            }
-        }
+        /// <inheritdoc/>
+        public override int Status => StatusCodes.Status401Unauthorized;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="InvalidClientContextException"/> class.
+        /// </summary>
         public InvalidClientContextException()
             : base("The client context provided with this request is invalid or incomplete. Please ensure your device is properly configured and try again.") { }
     }

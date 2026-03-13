@@ -42,7 +42,7 @@
 					Classes="DefaultWhite"
 					HorizontalContentAlignment="Center"
 					VerticalContentAlignment="Center"
-					Content="Wallet"
+					Content="My Wallet"
 					FontSize="12"
 					FontWeight="SemiBold">
 			</Button>

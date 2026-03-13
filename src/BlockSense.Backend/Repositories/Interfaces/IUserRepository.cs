@@ -4,69 +4,75 @@ using BlockSense.Contracts.Enums;
 namespace BlockSense.Backend.Repositories.Interfaces
 {
     /// <summary>
-    /// Defines data access operations for managing user entities.
+    /// Defines data access operations for users.
     /// </summary>
     public interface IUserRepository
     {
         /// <summary>
-        /// Retrieves a user by its unique identifier.
+        /// Retrieves a user by their unique identifier.
         /// </summary>
-        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="id">The unique identifier of the user.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>The corresponding <see cref="UserEntity"/> if found; otherwise, <c>null</c>.</returns>
-        Task<UserEntity?> GetByIdAsync(uint userId, CancellationToken cancellationToken = default);
-        /// <summary>
-        /// Retrieves a user by username or email address.
-        /// </summary>
-        /// <param name="identifier">The username or email associated with the user.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>The corresponding <see cref="UserEntity"/> if found; otherwise, <c>null</c>.</returns>
-        Task<UserEntity?> GetByUsernameOrEmailAsync(string identifier, CancellationToken cancellationToken = default);
+        /// <returns>The matching <see cref="User"/>, or <c>null</c> if not found.</returns>
+        Task<User?> GetByIdAsync(uint id, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Determines whether a username already exists.
+        /// Retrieves a user by their username or email address.
         /// </summary>
-        /// <param name="username">The username to check.</param>
+        /// <param name="identifier">The username or email address to look up.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns><c>true</c> if the username is already in use; otherwise, <c>false</c>.</returns>
-        Task<bool> UsernameExistsAsync(string username, CancellationToken cancellationToken = default);
-        /// <summary>
-        /// Determines whether an email address is already associated with an account.
-        /// </summary>
-        /// <param name="email">The email address to check.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns><c>true</c> if the email is already in use; otherwise, <c>false</c>.</returns>
-        Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default);
+        /// <returns>The matching <see cref="User"/>, or <c>null</c> if not found.</returns>
+        Task<User?> GetByUsernameOrEmailAsync(string identifier, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Creates a new user account.
+        /// Retrieves all users assigned the specified role, ordered by creation date ascending.
         /// </summary>
-        /// <param name="user">The user entity to persist.</param>
+        /// <param name="role">The role to filter users by.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>The unique identifier of the newly created user.</returns>
-        Task<uint> CreateAsync(UserEntity user, CancellationToken cancellationToken = default);
-        /// <summary>
-        /// Updates the user type for an existing account.
-        /// </summary>
-        /// <param name="userId">The unique identifier of the user.</param>
-        /// <param name="newType">The new user type to assign.</param>
-        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        Task UpdateUserTypeAsync(uint userId, UserType newType, CancellationToken cancellationToken = default);
+        /// <returns>A read-only list of users with the specified role.</returns>
+        Task<IReadOnlyList<User>> GetByRoleAsync(UserRole role, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Marks a user account as deleted without permanently removing it.
+        /// Retrieves the username of the user who invited the specified user via an invitation code.
         /// </summary>
-        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="userId">The identifier of the user whose inviter to look up.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        Task SoftDeleteAsync(uint userId, CancellationToken cancellationToken = default);
+        /// <returns>The inviter's username, or <c>null</c> if no invitation record exists.</returns>
+        Task<string?> GetInviterUsernameAsync(uint userId, CancellationToken cancellationToken = default);
+
         /// <summary>
-        /// Restores a previously soft-deleted user account.
+        /// Inserts a new user into the data store.
         /// </summary>
-        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="user">The user to create.</param>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns>The auto-generated identifier of the newly created user.</returns>
+        Task<uint> CreateAsync(User user, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Updates all mutable fields of an existing user record.
+        /// </summary>
+        /// <param name="user">The user containing the updated values.</param>
         /// <param name="cancellationToken">Optional token to cancel the operation.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        Task RestoreAsync(uint userId, CancellationToken cancellationToken = default);
+        Task UpdateAsync(User user, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Soft-deletes a user by setting their <c>deleted_at</c> timestamp.
+        /// Only applies if the user has not already been deleted.
+        /// </summary>
+        /// <param name="id">The identifier of the user to soft-delete.</param>
+        /// <param name="deletedAt">The UTC timestamp to record as the deletion time.</param>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        Task SoftDeleteAsync(uint id, DateTime deletedAt, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Restores a soft-deleted user by clearing their <c>deleted_at</c> timestamp.
+        /// Only applies if the user is currently soft-deleted.
+        /// </summary>
+        /// <param name="id">The identifier of the user to restore.</param>
+        /// <param name="cancellationToken">Optional token to cancel the operation.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        Task RestoreAsync(uint id, CancellationToken cancellationToken = default);
     }
 }

@@ -9,26 +9,38 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using static BlockSense.Desktop.Models.Api.ApiResult;
 
 namespace BlockSense.Desktop.Services.Implementations
 {
+    /// <summary>
+    /// Implements <see cref="ITwoFactorAuthService"/> to manage two-factor authentication (2FA)
+    /// for the current user, including setup, enabling, disabling, and backup code generation.
+    /// </summary>
     public sealed class TwoFactorAuthService : ITwoFactorAuthService
     {
         private readonly IApiClient _apiClient;
         private readonly ICurrentUserProvider _currentUserProvider;
         private readonly TwoFactorSlidingPanel _twoFactorSlidingPanel;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="TwoFactorAuthService"/>.
+        /// </summary>
+        /// <param name="apiClient">The API client used to communicate with the backend.</param>
+        /// <param name="currentUserProvider">The provider for accessing and updating the current user's profile.</param>
+        /// <exception cref="ArgumentNullException">Thrown if any required dependency is null.</exception>
         public TwoFactorAuthService(IApiClient apiClient, ICurrentUserProvider currentUserProvider)
         {
             _apiClient = apiClient
                 ?? throw new ArgumentNullException(nameof(apiClient));
+
             _currentUserProvider = currentUserProvider
                 ?? throw new ArgumentNullException(nameof(currentUserProvider));
+
             _twoFactorSlidingPanel = MainWindow.Instance.TwoFactorSlidingPanel
                 ?? throw new ArgumentNullException(nameof(MainWindow.Instance.TwoFactorSlidingPanel));
         }
 
+        /// <inheritdoc/>
         public async Task<TwoFactorSetupInit> GetSetupInitAsync(CancellationToken cancellationToken = default)
         {
             var response = await _apiClient
@@ -46,10 +58,11 @@ namespace BlockSense.Desktop.Services.Implementations
                 "Two-Factor Setup Error",
                 "Unable to load your Two-Factor Authentication setup data.");
 
-            throw new InvalidOperationException();
+            throw new InvalidOperationException("Failed to retrieve 2FA setup initialization data.");
         }
 
-        public async Task EnableAsync(string setupKey, CancellationToken cancellationToken = default)
+        /// <inheritdoc/>
+        public Task EnableAsync(string setupKey, CancellationToken cancellationToken = default)
         {
             _twoFactorSlidingPanel.ShowPanel(async code =>
             {
@@ -61,29 +74,34 @@ namespace BlockSense.Desktop.Services.Implementations
 
                 var response = await _apiClient
                     .AddBearerToken()
-                    .PostAsync<TwoFactorSetupRequest, UserSummaryDto>(
-                        request: request,
+                    .PostAsync<TwoFactorSetupRequest, object>(
                         requestUri: "/api/users/me/2fa",
+                        request: request,
                         cancellationToken: cancellationToken);
 
                 switch (response)
                 {
-                    case ApiResult<UserSummaryDto>.Success success:
-                        _currentUserProvider.SetProfile(success.Data);
+                    case ApiResult<object>.Success:
+                        _currentUserProvider.SetProfile(
+                            _currentUserProvider.Profile with { TwoFactorEnabled = true });
 
                         await _twoFactorSlidingPanel.ShowVerifiedState();
-                        return;
+                        break;
 
                     case ApiResult.Failure failure:
-                        await HandleFailureAsync(failure);
+                        await HandleTwoFactorFailureAsync(failure);
                         break;
                 }
             });
+
+            return Task.CompletedTask;
         }
 
-        public async Task DisableAsync(CancellationToken cancellationToken = default)
+        /// <inheritdoc/>
+        public Task DisableAsync(CancellationToken cancellationToken = default)
         {
             _twoFactorSlidingPanel.BackUpToggleButton.IsVisible = false;
+
             _twoFactorSlidingPanel.ShowPanel(async code =>
             {
                 var request = new TwoFactorVerificationRequest
@@ -93,27 +111,31 @@ namespace BlockSense.Desktop.Services.Implementations
 
                 var response = await _apiClient
                     .AddBearerToken()
-                    .DeleteAsync<TwoFactorVerificationRequest, UserSummaryDto>(
-                        request: request,
+                    .DeleteAsync<TwoFactorVerificationRequest, object>(
                         requestUri: "/api/users/me/2fa",
+                        request: request,
                         cancellationToken: cancellationToken);
 
                 switch (response)
                 {
-                    case ApiResult<UserSummaryDto>.Success success:
-                        _currentUserProvider.SetProfile(success.Data);
+                    case ApiResult<object>.Success:
                         _currentUserProvider.SetTwoFactorBackupCodes(null);
+                        _currentUserProvider.SetProfile(
+                            _currentUserProvider.Profile with { TwoFactorEnabled = false });
 
                         await _twoFactorSlidingPanel.ShowVerifiedState();
-                        return;
+                        break;
 
                     case ApiResult.Failure failure:
-                        await HandleFailureAsync(failure);
+                        await HandleTwoFactorFailureAsync(failure);
                         break;
                 }
             });
+
+            return Task.CompletedTask;
         }
 
+        /// <inheritdoc/>
         public async Task GenerateBackupCodesAsync(CancellationToken cancellationToken = default)
         {
             var response = await _apiClient
@@ -128,27 +150,30 @@ namespace BlockSense.Desktop.Services.Implementations
                     _currentUserProvider.SetTwoFactorBackupCodes(success.Data);
 
                     MainWindow.Instance.ShowNotification(
-                        "Two Factor Authentication",
-                        "Backup codes have been successfully generated and are now available for download.");
+                        "Two-Factor Authentication",
+                        "Backup codes have been generated and are available for download.");
 
                     break;
 
                 case ApiResult.Failure failure:
-                    MainWindow.Instance.ShowNotification(
-                        failure.ProblemDetails.Title,
-                        failure.ProblemDetails.Detail);
+                    ShowErrorNotification(failure);
                     break;
             }
         }
 
-        private async Task HandleFailureAsync(ApiResult.Failure failure)
+        private async Task HandleTwoFactorFailureAsync(ApiResult.Failure failure)
         {
-            if (failure.ProblemDetails.Type is ApiProblemTypes.TwoFactorAuthentication.InvalidCode)
+            if (failure.ProblemDetails.Type is StandardizedCodes.TwoFactorAuthentication.Invalid)
             {
                 await _twoFactorSlidingPanel.ShowErrorState();
                 return;
             }
 
+            ShowErrorNotification(failure);
+        }
+
+        private static void ShowErrorNotification(ApiResult.Failure failure)
+        {
             MainWindow.Instance.ShowNotification(
                 failure.ProblemDetails.Title,
                 failure.ProblemDetails.Detail);

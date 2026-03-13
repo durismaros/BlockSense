@@ -18,7 +18,7 @@ namespace BlockSense.Backend.Data.Configurations
         }
 
         /// <summary>
-        /// Number of digits used for generated 2FA verification codes.
+        /// The number of digits in a generated 2FA verification code.
         /// </summary>
         [Required]
         [Range(6, 8, ErrorMessage = "CodeLength must be between 6 and 8 digits.")]
@@ -29,7 +29,7 @@ namespace BlockSense.Backend.Data.Configurations
         }
 
         /// <summary>
-        /// The duration for which a generated 2FA code remains valid.
+        /// The duration for which a generated 2FA code remains valid before expiring.
         /// </summary>
         [Required]
         [Range(typeof(TimeSpan), "00:00:30", "1.00:00:00", ErrorMessage = "CodeLifetime must be between 30 seconds and 1 day.")]
@@ -40,7 +40,7 @@ namespace BlockSense.Backend.Data.Configurations
         }
 
         /// <summary>
-        /// Number of backup codes generated for account recovery.
+        /// The number of backup codes generated for account recovery.
         /// </summary>
         [Required]
         [Range(1, 100, ErrorMessage = "BackupCodeCount must be at least 1.")]
@@ -51,7 +51,7 @@ namespace BlockSense.Backend.Data.Configurations
         }
 
         /// <summary>
-        /// Length of each backup code.
+        /// The character length of each backup code.
         /// </summary>
         [Required]
         [Range(6, 64, ErrorMessage = "BackupCodeLength must be at least 6 characters.")]
@@ -62,10 +62,10 @@ namespace BlockSense.Backend.Data.Configurations
         }
 
         /// <summary>
-        /// The timespan at which Backup Codes can be generated.
+        /// The minimum time a user must wait between backup code regeneration requests.
         /// </summary>
         [Required]
-        [Range(typeof(TimeSpan), "00:30:00", "1.00:00:00", ErrorMessage = "Backup Codes Cooldown must be between 30 minutes and 1 day.")]
+        [Range(typeof(TimeSpan), "00:30:00", "1.00:00:00", ErrorMessage = "BackupCodeCooldown must be between 30 minutes and 1 day.")]
         public required TimeSpan BackupCodeCooldown
         {
             get;
@@ -73,7 +73,8 @@ namespace BlockSense.Backend.Data.Configurations
         }
 
         /// <summary>
-        /// Master secret key used as a base for generating user-specific 2FA secrets.
+        /// The master secret key used as a base for generating user-specific 2FA secrets.
+        /// Must be exactly 32 bytes, encoded as a Base64 string (44 characters).
         /// </summary>
         [Required]
         [StringLength(44, MinimumLength = 44, ErrorMessage = "MasterKey must be exactly 32 bytes.")]
