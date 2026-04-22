@@ -16,7 +16,7 @@
 
 <br/>
 
-[**Overview**](#-overview) · [**Features**](#-features) · [**Architecture**](#-architecture) · [**Security**](#-security-model) · [**Quick Start**](#-quick-start) · [**Screenshots**](#-screenshots) · [**Contributing**](#-contributing)
+[**Overview**](#overview) · [**Features**](#features) · [**Architecture**](#architecture) · [**Security**](#security-model) · [**Quick Start**](#quick-start) · [**Screenshots**](#screenshots) · [**Contributing**](#contributing)
 
 <br/>
 
