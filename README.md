@@ -318,26 +318,44 @@ dotnet run --project src/BlockSense.Desktop/BlockSense.Desktop.csproj
 ```
 BlockSense/
 ├── src/
-│   ├── BlockSense.Backend/          # ASP.NET Core Web API
-│   │   ├── Controllers/             # REST endpoints (JWT-validated)
-│   │   ├── Services/                # Business logic layer
-│   │   ├── Repositories/            # Dapper data access layer
-│   │   ├── Models/                  # Domain entities & DTOs
-│   │   └── Middleware/              # Global exception handler
+│   ├── BlockSense.Backend/        # ASP.NET Core Web API
+│   │   ├── Attributes/            # Custom attributes
+│   │   ├── Controllers/           # REST API endpoints
+│   │   ├── Data/                  # Database config & access
+│   │   ├── Entities/              # Core entities
+│   │   ├── Exceptions/            # Global error handling
+│   │   ├── Extensions/            # Startup extensions
+│   │   ├── Models/                # DTOs & request models
+│   │   ├── Properties/            # Project settings
+│   │   ├── Repositories/          # Dapper repositories
+│   │   ├── Services/              # Business logic
+│   │   └── Utilities/             # Shared helpers
 │   │
-│   └── BlockSense.Desktop/          # Avalonia UI client
-│       ├── Views/                   # XAML UI definitions
-│       ├── ViewModels/              # MVVM view models
-│       ├── Services/                # Crypto, wallet, API services
-│       └── Storage/                 # LevelDB encrypted local store
+│   ├── BlockSense.Contracts/      # Shared contracts library
+│   │   ├── Cryptography/          # Shared crypto logic
+│   │   ├── DTOs/                  # Shared DTOs
+│   │   ├── Definitions/           # Interfaces & constants
+│   │   └── Enums/                 # Shared enums
+│   │
+│   └── BlockSense.Desktop/        # Avalonia UI client
+│       ├── Assets/                # Images, fonts, icons
+│       ├── Models/                # UI models
+│       ├── Properties/            # App settings
+│       ├── Providers/             # Dependency providers
+│       ├── Services/              # Crypto, wallet, API services
+│       ├── Utilities/             # Desktop helpers
+│       ├── Views/                 # XAML UI definitions
+│       └── Windows/               # Application windows
 │
-├── docs/
-│   └── database/
-│       └── schema.sql               # Full MySQL schema
+├── docs/                          # Project documentation
+│   ├── Duris.pdf                  # PDF documentation
+│   └── Duris.docx                 # Word documentation
 │
-└── screenshots/                     # UI screenshots
+├── database/                      # Database resources
+│   └── schema.sql                 # Full MySQL schema
+│
+└── screenshots/                   # UI screenshots
 ```
-
 ---
 
 ## Contributing
@@ -397,7 +415,7 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for full terms.
 
 <br/>
 
-Built by **Maroš Ďuriš** · SPŠ Jozefa Murgaša, Banská Bystrica · 2025/2026
+Built by **Maroš Ďuriš** with ❤️ · SPŠ Jozefa Murgaša, Banská Bystrica · 2025/2026
 
 <br/>
 
