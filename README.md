@@ -244,11 +244,14 @@ cd src/BlockSense.Backend
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
   "Server=localhost;Database=blocksense;User=root;Password=<password>;"
 
-# JWT signing key  (use a cryptographically random value, ≥ 256 bits)
+# JWT signing key (cryptographically secure, ≥ 256 bits)
 dotnet user-secrets set "JwtTokenConfig:SigningKey" "<your-signing-key>"
 
-# 2FA master encryption key  (used to encrypt TOTP secrets in the DB)
+# 2FA master encryption key
 dotnet user-secrets set "TwoFactorAuthConfig:MasterKey" "<your-master-key>"
+
+# Crypto API key (external services like pricing / blockchain data)
+dotnet user-secrets set "CryptoConfig:ApiKey" "<your-api-key>"
 ```
 
 > **Generating secure keys:**
