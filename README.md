@@ -82,36 +82,36 @@ The application is split into two independent components that communicate exclus
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        DESKTOP CLIENT                               │
-│                                                                     │
-│  ┌───────────────┐    ┌──────────────┐    ┌──────────────────────┐  │
-│  │  Avalonia UI  │───▶│   Services   │───▶│   LevelDB ( local )  │  │
-│  │ ( XAML / C# ) │    │              │    │                      │  │
-│  └───────────────┘    └──────┬───────┘    └──────────────────────┘  │
-│                              │                                      │
-│                              │  HTTPS                               │
-└──────────────────────────────┼──────────────────────────────────────┘
-                               │
-┌──────────────────────────────┼──────────────────────────────────────┐
-│                      ASP.NET CORE API                               │
-│                              │                                      │
-│  ┌───────────────┐    ┌──────▼───────┐    ┌──────────────────────┐  │
-│  │  Controllers  │───▶│   Services   │───▶│     Repositories     │  │
-│  │  ( REST API ) │    │ (auth · 2FA) │    │  ( Dapper / MySQL )  │  │
-│  │               │    │              │    └──────────────────────┘  │
-│  └───────────────┘    └──────┬───────┘                              │
-│                              │                                      │
-└──────────────────────────────┼──────────────────────────────────────┘
-                               │
-                  ┌──────────── ────────────┐
-                  │                         │
-           ┌──────▼──────┐            ┌─────▼──────┐
-           │    MySQL    │            │  External  │
-           │  Database   │            │ Blockchain │
-           │             │            │    API     │
-           └─────────────┘            └────────────┘
-       
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                               DESKTOP CLIENT                                    │
+│                                                                                 │
+│   ┌────────────────────┐     ┌────────────────────┐     ┌───────────────────┐   │
+│   │    Avalonia UI     │ --> │      Services      │ --> │  LevelDB (Local)  │   │
+│   │    (XAML / C#)     │     │  (App Logic Layer) │     │  Embedded Store   │   │
+│   └────────────────────┘     └─────────┬──────────┘     └───────────────────┘   │
+│                                        │                                        │
+│                                        │ HTTPS (Secure API Calls)               │
+└────────────────────────────────────────┼────────────────────────────────────────┘
+                                         │
+                                         │
+                                         v
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            ASP.NET CORE BACKEND                                 │
+│                                                                                 │
+│   ┌────────────────────┐     ┌─────────────────────┐     ┌──────────────────┐   │
+│   │    Controllers     │ --> │      Services       │ --> │   Repositories   │   │
+│   │     (REST API)     │     │ (Auth / 2FA / Core) │     │ (Dapper / MySQL) │   │
+│   └────────────────────┘     └─────────┬───────────┘     └────────┬─────────┘   │
+│                                        │                          │             │
+└────────────────────────────────────────┼──────────────────────────┼─────────────┘
+                                         │                          │
+                                         │                          │
+                               ┌─────────v──────────┐ ┌─────────────v──────────────┐
+                               │    External API    │ │       MySQL Database       │
+                               │  Blockchain Layer  │ │    (Primary Data Store)    │
+                               └────────────────────┘ └────────────────────────────┘
+
 ```
 
 ### Layer Responsibilities
@@ -142,13 +142,19 @@ Entropy (CSPRNG)
                     │ AES-256 ( PIN-derived key ) │
                     └───────────┬─────────────────┘
                                 │
-                        LevelDB ( local disk )
+                        LevelDB ( Local Disk Storage )
 
-  ✗  Seed phrase → Server        NEVER
-  ✗  Private key → Server        NEVER
-  ✗  PIN         → Server        NEVER
-  ✓  Signed transaction → Server for broadcast only
-  ✓  Public address → Server for balance sync only
+
+SECURITY BOUNDARY RULES
+───────────────────────────────────────────────────────────────────────────────
+[ NEVER LEAVES CLIENT ]
+  - Seed Phrase (BIP39)
+  - Private Keys (BIP32 / BIP44)
+  - PIN / Encryption Key Material
+
+[ ALLOWED OUTBOUND ]
+  - Signed Transactions  -> Server (broadcast only)
+  - Public Addresses     -> Server (balance / sync only)
 ```
 
 ### Cryptographic Primitives
@@ -337,7 +343,7 @@ BlockSense/
 │   ├── BlockSense.Contracts/      # Shared contracts library
 │   │   ├── Cryptography/          # Shared crypto logic
 │   │   ├── DTOs/                  # Shared DTOs
-│   │   ├── Definitions/           # Interfaces & constants
+│   │   ├── Definitions/           # Shared constants
 │   │   └── Enums/                 # Shared enums
 │   │
 │   └── BlockSense.Desktop/        # Avalonia UI client
